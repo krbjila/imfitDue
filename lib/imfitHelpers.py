@@ -21,7 +21,7 @@ def checkAtom(atom):
 
     else:
         print('Atom must be a string or integer corresponding to an atom in the experiment.')
-        return -2
+        return -1
 
 def checkFrame(frame):
 
@@ -41,6 +41,24 @@ def checkFrame(frame):
         else:
             print('Frame must be a string or integer corresponding to a frame in the experiment.')
 
+def checkFitFunction(fitFunction):
+
+    if isinstance(fitFunction, basestring):
+        if fitFunction in FIT_FUNCTIONS:
+            return FIT_FUNCTIONS.index(fitFunction)
+        else:
+            print("Error: Fit function must be one of " ','.join(FIT_FUNCTIONS))
+            return -1
+    elif isinstance(fitFunction, int):
+        if fitFunction < len(FIT_FUNCTIONS):
+            return fitFunction
+        else:
+            print("Error: only {} fitting functions are defined!".format(len(FIT_FUNCTIONS)))
+            return -1
+    else:
+        print("Error: Fit function must be a string or integer corresponding to a real fitting function.")
+        return -1
+
 def cropArray(array, x, y):
     ### Crop array according to values in a list
     t = array[x,:]
@@ -52,7 +70,7 @@ def confidenceIntervals(res_lsq):
 
 
 def getTTF(fitObject):
-    if FIT_FUNCTIONS[fitObject.fitFunction] == 'fermidirac':
+    if FIT_FUNCTIONS[fitObject.fitFunction] == 2:
         TTF = (6.0 * polylog.fermi_poly3(fitObject.fitData[6]))**(-1.0/3.0)
         TTFErr = 0.5*( (6.0 * polylog.fermi_poly3(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/3.0) - (6.0 * polylog.fermi_poly3(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/3.0))
         return TTF,TTFErr
@@ -103,3 +121,40 @@ def getImagesFromRange(stringIn):
     l.sort()
     
     return l
+
+def upload2Origin(atom, fitFunction, data):
+    import win32com.client
+
+    progID = 'Origin.ApplicationSI'
+    orgApp = win32com.client.Dispatch(progID)
+
+
+    atom = checkAtom(atom)
+    fitFunction = checkFitFunction(fitFunction)
+
+
+
+    if atom != -1 and fitFunction != -1:
+
+        template = WORKSHEET_NAMES[fitFunction]
+        worksheetName = ATOM_NAMES[atom] + WORKSHEET_NAMES[fitFunction]
+
+        if orgApp.FindWorksheet(worksheetName) is None:
+            orgApp.CreatePage(2, worksheetName, template)
+
+
+        n = 0
+        for k in data:
+            uploadSuccess = orgApp.PutWorksheet(worksheetName, k, -1, n)
+            if uploadSuccess:
+                n += 1
+            else:
+                print("Failed to upload to Origin. Is the proper worksheet available?")
+                return -1
+
+    else: 
+        print("Failed to upload to Origin.")
+        return -1
+
+if __name__ == "__main__":
+    uploadToOrigin('K', 'Gaussian', [1,1])

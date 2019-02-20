@@ -18,8 +18,8 @@ import os
 class ImageWindows(QtGui.QWidget):
     def __init__(self, Parent=None):
         super(ImageWindows,self).__init__(Parent)
-       # self.setGeometry(10,10,1200,800)
-        self.setGeometry(10,10,1000,600)
+        # self.setGeometry(10,10,600,400)
+        # self.setGeometry(10,10,1000,600)
         
         pal = QtGui.QPalette()
         pal.setColor(QtGui.QPalette.Background, QtCore.Qt.white)
@@ -33,7 +33,8 @@ class ImageWindows(QtGui.QWidget):
         self.figure = Figure(facecolor='white',tight_layout=True)
         self.canvas = FigureCanvas(self.figure)
         self.canvas.setContentsMargins(0,0,0,0)
-        self.canvas.setFixedSize(1300,800)
+        self.canvas.setFixedSize(1040,640)
+
         self.toolbar = NavigationToolbar(self.canvas, self)
 
         cid = self.canvas.mpl_connect('button_press_event', self.mainGraphClicked)
@@ -180,7 +181,7 @@ class plotTools(QtGui.QWidget):
     def __init__(self,Parent=None):
         super(plotTools,self).__init__(Parent)
         self.setup()
-        self.setFixedHeight(760)
+        self.setFixedHeight(650)
 
     def setup(self):
 
@@ -368,8 +369,18 @@ class pathWidget(QtGui.QWidget):
 
     def camChanged(self):
         self.autoLoad.setChecked(False)
-
-        ### Put something in here to get the most recent file into the autoload box
+        if self.cameraGroup.checkedId():
+            d = DEFAULT_PATH_IXON
+            self.filePath.setText(d)
+            if os.path.isdir(d):
+                n = getLastFile(d)
+                self.autoLoadFile.setText(str(n))
+        else:
+            d = DEFAULT_PATH_PI
+            self.filePath.setText(d)
+            if os.path.isdir(d):
+                n = getLastFile(d)
+                self.autoLoadFile.setText(str(n))
 
 class fitOptionsWidget(QtGui.QWidget):
     def __init__(self,Parent=None):
@@ -384,6 +395,9 @@ class fitOptionsWidget(QtGui.QWidget):
         self.kFitFunction = QtGui.QComboBox()
         self.kFitFunction.addItems(FIT_FUNCTIONS)
 
+        self.imagePath = QtGui.QComboBox()
+        self.imagePath.addItems(IMAGING_PATHS)
+
         self.autoFit = QtGui.QCheckBox('AutoFit')
         self.autoUpload = QtGui.QCheckBox('Auto Origin')
         self.moleculeBook = QtGui.QCheckBox('Molecules?')
@@ -395,6 +409,8 @@ class fitOptionsWidget(QtGui.QWidget):
         #### Layout Stuff
 
         h0 = QtGui.QHBoxLayout()
+        h0.addWidget(QtGui.QLabel("Imageing Path: "))
+        h0.addWidget(self.imagePath)
         h0.addStretch(1)
         h0.addWidget(QtGui.QLabel('Fit Rb to:'))
         h0.addWidget(self.rbFitFunction)

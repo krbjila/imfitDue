@@ -320,7 +320,7 @@ class fitOD():
 
 class processFitResult():
 
-    def __init__(self,fitObject, imagePath='axial'):
+    def __init__(self,fitObject, imagePath='Axial'):
 
         self.fitObject = fitObject 
         self.bin = self.fitObject.odImage.data.bin
@@ -328,7 +328,7 @@ class processFitResult():
         self.imagePath = IMAGING_PATHS.index(imagePath)
         self.pixelSize = PIXEL_SIZES[self.imagePath]
 
-        self.r = None
+        self.data = None
 
         self.getResults()
 
@@ -337,29 +337,32 @@ class processFitResult():
         
         if self.fitObject.fitFunction == 0:
 
-            self.r = {
+            r = {
                     'offset' : self.fitObject.fitData[0],
                     'peakOD' : self.fitObject.fitData[1],
                     'x0' : self.fitObject.fitData[2],
                     'y0' : self.fitObject.fitData[4],
                     'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
                     'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
-                    'angle' : self.fitObject.fitData[6]
+                    'angle' : self.fitObject.fitData[6]*180.0/3.141592
                     }
 
-            self.rErr = {
+            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
+
+
+            rErr = {
                     'offset' : self.fitObject.fitDataConf[0],
                     'peakOD' : self.fitObject.fitDataConf[1],
                     'x0' : self.fitObject.fitDataConf[2],
                     'y0' : self.fitObject.fitDataConf[4],
                     'wx' : self.fitObject.fitDataConf[3]*(self.bin+1.0)*self.pixelSize,
                     'wy' : self.fitObject.fitDataConf[5]*(self.bin+1.0)*self.pixelSize,
-                    'angle' : self.fitObject.fitDataConf[6]
+                    'angle' : self.fitObject.fitDataConf[6]*180.0/3.141592
                     }
 
         elif self.fitObject.fitFunction == 1:
 
-            self.r = {
+            r = {
                     'offset' : self.fitObject.fitData[0],
                     'peakODBEC' : self.fitObject.fitData[1],
                     'wxBEC' : self.fitObject.fitData[2]*(self.bin+1.0)*self.pixelSize,
@@ -370,6 +373,8 @@ class processFitResult():
                     'x0': self.fitObject.fitData[7],
                     'y0': self.fitObject.fitData[8],
                     }
+
+            self.data = ['fileName', IMAGING_PATHS[self.imagePath], r['peakODBEC'], r['wxBEC'], r['wyBEC'], r['peakODThermal'], r['wxThermal'], r['wyThermal'], r['x0'], r['y0'], r['offset']]
 
         elif self.fitObject.fitFunction == 2:
 

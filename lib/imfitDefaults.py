@@ -1,19 +1,29 @@
 
-FILESEP = '/'
-DEFAULT_PATH = '/home/fermikrb/luigi/imfit/testfiles/pi_192.spe'
+
 
 #######################################################################
 ########################    Imaging Parameters   ######################
 #######################################################################
 
+IMAGING_PATHS = ['Axial', 'Axial (Low Mag.)', 'Vertical']
+PIXEL_SIZES = [2.3, 7.5, 1.0]
+
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
-ATOM_NAMES = ['K','RB']
-NATOMS = len(ATOM_NAMES)
+ATOM_NAMES = ['K','RB','KRB']
+NATOMS = 2
 WAVELENGTHS = [767.0E-9, 780.0E-9]
 
+#######################################################################
+########################  File System Parameters  #####################
+#######################################################################
 
-IMAGING_PATHS = ['axial', 'axial low mag.', 'vertical']
-PIXEL_SIZES = [2.3, 7.5, 1.0]
+import datetime
+now = datetime.datetime.now()
+
+DEFAULT_PATH = now.strftime('G:/Seagate/DATA/%Y/%m/%Y%m%d/')
+DEFAULT_PATH_PI = DEFAULT_PATH + 'Raw files/'
+DEFAULT_PATH_IXON = DEFAULT_PATH + 'Andor/'
+FILESEP = '/'
 
 #######################################################################
 ########################  Princeton Instruments  ######################
@@ -22,7 +32,7 @@ PIXEL_SIZES = [2.3, 7.5, 1.0]
 CAMERA_NAME_PI = 'Princeton Instruments'
 
 
-DEFAULT_PATH_PI = '/home/fermikrb/luigi/imfit/testfiles/'
+
 
 SENSOR_WIDTH_PI = 808
 
@@ -36,7 +46,6 @@ ISAT_FLUX_PI = [290.0, 260.0] #Saturation intensity flux counts/px/microsecond (
 
 CAMERA_NAME_IXON = 'Andor iXon 888'
 
-DEFAULT_PATH_IXON = '/home/fermikrb/luigi/imfit/testfiles/'
 SENSOR_WIDTH_IXON = 1024
 
 TPROBE_IXON = [40.0, 40.0]
@@ -53,3 +62,4 @@ DEFAULT_REGION = [[90, 125, 80, 80],
                  ]
 
 FIT_FUNCTIONS = ['Gaussian', 'Bigaussian', 'Fermi-Dirac']
+WORKSHEET_NAMES = ['Gauss1', 'Gauss2', 'FermiDirac']

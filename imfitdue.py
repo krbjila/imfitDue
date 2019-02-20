@@ -1,13 +1,11 @@
 import sys, os
 sys.path.append('./lib')
 
-
 from PyQt4 import QtGui, QtCore
 
-from imfitDefaults import *
 from imageRead import *
 from imageProcess import *
-
+from imfitDefaults import *
 from gui_helpers import *
 
 import numpy as np
@@ -28,6 +26,9 @@ class imfitDue(QtGui.QMainWindow):
         self.autoloader.connect(self.autoloader, QtCore.SIGNAL('fileArrived'), self.loadFile)
         self.autoloader.start()
 
+        self.fitK = None
+        self.fitRb = None
+
     def makeConnections(self):
         self.pf.loadButton.clicked.connect(self.loadFile)
         self.fo.fitButton.clicked.connect(self.fitCurrent)
@@ -39,6 +40,7 @@ class imfitDue(QtGui.QMainWindow):
                 self.roi.region[i][j].returnPressed.connect(self.currentODCalc)
         
         self.av.averageButton.clicked.connect(self.averageImages)
+        self.fo.uploadButton.clicked.connect(self.process2Origin)
 
     def loadFile(self):
         path = str(self.pf.filePath.text())
@@ -123,6 +125,31 @@ class imfitDue(QtGui.QMainWindow):
         self.fitRb = fitOD(self.odRb, str(self.fo.rbFitFunction.currentText()))
         self.plotCurrent()
 
+        if self.fo.autoUpload.isChecked():
+            self.process2Origin()
+
+    def process2Origin(self):
+        
+        imagePath = self.fo.imagePath.currentText()
+
+        if self.fitK is not None and self.fitRb is not None:
+            KProcess = processFitResult(self.fitK, imagePath)
+            RbProcess = processFitResult(self.fitRb, imagePath)
+
+            KProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
+            RbProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
+
+            if self.fo.moleculeBook.isChecked():
+                upload2Origin('KRb', self.fitK.fitFunction, KProcess.data)
+            else:
+                upload2Origin('K', self.fitK.fitFunction, KProcess.data)
+            upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
+
+
+
+
+
+
     def plotCurrent(self):
         
         if self.figs.plotTools.kSelect.isChecked():
@@ -190,6 +217,7 @@ class imfitDue(QtGui.QMainWindow):
 
     def initializeGui(self):
 
+
         self.pf = pathWidget()
         self.roi = regionWidget()
         self.fo = fitOptionsWidget()
@@ -205,7 +233,7 @@ class imfitDue(QtGui.QMainWindow):
         gb1.setLayout(gb1l)
 
         v0 = QtGui.QVBoxLayout()
-        v0.addStretch(8)
+        v0.addStretch(4)
         v0.addWidget(gb1)
         v0.addStretch(1)
 
@@ -437,6 +465,7 @@ if __name__=="__main__":
     app = QtGui.QApplication(sys.argv)
 
     w = imfitDue()
+    w.setGeometry(100,100, 1200, 800)
     w.show()
 
     sys.exit(app.exec_())
