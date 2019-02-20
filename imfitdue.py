@@ -51,11 +51,13 @@ class imfitDue(QtGui.QMainWindow):
                 self.currentFile = readPIImage(path)
             elif self.pf.cameraGroup.checkedId() == 1:
                 self.currentFile = readIXONImage(path)
-            self.autoloader.start()
+            
 
             if self.pf.autoLoad.isChecked():
                 t = self.pf.autoLoadFile.text()
                 self.pf.autoLoadFile.setText(str(int(t) + 1))
+
+            self.autoloader.start()
 
         else:
             print('File not found!')

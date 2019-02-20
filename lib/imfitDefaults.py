@@ -20,7 +20,7 @@ WAVELENGTHS = [767.0E-9, 780.0E-9]
 import datetime
 now = datetime.datetime.now()
 
-DEFAULT_PATH = now.strftime('G:/Seagate/DATA/%Y/%m/%Y%m%d/')
+DEFAULT_PATH = now.strftime('G:/DATA/%Y/%m/%Y%m%d/')
 DEFAULT_PATH_PI = DEFAULT_PATH + 'Raw files/'
 DEFAULT_PATH_IXON = DEFAULT_PATH + 'Andor/'
 FILESEP = '/'

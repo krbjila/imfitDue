@@ -500,7 +500,7 @@ class autoloader(QtCore.QThread):
                 if camera == 0 and fileGood == 1:
                     nextPath = DEFAULT_PATH_PI + "pi_" + nextFile + ".spe"
                     if path.isfile(nextPath):
-                        self.mainPF.filePath.setText(nextPath)
+                    	self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
 
                 elif camera == 1 and fileGood == 1:
