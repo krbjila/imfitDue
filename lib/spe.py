@@ -36,7 +36,7 @@ class SpeFile(object):
 		self.initialize()
 
 	def initialize(self):
-		with open(self.filename) as f:
+		with open(self.filename, 'rb') as f:
 			self.xdim = self.readBytes(f, headerDefs['xdim'], 2, True)
 			self.ydim = self.readBytes(f, headerDefs['ydim'], 2, True)
 			self.numFrames = self.readBytes(f, headerDefs['numFrames'], 4, True)
