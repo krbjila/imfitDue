@@ -336,7 +336,7 @@ class processFitResult():
 
         
         if self.fitObject.fitFunction == 0:
-
+            
             r = {
                     'offset' : self.fitObject.fitData[0],
                     'peakOD' : self.fitObject.fitData[1],

@@ -14,7 +14,7 @@ def gaussian(p, r, y):
     x0R = p[2]*np.cos(p[6]) - p[4]*np.sin(p[6])
     y0R = p[2]*np.sin(p[6]) + p[4]*np.cos(p[6])
 
-    return np.ravel(p[0] + p[1]*np.exp( -(XR-x0R)**2.0/(2*p[3]**2.0)  -(YR-y0R)**2.0/(2*p[5]**2.0)  ) - y)
+    return np.ravel(p[0] + p[1]*np.exp( -(XR-x0R)**2.0/(2.0*p[3]**2.0)  -(YR-y0R)**2.0/(2.0*p[5]**2.0)  ) - y)
 
 
 def doubleGaussian(p,r,y):
