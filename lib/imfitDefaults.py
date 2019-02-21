@@ -37,7 +37,7 @@ CAMERA_NAME_PI = 'Princeton Instruments'
 SENSOR_WIDTH_PI = 808
 
 TPROBE_PI = [40.0, 40.0]
-ODSAT_PI = [4.0, 4.0]
+ODSAT_PI = [6.0, 6.0]
 ISAT_FLUX_PI = [290.0, 260.0] #Saturation intensity flux counts/px/microsecond (unbinned)
 
 #######################################################################

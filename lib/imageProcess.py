@@ -78,8 +78,12 @@ class calcOD():
             #Set all nans and infs to zero
             self.OD[np.isnan(self.OD)] = 0
             self.OD[np.isinf(self.OD)] = 0
-            self.ODCorrected[np.isnan(self.ODCorrected)] = 0
-            self.ODCorrected[np.isinf(self.ODCorrected)] = 0
+            if self.data.camera == CAMERA_NAME_IXON:
+                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
+                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
+            elif self.data.camera == CAMERA_NAME_PI:
+                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_PI[self.atom]
+                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_PI[self.atom]
 
     def defineROI(self):
         if self.xCenter0 > self.data.hImgSize or self.xCenter0 < 0:
@@ -167,7 +171,7 @@ class fitOD():
     
             
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0]
-            pUpper = [np.inf, 8.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), np.pi/2.0]
+            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), np.pi/2.0]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -np.pi/2.0]
 
             resLSQ = least_squares(gaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
@@ -374,7 +378,7 @@ class processFitResult():
                     'y0': self.fitObject.fitData[8],
                     }
 
-            self.data = ['fileName', IMAGING_PATHS[self.imagePath], r['peakODBEC'], r['wxBEC'], r['wyBEC'], r['peakODThermal'], r['wxThermal'], r['wyThermal'], r['x0'], r['y0'], r['offset']]
+            self.data = ['fileName', r['peakODBEC'], r['wxBEC'], r['wyBEC'], r['peakODThermal'], r['wxThermal'], r['wyThermal'], r['x0'], r['y0'], r['offset']]
 
         elif self.fitObject.fitFunction == 2:
 

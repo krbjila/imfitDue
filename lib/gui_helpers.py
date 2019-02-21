@@ -106,7 +106,7 @@ class ImageWindows(QtGui.QWidget):
             self.crossHairV, = self.ax0.plot([],[],color=crossHairColor)
             self.crossHairH, = self.ax0.plot([],[],color=crossHairColor)
             
-            self.mainImage = self.ax0.pcolormesh(x,y,image,cmap=colorMap)
+            self.mainImage = self.ax0.imshow(image,cmap=colorMap, extent=(min(x),max(x),max(y),min(y)))
             self.setCrossHair()            
             
             if ch0 is not None:
@@ -409,7 +409,7 @@ class fitOptionsWidget(QtGui.QWidget):
         #### Layout Stuff
 
         h0 = QtGui.QHBoxLayout()
-        h0.addWidget(QtGui.QLabel("Imageing Path: "))
+        h0.addWidget(QtGui.QLabel("Imaging Path: "))
         h0.addWidget(self.imagePath)
         h0.addStretch(1)
         h0.addWidget(QtGui.QLabel('Fit Rb to:'))
@@ -500,16 +500,19 @@ class autoloader(QtCore.QThread):
                 if camera == 0 and fileGood == 1:
                     nextPath = DEFAULT_PATH_PI + "pi_" + nextFile + ".spe"
                     if path.isfile(nextPath):
+                        self.sleep(1)
                     	self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
 
                 elif camera == 1 and fileGood == 1:
                     nextPath = DEFAULT_PATH_IXON + "ixon_" + nextFile + ".csv"
                     if path.isfile(nextPath):
+                        self.sleep(1)
                         self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
+            self.msleep(500)
 
-            self.sleep(1)
+            
 
 def main():
     app = QtGui.QApplication(sys.argv)
