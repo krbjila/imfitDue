@@ -70,9 +70,10 @@ def confidenceIntervals(res_lsq):
 
 
 def getTTF(fitObject):
-    if FIT_FUNCTIONS[fitObject.fitFunction] == 2:
+    if fitObject.fitFunction == 2:
         TTF = (6.0 * polylog.fermi_poly3(fitObject.fitData[6]))**(-1.0/3.0)
         TTFErr = 0.5*( (6.0 * polylog.fermi_poly3(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/3.0) - (6.0 * polylog.fermi_poly3(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/3.0))
+        print(TTF)
         return TTF,TTFErr
     else:
         print('T/TF only available for Fermi-Dirac fit.')
@@ -136,7 +137,10 @@ def upload2Origin(atom, fitFunction, data):
 
     if atom != -1 and fitFunction != -1:
 
-        template = WORKSHEET_NAMES[fitFunction]
+        if atom == 2:
+            template = 'KRbGauss1'
+        else:
+            template = WORKSHEET_NAMES[fitFunction]
         worksheetName = ATOM_NAMES[atom] + WORKSHEET_NAMES[fitFunction]
 
         if orgApp.FindWorksheet(worksheetName) is None:

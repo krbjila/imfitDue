@@ -107,6 +107,8 @@ class ImageWindows(QtGui.QWidget):
             self.crossHairH, = self.ax0.plot([],[],color=crossHairColor)
             
             self.mainImage = self.ax0.imshow(image,cmap=colorMap, extent=(min(x),max(x),max(y),min(y)))
+            self.ax0.set_xlim((min(x), max(x)))
+            self.ax0.set_ylim((max(y), min(y)))
             self.setCrossHair()            
             
             if ch0 is not None:

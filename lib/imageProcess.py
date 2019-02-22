@@ -235,7 +235,7 @@ class fitOD():
             pLower = [-np.inf, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
             resLSQ = least_squares(doubleGaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
-            self.fitDataConf = confidenceIntervals(resLSQ)
+            #self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
             self.fittedImage = doubleGaussian(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
                 
