@@ -13,7 +13,7 @@ from krb_custom_colors import KRbCustomColors
 from imfitDefaults import *
 from imfitHelpers import *
 import os
-
+import datetime 
 
 class ImageWindows(QtGui.QWidget):
     def __init__(self, Parent=None):
@@ -478,41 +478,50 @@ class autoloader(QtCore.QThread):
         super(autoloader, self).__init__(Parent)
 
         self.mainPF = mainPF
-
+        self.startDate = datetime.datetime.now().strftime('%d')
         self.autoloadState = True
         self.camera = None
 
+        self.pathPI = DEFAULT_PATH_PI
+        self.pathIXON = DEFAULT_PATH_IXON
+
     def run(self):
-        from os import path 
+        from os import path
 
         while True:
             if self.mainPF.autoLoad.isChecked():
 
-                camera = self.mainPF.cameraGroup.checkedId()
+                if self.startDate != datetime.datetime.now().strftime('%d'):
+                    import imfitDefaults
+                    self.pathPI = DEFAULT_PATH_PI
+                    self.pathIXON = DEFAULT_PATH_IXON
+                    self.startDate = datetime.datetime.now().strftime('%d')
 
+
+                camera = self.mainPF.cameraGroup.checkedId()
                 nextFile = self.mainPF.autoLoadFile.text()
 
                 fileGood = 0
                 try:
                     int(nextFile)
                     fileGood = 1
-                except:
-                    pass
+                except ValueError:
+                    print("Something other than an integer is in the autoload box!")
 
                 if camera == 0 and fileGood == 1:
-                    nextPath = DEFAULT_PATH_PI + "pi_" + nextFile + ".spe"
+                    nextPath = self.pathPI + "pi_" + nextFile + ".spe"
                     if path.isfile(nextPath):
-                        self.sleep(1)
+                        self.msleep(100)
                     	self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
 
                 elif camera == 1 and fileGood == 1:
-                    nextPath = DEFAULT_PATH_IXON + "ixon_" + nextFile + ".csv"
+                    nextPath = self.pathIXON + "ixon_" + nextFile + ".csv"
                     if path.isfile(nextPath):
-                        self.sleep(1)
+                        self.msleep(100)
                         self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
-            self.msleep(500)
+            self.msleep(200)
 
             
 
