@@ -62,11 +62,20 @@ class SpeFile(object):
 		data = np.zeros((frames, ydim, xdim))
 		stride = xdim * ydim
 		f.seek(headerDefs['data'])
+
+		# Changed KM 2/25/2019
 		try:
-			for i in range(0, frames):
-				for j in range(0, ydim):
-					for k in range(0, xdim):
-						data[i, j, k] = self.readBytes(f, 0, data_length)
-			return data
-		except:
+			img = np.fromfile(f, np.uint32, frames*stride)
+			return img.reshape((frames, ydim, xdim))
+		except Exception as e:
+			print e
 			print "Error reading data from file."
+
+		# try:
+		# 	for i in range(0, frames):
+		# 		for j in range(0, ydim):
+		# 			for k in range(0, xdim):
+		# 				data[i, j, k] = self.readBytes(f, 0, data_length)
+		# 	return data
+		# except:
+		# 	print "Error reading data from file."
