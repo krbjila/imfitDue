@@ -175,7 +175,17 @@ class fitOD():
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -np.pi/2.0]
 
             resLSQ = least_squares(gaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
-            self.fitDataConf = confidenceIntervals(resLSQ)
+            
+            # Edited KM 2/22/19
+            ######################
+            try:
+            	self.fitDataConf = confidenceIntervals(resLSQ)
+            except Exception as e:
+            	self.fitDataConf = [0]*7
+            	print "An error occured: "
+            	print(e)
+            ######################
+
             self.fitData = resLSQ.x
             self.fittedImage = gaussian(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
 
@@ -352,7 +362,6 @@ class processFitResult():
                     }
 
             self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
-
 
             rErr = {
                     'offset' : self.fitObject.fitDataConf[0],
