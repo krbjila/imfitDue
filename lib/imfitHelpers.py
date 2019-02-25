@@ -65,8 +65,18 @@ def cropArray(array, x, y):
     return t[:,y]
 
 def confidenceIntervals(res_lsq):
-    cov = np.linalg.inv(np.matmul(res_lsq.jac.transpose(),res_lsq.jac)) * (res_lsq.fun**2).mean()
-    return np.sqrt(np.abs(np.diag(cov)))
+    hess = np.matmul(res_lsq.jac.transpose(),res_lsq.jac)
+    try:
+        cov = np.linalg.inv(hess) * (res_lsq.fun**2).mean()
+        return np.sqrt(np.abs(np.diag(cov)))
+
+    except np.linalg.LinAlgError as err:
+        if "Singular matrix" in str(err):
+            print('Error: Least squares method returned a singular hessian due to a poor fit. Fit uncertainty not estimated. Zeros returned.')
+            return np.array([0]*hess.shape[0])
+        else:
+            return -1
+    
 
 
 def getTTF(fitObject):

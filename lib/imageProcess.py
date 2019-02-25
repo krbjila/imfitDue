@@ -176,16 +176,8 @@ class fitOD():
 
             resLSQ = least_squares(gaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
             
-            # Edited KM 2/22/19
-            ######################
-            try:
-            	self.fitDataConf = confidenceIntervals(resLSQ)
-            except Exception as e:
-            	self.fitDataConf = [0]*7
-            	print "An error occured: "
-            	print(e)
-            ######################
 
+            self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
             self.fittedImage = gaussian(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
 
