@@ -24,7 +24,7 @@ with open('./lib/ip.txt') as f:
 	ip_str = f.read(100)
 DEFAULT_PATH = now.strftime('//'+ip_str+'/Seagate/DATA/%Y/%m/%Y%m%d/') # PolarKRB's IP address
 
-# DEFAULT_PATH = now.strftime('G:/DATA/%Y/%m/%Y%m%d/')
+
 DEFAULT_PATH_PI = DEFAULT_PATH + 'Raw files/'
 DEFAULT_PATH_IXON = DEFAULT_PATH + 'Andor/'
 FILESEP = '/'
