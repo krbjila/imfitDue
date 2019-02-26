@@ -187,7 +187,7 @@ class imfitDue(QtGui.QMainWindow):
             self.figs.plotUpdate(x,y,self.odK.ODCorrected,ch0,ch1)
 
             if self.fitK is not None:
-                if self.fitK.fitFunction==2:
+                if self.fitK.fitFunction==FIT_FUNCTIONS.index('Fermi-Dirac'):
                     self.figs.plotSliceUpdate(x,[Sx,Fx],np.arange(len(R)),[R,RG,RF])
                 else:
                     self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])

@@ -65,5 +65,5 @@ DEFAULT_REGION = [[90, 125, 80, 80],
                   [110, 50, 100, 100]
                  ]
 
-FIT_FUNCTIONS = ['Gaussian', 'Bigaussian', 'Fermi-Dirac']
-WORKSHEET_NAMES = ['Gauss1', 'Gauss2', 'FermiDirac']
+FIT_FUNCTIONS = ['Gaussian', 'Static Gaussian', 'Bigaussian', 'Fermi-Dirac']
+WORKSHEET_NAMES = ['Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac']

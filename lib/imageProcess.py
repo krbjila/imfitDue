@@ -161,8 +161,8 @@ class fitOD():
         M = self.odImage.ODCorrected[I0,I1]
         M *= (M>0) #Make sure M isn't out of bounds 
 
-        if self.fitFunction == 0:
-
+        if self.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
+            
             # Gaussian fit
 
             r = [None,None]
@@ -222,8 +222,49 @@ class fitOD():
                 self.slices.fit1.append(gaussian(resLSQ.x,[ch1[k], r[1][k]],0)[0])
             self.slices.ch1 = ch1
 
+        elif self.fitFunction == FIT_FUNCTIONS.index('Static Gaussian'):
 
-        elif self.fitFunction == 1:
+            # Gaussian fit without rotation
+
+            r = [None,None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+    
+            
+            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20]
+            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1])]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
+
+            resLSQ = least_squares(gaussianNoRot, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+            
+
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fittedImage = gaussianNoRot(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
+
+            
+            ### Get radial average
+            
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+
+            ### Calculate slices through fit
+
+            self.slices.points0 = self.odImage.ODCorrected[I1,:]
+            self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1,:]
+
+            self.slices.points1 = self.odImage.ODCorrected[:,I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
+            self.slices.fit1 = self.fittedImage[:,I0]
+
+
+        elif self.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
             #Bi Gaussian fit
             ### Parameters: [offset, Amp1, wx1, wy1, Amp2, wx2, wy2, x0, y0]
 
@@ -272,7 +313,7 @@ class fitOD():
             self.slices.fit1 = self.fittedImage[:,I0]
 
 
-        elif self.fitFunction == 2:
+        elif self.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
             
             r = [None,None]
             r[0] = self.odImage.xRange0
@@ -341,7 +382,7 @@ class processFitResult():
     def getResults(self):
 
         
-        if self.fitObject.fitFunction == 0:
+        if self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
             
             r = {
                     'offset' : self.fitObject.fitData[0],
@@ -365,7 +406,21 @@ class processFitResult():
                     'angle' : self.fitObject.fitDataConf[6]*180.0/3.141592
                     }
 
-        elif self.fitObject.fitFunction == 1:
+        elif self.fitObject.fitFunction == FIT_FUNCTION.index('Static Gaussian'):
+
+            r = {
+                    'offset' : self.fitObject.fitData[0],
+                    'peakOD' : self.fitObject.fitData[1],
+                    'x0' : self.fitObject.fitData[2],
+                    'y0' : self.fitObject.fitData[4],
+                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
+                    'angle' : self.fitObject.fitData[6]*180.0/3.141592
+                    }
+
+            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], 0]            
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
 
             r = {
                     'offset' : self.fitObject.fitData[0],
@@ -381,7 +436,7 @@ class processFitResult():
 
             self.data = ['fileName', r['peakODBEC'], r['wxBEC'], r['wyBEC'], r['peakODThermal'], r['wxThermal'], r['wyThermal'], r['x0'], r['y0'], r['offset']]
 
-        elif self.fitObject.fitFunction == 2:
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
 
             r = {
                     'offset' : self.fitObject.fitData[0],
