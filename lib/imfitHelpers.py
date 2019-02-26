@@ -108,9 +108,11 @@ def getLastFile(path):
     d1 = [i.split('.')[0] for i in d]
     d2 = [i.split('_')[-1] for i in d1]
 
-    f = max(map(int, d2))
-
-    return f
+    if not d2:
+        return 0
+    else:
+        f = max(map(int, d2))
+        return f
 
 def getImagesFromRange(stringIn):
 
