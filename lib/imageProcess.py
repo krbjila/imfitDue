@@ -406,7 +406,7 @@ class processFitResult():
                     'angle' : self.fitObject.fitDataConf[6]*180.0/3.141592
                     }
 
-        elif self.fitObject.fitFunction == FIT_FUNCTION.index('Static Gaussian'):
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Static Gaussian'):
 
             r = {
                     'offset' : self.fitObject.fitData[0],
@@ -415,10 +415,10 @@ class processFitResult():
                     'y0' : self.fitObject.fitData[4],
                     'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
                     'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
-                    'angle' : self.fitObject.fitData[6]*180.0/3.141592
+                    'angle' : 0
                     }
 
-            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], 0]            
+            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]            
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
 
