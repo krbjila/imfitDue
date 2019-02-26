@@ -83,7 +83,6 @@ def getTTF(fitObject):
     if fitObject.fitFunction == 2:
         TTF = (6.0 * polylog.fermi_poly3(fitObject.fitData[6]))**(-1.0/3.0)
         TTFErr = 0.5*( (6.0 * polylog.fermi_poly3(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/3.0) - (6.0 * polylog.fermi_poly3(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/3.0))
-        print(TTF)
         return TTF,TTFErr
     else:
         print('T/TF only available for Fermi-Dirac fit.')

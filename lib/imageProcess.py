@@ -383,7 +383,7 @@ class processFitResult():
 
         elif self.fitObject.fitFunction == 2:
 
-            self.r = {
+            r = {
                     'offset' : self.fitObject.fitData[0],
                     'peakOD' : self.fitObject.fitData[1],
                     'x0' : self.fitObject.fitData[2],
@@ -396,6 +396,8 @@ class processFitResult():
                     'wyClassical' : self.fitObject.fitDataGauss[5]*(self.bin+1.0)*self.pixelSize,
                     'peakODClassical' : self.fitObject.fitDataGauss[1]
                     }
+
+            self.data = ['fileName', r['peakODClassical'], r['wxClassical'], r['wyClassical'], r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TTF']]
 
         else:
             print('Fit function undefined! Something went wrong!')
