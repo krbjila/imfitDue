@@ -159,16 +159,16 @@ def upload2Origin(atom, fitFunction, data):
         if orgApp.FindWorksheet(worksheetName) is None:
             orgApp.CreatePage(2, worksheetName, template)
         orgApp.Execute("{}!page.longname$ = {}".format(worksheetName, longname))
-        orgApp.Execute("{}!page.active$ = {}".format(worksheetName, "Sheet1")) 
+        # orgApp.Execute("{}!page.active$ = {}".format(worksheetName, "Sheet1")) 
 
 
         n = 0
         for k in data:
-            uploadSuccess = orgApp.PutWorksheet(worksheetName, k, -1, n)
+            uploadSuccess = orgApp.PutWorksheet("[]Sheet1".format(worksheetName), k, -1, n)
             if uploadSuccess:
                 n += 1
             else:
-                print("Failed to upload to Origin. Is the proper worksheet available?")
+                print("Failed to upload to Origin. Is Sheet1 in the proper workbook available?")
                 return -1
 
     else: 
