@@ -164,7 +164,7 @@ def upload2Origin(atom, fitFunction, data):
 
         n = 0
         for k in data:
-            uploadSuccess = orgApp.PutWorksheet("[]Sheet1".format(worksheetName), k, -1, n)
+            uploadSuccess = orgApp.PutWorksheet("[{}]Sheet1".format(worksheetName), k, -1, n)
             if uploadSuccess:
                 n += 1
             else:
