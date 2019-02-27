@@ -158,7 +158,8 @@ def upload2Origin(atom, fitFunction, data):
 
         if orgApp.FindWorksheet(worksheetName) is None:
             orgApp.CreatePage(2, worksheetName, template)
-        orgApp.Execute("{}!page.longname$ = {}".format(worksheetName, longname)) 
+        orgApp.Execute("{}!page.longname$ = {}".format(worksheetName, longname))
+        orgApp.Execute("{}!page.active$ = {}".format(worksheetName, "Sheet1")) 
 
 
         n = 0
