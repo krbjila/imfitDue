@@ -80,7 +80,7 @@ def confidenceIntervals(res_lsq):
 
 
 def getTTF(fitObject):
-    if fitObject.fitFunction == 2:
+    if fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
         TTF = (6.0 * polylog.fermi_poly3(fitObject.fitData[6]))**(-1.0/3.0)
         TTFErr = 0.5*( (6.0 * polylog.fermi_poly3(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/3.0) - (6.0 * polylog.fermi_poly3(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/3.0))
         return TTF,TTFErr
@@ -154,8 +154,11 @@ def upload2Origin(atom, fitFunction, data):
             template = WORKSHEET_NAMES[fitFunction]
         worksheetName = ATOM_NAMES[atom] + WORKSHEET_NAMES[fitFunction]
 
+        longname = ATOM_NAMES[atom] + " " + FIT_FUNCTIONS[fitFunction]
+
         if orgApp.FindWorksheet(worksheetName) is None:
             orgApp.CreatePage(2, worksheetName, template)
+        orgApp.Execute("{}!page.longname$ = {}".format(worksheetName, longname)) 
 
 
         n = 0
