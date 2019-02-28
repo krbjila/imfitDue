@@ -102,7 +102,7 @@ class ImageWindows(QtGui.QWidget):
         if image is not None:
             self.ax0.cla()
 
-            crossHairColor = [0.5, 0.5, 0.5,0.5]
+            crossHairColor = [0.,0.,0.,1]
             self.crossHairV, = self.ax0.plot([],[],color=crossHairColor)
             self.crossHairH, = self.ax0.plot([],[],color=crossHairColor)
             
@@ -112,9 +112,9 @@ class ImageWindows(QtGui.QWidget):
             self.setCrossHair()            
             
             if ch0 is not None:
-                self.ax0.plot(x,ch0,color=[1,0,0,0.25])
+                self.ax0.plot(x,ch0,color=[0.75,0,0,0.75])
             if ch1 is not None:
-                self.ax0.plot(ch1,y,color=[0,1,0,0.25])
+                self.ax0.plot(ch1,y,color=[0,0.5,0,0.75])
         
         try:
             self.mainImage.set_clim(levelLow, self.plotTools.odSlider.value()/10.0)
@@ -128,13 +128,15 @@ class ImageWindows(QtGui.QWidget):
             self.ax1.cla()
             self.ax2.cla()
 
-            plotStyles = ['ok', 'r', 'b']
+            
 
             for k in range(len(Lx)):
+            	plotStyles = ['ok', 'r']
                 self.ax1.plot(x,Lx[k],plotStyles[k])
             
             for k in range(len(Ly)):
-                 self.ax2.plot(y,Ly[k],plotStyles[k])
+            	plotStyles = ['ok', 'g']
+                self.ax2.plot(y,Ly[k],plotStyles[k])
 
             self.canvas.draw()
 
