@@ -135,7 +135,7 @@ class ImageWindows(QtGui.QWidget):
                 self.ax1.plot(x,Lx[k],plotStyles[k])
             
             for k in range(len(Ly)):
-            	plotStyles = ['ok', 'g']
+            	plotStyles = ['ok', 'g', 'r']
                 self.ax2.plot(y,Ly[k],plotStyles[k])
 
             self.canvas.draw()
