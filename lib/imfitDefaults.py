@@ -1,6 +1,4 @@
 
-
-
 #######################################################################
 ########################    Imaging Parameters   ######################
 #######################################################################
@@ -22,7 +20,7 @@ now = datetime.datetime.now()
 
 with open('./lib/ip.txt') as f:
 	ip_str = f.read(100)
-DEFAULT_PATH = now.strftime('//'+ip_str+'/Seagate/DATA/%Y/%m/%Y%m%d/') # PolarKRB's IP address
+DEFAULT_PATH = now.strftime('//'+ip_str+'/krbdata/data/%Y/%m/%Y%m%d/') # PolarKRB's IP address
 
 
 DEFAULT_PATH_PI = DEFAULT_PATH + 'Raw files/'
