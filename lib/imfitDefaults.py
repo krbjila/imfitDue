@@ -4,7 +4,7 @@
 #######################################################################
 
 IMAGING_PATHS = ['Axial', 'Axial (Low Mag.)', 'Vertical']
-PIXEL_SIZES = [2.3, 7.6, 1.0]
+PIXEL_SIZES = [2.3, 31.8, 1.0]
 
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
 ATOM_NAMES = ['K','RB','KRB']
