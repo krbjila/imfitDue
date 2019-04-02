@@ -115,7 +115,11 @@ class calcOD():
         
 class fitOD():
 
-    def __init__(self, odImage, fitFunction):
+    def __init__(self, odImage, fitFunction, atom, TOF, pxl):
+
+        self.atom = atom
+        self.TOF = TOF
+        self.pxl = pxl*(1.0 + odImage.data.bin)
 
         self.fitFunction = None
         self.odImage = odImage
@@ -361,6 +365,48 @@ class fitOD():
             self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
             self.slices.fit1 =  self.fittedImage[:,I0]
 
+        elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
+
+            # Band mapping function in the vertical direction
+
+            r = [None,None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+    
+            ### Parameters: [Offset, A0, A1, A2, wy, yc, wx, xc]
+            p0 = [0, M, 0, 0, 7.0, self.odImage.xRange0[I0], 20, self.odImage.xRange1[I0]]
+            pUpper = [np.inf, 15.0, 15.0, 15.0, len(r[1]), np.max(r[1]), len(r[0]), np.max(r[0])]
+            pLower = [-np.inf, 0.0, 0.0, 0.0,  0.0, np.min(r[1]), 0.0, np.min(r[0])]
+
+            imageDetails = [self.atom, self.TOF, self.pxl]
+
+            resLSQ = least_squares(bandmapV, p0, args=(r,self.odImage.ODCorrected, imageDetails),bounds=(pLower,pUpper))
+            
+
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fittedImage = bandmapV(resLSQ.x, r, 0,imageDetails).reshape(self.odImage.ODCorrected.shape)
+            
+            ### Get radial average
+            
+            I0 = self.odImage.xRange0.index(int(self.fitData[7]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[5]))
+
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+
+            ### Calculate slices through fit
+
+            self.slices.points0 = self.odImage.ODCorrected[I1,:]
+            self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1,:]
+
+            self.slices.points1 = self.odImage.ODCorrected[:,I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
+            self.slices.fit1 = self.fittedImage[:,I0]
+        
         else:
             print('Fit function undefined! Something went wrong!')
             return -1
@@ -453,6 +499,21 @@ class processFitResult():
                     }
 
             self.data = ['fileName', r['peakODClassical'], r['wxClassical'], r['wyClassical'], r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TTF']]
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
+
+            r = {
+                    'offset' : self.fitObject.fitData[0],
+                    'Band0' : self.fitObject.fitData[1],
+                    'Band1' : self.fitObject.fitData[2],
+                    'Band2' : self.fitObject.fitData[3],
+                    'wy' : self.fitObject.fitData[4]*(self.bin+1.0)*self.pixelSize,
+                    'wx' : self.fitObject.fitData[6]*(self.bin+1.0)*self.pixelSize,
+                    'x0': self.fitObject.fitData[7],
+                    'y0': self.fitObject.fitData[5],
+                    }
+
+            self.data = ['fileName', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']]
 
         else:
             print('Fit function undefined! Something went wrong!')

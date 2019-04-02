@@ -409,7 +409,9 @@ class fitOptionsWidget(QtGui.QWidget):
         self.fitButton = QtGui.QPushButton('Fit')
         self.uploadButton = QtGui.QPushButton('Upload to Origin')
 
-        
+        self.tof = QtGui.QLineEdit('6')
+        self.tof.setFixedWidth(30)
+
         #### Layout Stuff
 
         h0 = QtGui.QHBoxLayout()
@@ -420,6 +422,8 @@ class fitOptionsWidget(QtGui.QWidget):
         h0.addWidget(self.rbFitFunction)
 
         h1 = QtGui.QHBoxLayout()
+        h1.addWidget(QtGui.QLabel('K TOF (ms):'))
+        h1.addWidget(self.tof)
         h1.addStretch(1)
         h1.addWidget(QtGui.QLabel('Fit K to:'))
         h1.addWidget(self.kFitFunction)

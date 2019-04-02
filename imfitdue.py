@@ -122,9 +122,19 @@ class imfitDue(QtGui.QMainWindow):
 
 
     def fitCurrent(self):
-        
-        self.fitK = fitOD(self.odK, str(self.fo.kFitFunction.currentText()))
-        self.fitRb = fitOD(self.odRb, str(self.fo.rbFitFunction.currentText()))
+       
+
+        if self.fo.moleculeBook.isChecked():
+            kAtom = 2
+        else:
+            kAtom = 0
+
+        rbAtom = 1
+        TOF = float(self.fo.tof.text())
+        pxl = PIXEL_SIZES[IMAGING_PATHS.index(self.fo.imagePath.currentText())]
+
+        self.fitK = fitOD(self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
+        self.fitRb = fitOD(self.odRb, str(self.fo.rbFitFunction.currentText()), rbAtom, TOF + 6,pxl)
         self.plotCurrent()
 
         if self.fo.autoUpload.isChecked():
