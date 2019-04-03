@@ -236,6 +236,7 @@ class fitOD():
     
             
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20]
+            print(p0)
             pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1])]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
 
@@ -372,9 +373,10 @@ class fitOD():
             r = [None,None]
             r[0] = self.odImage.xRange0
             r[1] = self.odImage.xRange1
-    
+
             ### Parameters: [Offset, A0, A1, A2, wy, yc, wx, xc]
-            p0 = [0, M, 0, 0, 7.0, self.odImage.xRange0[I0], 20, self.odImage.xRange1[I0]]
+            p0 = [0, M, M*0.05, 0, 10.0, self.odImage.xRange1[I0], 40, self.odImage.xRange0[I1]]
+            print(p0)
             pUpper = [np.inf, 15.0, 15.0, 15.0, len(r[1]), np.max(r[1]), len(r[0]), np.max(r[0])]
             pLower = [-np.inf, 0.0, 0.0, 0.0,  0.0, np.min(r[1]), 0.0, np.min(r[0])]
 
@@ -386,7 +388,9 @@ class fitOD():
             self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
             self.fittedImage = bandmapV(resLSQ.x, r, 0,imageDetails).reshape(self.odImage.ODCorrected.shape)
+
             
+
             ### Get radial average
             
             I0 = self.odImage.xRange0.index(int(self.fitData[7]))
