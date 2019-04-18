@@ -374,9 +374,13 @@ class fitOD():
             r[0] = self.odImage.xRange0
             r[1] = self.odImage.xRange1
 
+
+            N0 = len(self.odImage.xRange0)
+            N1 = len(self.odImage.xRange1)
+
             ### Parameters: [Offset, A0, A1, A2, wy, yc, wx, xc]
-            p0 = [0, M, M*0.05, 0, 10.0, self.odImage.xRange1[I0], 40, self.odImage.xRange0[I1]]
-            print(p0)
+            p0 = [0, M, M*0.05, 0, 10.0, self.odImage.xRange1[N1/2], 40, self.odImage.xRange0[N0/2]]
+            
             pUpper = [np.inf, 15.0, 15.0, 15.0, len(r[1]), np.max(r[1]), len(r[0]), np.max(r[0])]
             pLower = [-np.inf, 0.0, 0.0, 0.0,  0.0, np.min(r[1]), 0.0, np.min(r[0])]
 
@@ -387,9 +391,7 @@ class fitOD():
 
             self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
-            self.fittedImage = bandmapV(resLSQ.x, r, 0,imageDetails).reshape(self.odImage.ODCorrected.shape)
-
-            
+            self.fittedImage = bandmapV(resLSQ.x, r, 0,imageDetails).reshape(self.odImage.ODCorrected.shape)            
 
             ### Get radial average
             
@@ -504,7 +506,7 @@ class processFitResult():
 
             self.data = ['fileName', r['peakODClassical'], r['wxClassical'], r['wyClassical'], r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TTF']]
 
-        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
 
             r = {
                     'offset' : self.fitObject.fitData[0],
@@ -515,9 +517,10 @@ class processFitResult():
                     'wx' : self.fitObject.fitData[6]*(self.bin+1.0)*self.pixelSize,
                     'x0': self.fitObject.fitData[7],
                     'y0': self.fitObject.fitData[5],
+                    'TOF': self.fitObject.TOF,
                     }
 
-            self.data = ['fileName', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']]
+            self.data = ['fileName', 'species', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TOF']]
 
         else:
             print('Fit function undefined! Something went wrong!')

@@ -151,11 +151,27 @@ class imfitDue(QtGui.QMainWindow):
             KProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
             RbProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
 
+
+
+            upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
+
+            if self.fitK.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
+                if self.fo.moleculeBook.isChecked():
+                    KProcess.data[1] = 'KRb'
+                else:
+                    KProcess.data[1] = 'K'
+
+                upload2Origin('K', self.fitK.fitFunction, KProcess.data)
+                return 1
+
+
             if self.fo.moleculeBook.isChecked():
                 upload2Origin('KRb', self.fitK.fitFunction, KProcess.data)
+                return 1
             else:
                 upload2Origin('K', self.fitK.fitFunction, KProcess.data)
-            upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
+                return 1
+            
 
 
 

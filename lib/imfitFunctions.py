@@ -67,7 +67,7 @@ def bandmapV(p, r, y, imageDetails):
     TOF = imageDetails[1]*1E-3
     
     Delta = 2.0*hbar*k/m*TOF*1E6/pxl ### Delta is in pixels 
-    print(Delta)
+    
 
     ### Parameters: [offset, A0, A1, A2, wy, yc, wx, xc]
 
