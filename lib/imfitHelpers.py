@@ -149,7 +149,10 @@ def upload2Origin(atom, fitFunction, data):
     if atom != -1 and fitFunction != -1:
 
         if atom == 2:
-            template = 'KRbGauss1'
+            if FIT_FUNCTIONS[fitFunction] == 'Gaussian':
+                template = 'KRbGauss1'
+            else:
+                template = WORKSHEET_NAMES[fitFunction]    
         else:
             template = WORKSHEET_NAMES[fitFunction]
         worksheetName = ATOM_NAMES[atom] + WORKSHEET_NAMES[fitFunction]
