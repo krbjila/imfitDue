@@ -236,7 +236,6 @@ class fitOD():
     
             
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20]
-            print(p0)
             pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1])]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
 
@@ -338,7 +337,9 @@ class fitOD():
 
             #Gaussian fit
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0] 
-            pUpper = [np.inf, 8.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), 0.00001]
+
+            print(p0)
+            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), 0.00001]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -0.00001]
 
             resLSQ = least_squares(gaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
