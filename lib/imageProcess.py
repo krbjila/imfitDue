@@ -165,7 +165,7 @@ class fitOD():
         M = self.odImage.ODCorrected[I0,I1]
         M *= (M>0) #Make sure M isn't out of bounds 
 
-        if self.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
+        if self.fitFunction == FIT_FUNCTIONS.index('Rotated Gaussian'):
             
             # Gaussian fit
 
@@ -177,6 +177,7 @@ class fitOD():
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0]
             pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), np.pi/2.0]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -np.pi/2.0]
+            p0 = checkGuess(p0,pUpper,pLower)
 
             resLSQ = least_squares(gaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
             
@@ -226,7 +227,7 @@ class fitOD():
                 self.slices.fit1.append(gaussian(resLSQ.x,[ch1[k], r[1][k]],0)[0])
             self.slices.ch1 = ch1
 
-        elif self.fitFunction == FIT_FUNCTIONS.index('Static Gaussian'):
+        elif self.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
 
             # Gaussian fit without rotation
 
@@ -238,6 +239,7 @@ class fitOD():
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20]
             pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1])]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
+            p0 = checkGuess(p0,pUpper,pLower)
 
             resLSQ = least_squares(gaussianNoRot, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
             
@@ -280,6 +282,7 @@ class fitOD():
             p0 = [0, M/2.0, 20.0, 20.0, M/2.0, 8.0, 8.0, self.odImage.xRange0[I1], self.odImage.xRange1[I0]]
             pUpper = [np.inf, 8.0, len(r[0]), len(r[1]), 8.0, len(r[0]), len(r[1]), np.max(r[0]), np.max(r[1])]
             pLower = [-np.inf, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            p0 = checkGuess(p0,pUpper,pLower)
 
             resLSQ = least_squares(doubleGaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
             #self.fitDataConf = confidenceIntervals(resLSQ)
@@ -329,6 +332,7 @@ class fitOD():
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0] #An initial q of 0 corresponds to T/TF=0.56
             pUpper = [np.inf, 900.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), np.inf]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -np.inf]
+            p0 = checkGuess(p0,pUpper,pLower)
 
             resLSQ = least_squares(fermiDirac, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
             self.fitDataConf = confidenceIntervals(resLSQ)
@@ -381,9 +385,9 @@ class fitOD():
 
             ### Parameters: [Offset, A0, A1, A2, wy, yc, wx, xc]
             p0 = [0, M, M*0.05, 0, 10.0, self.odImage.xRange1[N1/2], 40, self.odImage.xRange0[N0/2]]
-            
             pUpper = [np.inf, 15.0, 15.0, 15.0, len(r[1]), np.max(r[1]), len(r[0]), np.max(r[0])]
             pLower = [-np.inf, 0.0, 0.0, 0.0,  0.0, np.min(r[1]), 0.0, np.min(r[0])]
+            p0 = checkGuess(p0,pUpper,pLower)
 
             imageDetails = [self.atom, self.TOF, self.pxl]
 
@@ -435,7 +439,7 @@ class processFitResult():
     def getResults(self):
 
         
-        if self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
+        if self.fitObject.fitFunction == FIT_FUNCTIONS.index('Rotated Gaussian'):
             
             r = {
                     'offset' : self.fitObject.fitData[0],
@@ -459,7 +463,7 @@ class processFitResult():
                     'angle' : self.fitObject.fitDataConf[6]*180.0/3.141592
                     }
 
-        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Static Gaussian'):
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
 
             r = {
                     'offset' : self.fitObject.fitData[0],

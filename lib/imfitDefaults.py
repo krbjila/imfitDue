@@ -63,5 +63,5 @@ DEFAULT_REGION = [[90, 125, 80, 80],
                   [110, 50, 100, 100]
                  ]
 
-FIT_FUNCTIONS = ['Gaussian', 'Static Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
+FIT_FUNCTIONS = ['Gaussian', 'Rotated Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
 WORKSHEET_NAMES = ['Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']

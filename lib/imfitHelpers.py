@@ -178,5 +178,18 @@ def upload2Origin(atom, fitFunction, data):
         print("Failed to upload to Origin.")
         return -1
 
+def checkGuess(x0, xUpper, xLower):
+    n = len(x0)
+    for k in range(n):
+        if x0[k] > xUpper[k]:
+            x0[k] = xUpper[k]
+            print("Initial guess clamped to upper bound.")
+        elif x0[k] < xLower[k]:
+            x0[k] = xLower[k]
+            print("Initial guess clamped to lower bound.")
+        else:
+            pass
+    return x0
+
 if __name__ == "__main__":
     uploadToOrigin('K', 'Gaussian', [1,1])
