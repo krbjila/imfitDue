@@ -357,7 +357,7 @@ class fitOD():
             I1 = self.odImage.xRange1.index(int(self.fitData[4]))
 
             # azAverage -- I'm not sure what the correct index should be for azAverage... 
-            center = [I0 + 1, I1 + 1]
+            center = [I0, I1]
             self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
             self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
             self.slices.radSliceFitGauss = azimuthalAverage(self.fittedImageGauss, center)

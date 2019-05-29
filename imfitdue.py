@@ -91,7 +91,7 @@ class imfitDue(QtGui.QMainWindow):
         if p == 0:
             path = DEFAULT_PATH_PI + "pi_{}.spe"
         elif p == 1:
-            path = DEFAULT_PATH_IXON + "pi_{}.csv"
+            path = DEFAULT_PATH_IXON + "ixon_{}.csv"
 
         firstFile = True
         if x is not None:
