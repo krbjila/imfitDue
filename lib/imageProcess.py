@@ -464,7 +464,7 @@ class processFitResult():
                     }
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
-
+            
             r = {
                     'offset' : self.fitObject.fitData[0],
                     'peakOD' : self.fitObject.fitData[1],

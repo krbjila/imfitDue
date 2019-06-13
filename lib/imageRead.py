@@ -111,6 +111,7 @@ class readIXONImage():
         self.hImgSize = int(self.img.shape[1])
         self.vImgSize = int(self.img.shape[0]/(NATOMS*self.nFrames))
 
+        
         if self.hImgSize == SENSOR_WIDTH_IXON:
             self.bin = False
         elif self.hImgSize == SENSOR_WIDTH_IXON/2:
