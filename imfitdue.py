@@ -70,8 +70,10 @@ class imfitDue(QtGui.QMainWindow):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
-        self.odK = calcOD(self.currentFile,'K',self.regionK)
-        self.odRb = calcOD(self.currentFile, 'Rb', self.regionRb)
+
+        imagePath = IMAGING_PATHS.index(self.fo.imagePath.currentText())
+        self.odK = calcOD(self.currentFile,'K', imagePath,self.regionK)
+        self.odRb = calcOD(self.currentFile, 'Rb', imagePath, self.regionRb)
 
         
         if self.fo.autoFit.isChecked():

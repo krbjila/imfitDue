@@ -5,6 +5,7 @@
 
 IMAGING_PATHS = ['Axial', 'Axial (Low Mag.)', 'Vertical']
 PIXEL_SIZES = [2.47, 31.8, 1.29]
+CSATEFF = [15000.0, 1.0E6, 2350.0]
 
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
 ATOM_NAMES = ['K','RB','KRB']

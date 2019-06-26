@@ -9,7 +9,7 @@ from scipy.interpolate import interp2d
 
 class calcOD():
 
-    def __init__(self,data,atom,region=[]):
+    def __init__(self,data,atom,imagePath,region=[]):
 
         ### Note that the region is passed as [x0, y0, xcrop, ycrop]
         ### Crop is symmetric about center (x0,y0)
@@ -18,7 +18,7 @@ class calcOD():
         self.data = data
         self.xRange0 = None
         self.xRange1 = None
-
+        self.imagePath = imagePath
     
         if checkAtom(atom) < 0:
             pass
@@ -76,7 +76,7 @@ class calcOD():
             # ODmod = np.log((1.0-np.exp(-odsat))/(np.exp(-self.OD)-np.exp(-odsat)))
             # self.ODCorrected = ODmod + (1-np.exp(-ODmod))*lightCrop/isat
             
-            Ceff = 15000.
+            Ceff = CSATEFF[self.imagePath]
             self.ODCorrected = self.OD + (lightCrop - shadowCrop)/Ceff
 
             #Set all nans and infs to zero
