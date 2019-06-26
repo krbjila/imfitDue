@@ -72,8 +72,12 @@ class calcOD():
                 isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXON[self.atom]*TPROBE_IXON[self.atom]
                 odsat = ODSAT_IXON[self.atom]
     
-            ODmod = np.log((1.0-np.exp(-odsat))/(np.exp(-self.OD)-np.exp(-odsat)))
-            self.ODCorrected = ODmod + (1-np.exp(-ODmod))*lightCrop/isat
+
+            # ODmod = np.log((1.0-np.exp(-odsat))/(np.exp(-self.OD)-np.exp(-odsat)))
+            # self.ODCorrected = ODmod + (1-np.exp(-ODmod))*lightCrop/isat
+            
+            Ceff = 15000.
+            self.ODCorrected = self.OD + (lightCrop - shadowCrop)/Ceff
 
             #Set all nans and infs to zero
             self.OD[np.isnan(self.OD)] = 0
@@ -85,6 +89,8 @@ class calcOD():
                 self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_PI[self.atom]
                 self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_PI[self.atom]
 
+                self.ODCorrected[self.ODCorrected > 10] = ODSAT_PI[self.atom]
+  
     def defineROI(self):
         if self.xCenter0 > self.data.hImgSize or self.xCenter0 < 0:
             print('The horizontal center is out of range.')
@@ -163,7 +169,10 @@ class fitOD():
 
         I0,I1 = np.unravel_index(self.odImage.ODCorrected.argmax(),self.odImage.ODCorrected.shape)
         M = self.odImage.ODCorrected[I0,I1]
-        M *= (M>0) #Make sure M isn't out of bounds 
+        M *= (M>0) #Make sure M isn't out of bounds
+
+        if M > 10:
+            M = 10
 
         if self.fitFunction == FIT_FUNCTIONS.index('Rotated Gaussian'):
             
