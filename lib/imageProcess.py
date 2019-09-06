@@ -236,6 +236,69 @@ class fitOD():
                 self.slices.fit1.append(gaussian(resLSQ.x,[ch1[k], r[1][k]],0)[0])
             self.slices.ch1 = ch1
 
+
+        elif self.fitFunction == FIT_FUNCTIONS.index('Twisted Gaussian'):
+            
+            # Gaussian fit, rotated by VERT_TRAP_ANGLE
+
+            r = [None,None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+    
+            
+            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20]
+            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1])]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
+            p0 = checkGuess(p0,pUpper,pLower)
+
+            resLSQ = least_squares(gaussianNoRotTwist, p0, args=(r,self.odImage.ODCorrected,VERT_TRAP_ANGLE),bounds=(pLower,pUpper))
+
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fittedImage = gaussianNoRotTwist(resLSQ.x, r, 0, VERT_TRAP_ANGLE).reshape(self.odImage.ODCorrected.shape)
+
+            
+            ### Get radial average
+            
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+            
+
+            ####### Calculate slices through fit #####
+
+            f = interp2d(self.odImage.xRange0, self.odImage.xRange1, self.odImage.ODCorrected, kind='cubic')
+
+
+            m0 = np.tan(np.pi/2.0 - VERT_TRAP_ANGLE)
+            m1 = -np.tan(VERT_TRAP_ANGLE)
+
+            if abs(m0) > abs(m1):
+                # Ensure the that lower slope is always along x
+                m0, m1 = m1, m0
+
+
+            b0 = -m0*resLSQ.x[2] + resLSQ.x[4]
+            ch0 = np.asarray(self.odImage.xRange0)*m0 + b0
+            b1 = -m1*resLSQ.x[2] + resLSQ.x[4]
+            ch1 = (np.asarray(self.odImage.xRange1) - b1)/m1 
+
+
+            for k in range(len(self.odImage.xRange0)):
+                self.slices.points0.append(f(self.odImage.xRange0[k],ch0[k])[0])
+                self.slices.fit0.append(gaussianNoRotTwist(resLSQ.x,[r[0][k], ch0[k]],0.0,VERT_TRAP_ANGLE)[0])
+            self.slices.ch0 = ch0
+ 
+            for k in range(len(self.odImage.xRange1)):
+                self.slices.points1.append(f(ch1[k],self.odImage.xRange1[k])[0])
+                self.slices.fit1.append(gaussianNoRotTwist(resLSQ.x,[ch1[k], r[1][k]],0,VERT_TRAP_ANGLE)[0])
+            self.slices.ch1 = ch1
+
+
         elif self.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
 
             # Gaussian fit without rotation
@@ -251,7 +314,6 @@ class fitOD():
             p0 = checkGuess(p0,pUpper,pLower)
 
             resLSQ = least_squares(gaussianNoRot, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
-            
 
             self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
@@ -482,6 +544,21 @@ class processFitResult():
                     'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
                     'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
                     'angle' : 0
+                    }
+
+            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
+
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Twisted Gaussian'):
+            
+            r = {
+                    'offset' : self.fitObject.fitData[0],
+                    'peakOD' : self.fitObject.fitData[1],
+                    'x0' : self.fitObject.fitData[2],
+                    'y0' : self.fitObject.fitData[4],
+                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
+                    'angle' : VERT_TRAP_ANGLE
                     }
 
             self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]            

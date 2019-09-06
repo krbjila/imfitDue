@@ -26,6 +26,22 @@ def gaussianNoRot(p, r, y):
     return np.ravel(p[0] + p[1]*np.exp( -(X-p[2])**2.0/(2.0*p[3]**2.0)  -(Y-p[4])**2.0/(2.0*p[5]**2.0)  ) - y)
 
 
+def gaussianNoRotTwist(p, r, y, angle):
+    ### Parameters: [offset, amplitude, x0, wx, y0, wy]
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis, yaxis)
+    theta = angle*np.pi/180.0
+    XX = X * np.cos(theta) - Y*np.sin(theta)
+    YY = Y * np.cos(theta) + X*np.sin(theta)
+
+    x0R = p[2]*np.cos(theta) - p[4]*np.sin(theta)
+    y0R = p[2]*np.sin(theta) + p[4]*np.cos(theta)
+
+    return np.ravel(p[0] + p[1]*np.exp( -(XX-x0R)**2.0/(2.0*p[3]**2.0)  -(YY-y0R)**2.0/(2.0*p[5]**2.0) ) - y)
+
+
 def doubleGaussian(p,r,y):
     ### Parameters: [offset, Amp1, wx1, wy1, Amp2, wx2, wy2, x0, y0]
     xaxis = r[0]

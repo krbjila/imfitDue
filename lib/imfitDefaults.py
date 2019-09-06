@@ -4,13 +4,16 @@
 #######################################################################
 
 IMAGING_PATHS = ['Axial', 'Axial (Low Mag.)', 'Vertical']
-PIXEL_SIZES = [2.47, 31.8, 1.29]
-CSATEFF = [15000.0, 1.0E6, 2350.0]
+PIXEL_SIZES = [2.4, 31.8, 1.29]
+CSATEFF = [15000.0, 1.0E6, 1400.0]
 
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
 ATOM_NAMES = ['K','RB','KRB']
 NATOMS = 2
 WAVELENGTHS = [767.0E-9, 780.0E-9]
+
+
+VERT_TRAP_ANGLE = 51.0 # Degrees
 
 #######################################################################
 ########################  File System Parameters  #####################
@@ -64,5 +67,5 @@ DEFAULT_REGION = [[90, 125, 80, 80],
                   [110, 50, 100, 100]
                  ]
 
-FIT_FUNCTIONS = ['Gaussian', 'Rotated Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
-WORKSHEET_NAMES = ['Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']
+FIT_FUNCTIONS = ['Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
+WORKSHEET_NAMES = ['Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']
