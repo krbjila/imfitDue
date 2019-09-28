@@ -48,7 +48,8 @@ class imfitDue(QtGui.QMainWindow):
             # Terminate the autoloader thread so that the reader doesn't get bogged down
             self.autoloader.terminate()
             if self.pf.cameraGroup.checkedId() == 0:
-                self.currentFile = readPIImage(path)
+                # self.currentFile = readPIImage(path) # Changed to xiQ on 9/26/2019
+                self.currentFile = readXimeaImage(path)
             elif self.pf.cameraGroup.checkedId() == 1:
                 self.currentFile = readIXONImage(path)
             
@@ -91,7 +92,8 @@ class imfitDue(QtGui.QMainWindow):
         p = self.pf.cameraGroup.checkedId() 
 
         if p == 0:
-            path = DEFAULT_PATH_PI + "pi_{}.spe"
+            # path = DEFAULT_PATH_PI + "pi_{}.spe"  # Changed to xiQ on 9/26/2019
+            path = DEFAULT_PATH_XIMEA + "xi_{}.dat"
         elif p == 1:
             path = DEFAULT_PATH_IXON + "ixon_{}.csv"
 
@@ -100,7 +102,8 @@ class imfitDue(QtGui.QMainWindow):
             for k in x:
                 print(path.format(k))
                 if p == 0:
-                    self.currentFile = readPIImage(path.format(k))
+                    # self.currentFile = readPIImage(path.format(k)) # Changed to xiQ on 9/26/2019
+                    self.currentFile = readXimeaImage(path.format(k))
                     if firstFile:
                         imageMean = self.currentFile.img
                         firstFile = False
@@ -430,7 +433,8 @@ class imfitDue(QtGui.QMainWindow):
         if self.pf.cameraGroup.checkedId():
             ext = '*.csv'
         else:
-            ext = '*.spe'
+            # ext = '*.spe'
+            ext = '*.dat'
 
         x = QtGui.QFileDialog()
         xp = x.getOpenFileName(self,'Select a file to load', filter=ext, directory=d,options=QtGui.QFileDialog.DontUseNativeDialog)

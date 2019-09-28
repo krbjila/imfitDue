@@ -4,8 +4,8 @@
 #######################################################################
 
 IMAGING_PATHS = ['Axial', 'Axial (Low Mag.)', 'Vertical']
-PIXEL_SIZES = [2.4, 31.8, 1.29]
-CSATEFF = [15000.0, 1.0E6, 1400.0]
+PIXEL_SIZES = [1.8, 31.8, 1.29]
+CSATEFF = [900.0, 1.0E6, 1400.0]
 
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
 ATOM_NAMES = ['K','RB','KRB']
@@ -27,7 +27,7 @@ with open('./lib/ip.txt') as f:
 DEFAULT_PATH = now.strftime('//'+ip_str+'/krbdata/data/%Y/%m/%Y%m%d/') # PolarKRB's IP address
 
 
-DEFAULT_PATH_PI = DEFAULT_PATH + 'Raw files/'
+DEFAULT_PATH_PI = DEFAULT_PATH + 'ximea/'
 DEFAULT_PATH_IXON = DEFAULT_PATH + 'Andor/'
 FILESEP = '/'
 
@@ -57,6 +57,12 @@ SENSOR_WIDTH_IXON = 1024
 TPROBE_IXON = [40.0, 40.0]
 ODSAT_IXON = [4.0, 4.0]
 ISAT_FLUX_IXON = [275.0, 275.0]
+
+#######################################################################
+########################        Ximea xiQ        ######################
+#######################################################################
+
+CAMERA_NAME_XIMEA = 'Ximea xiQ'
 
 
 ########################################################################

@@ -319,7 +319,8 @@ class pathWidget(QtGui.QWidget):
 
 
         self.cameraGroup = QtGui.QButtonGroup()
-        self.pi = QtGui.QRadioButton('Princeton Instruments')
+        # self.pi = QtGui.QRadioButton('Princeton Instruments')
+        self.pi = QtGui.QRadioButton('Ximea xiQ')
         self.pi.setChecked(True)
         self.ixon = QtGui.QRadioButton('Andor iXon 888')
         self.cameraGroup.addButton(self.pi, 0)
@@ -363,7 +364,8 @@ class pathWidget(QtGui.QWidget):
         if self.cameraGroup.checkedId():
             ext = '*.csv'
         else:
-            ext = '*.spe'
+            # ext = '*.spe'
+            ext = '*.dat'
 
 
         x = QtGui.QFileDialog()
@@ -515,7 +517,8 @@ class autoloader(QtCore.QThread):
                     print("Something other than an integer is in the autoload box!")
 
                 if camera == 0 and fileGood == 1:
-                    nextPath = self.pathPI + "pi_" + nextFile + ".spe"
+                    # nextPath = self.pathPI + "pi_" + nextFile + ".spe" # Changed to ximea 9/26/2019
+                    nextPath = self.pathPI + "xi_" + nextFile + ".dat"
                     if path.isfile(nextPath):
                         self.msleep(100)
                     	self.mainPF.filePath.setText(nextPath)

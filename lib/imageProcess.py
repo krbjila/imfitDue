@@ -63,7 +63,8 @@ class calcOD():
     
             self.OD = np.log((lightCrop-darkCrop)/(shadowCrop-darkCrop))
     
-            if self.data.camera == CAMERA_NAME_PI:
+            # if self.data.camera == CAMERA_NAME_XIMEA: #Changed to ximea 9/26/2019
+            if self.data.camera == CAMERA_NAME_XIMEA:
                 print(CAMERA_NAME_PI)
                 isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_PI[self.atom]*TPROBE_PI[self.atom]
                 odsat = ODSAT_PI[self.atom]
@@ -82,7 +83,8 @@ class calcOD():
             #Set all nans and infs to zero
             self.OD[np.isnan(self.OD)] = 0
             self.OD[np.isinf(self.OD)] = 0
-            if self.data.camera == CAMERA_NAME_IXON:
+            # if self.data.camera == CAMERA_NAME_IXON:            
+            if self.data.camera == CAMERA_NAME_XIMEA:
                 self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
                 self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
             elif self.data.camera == CAMERA_NAME_PI:
