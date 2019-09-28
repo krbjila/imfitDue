@@ -162,12 +162,20 @@ class readXimeaImage():
         self.fileNumber =  int(self.path.split('_')[-1].split('.')[0]),
         self.fileTimeStamp = os.path.getctime(self.path)
 
-        import json 
+        import json
+        from time import sleep 
+
 
         f = open(self.path,'r')
-        dataTemp = json.load(f)
-        
-        
+        # KM 9/27/19
+        try:
+            dataTemp = json.load(f)
+        except ValueError:
+            f.close()
+            sleep(0.2)
+            f = open(self.path,'r')
+            dataTemp = json.load(f)
+        f.close()       
 
         self.img = np.array(dataTemp['K']['Shadow'], dtype=np.float)
         self.img = np.vstack((self.img, np.array(dataTemp['K']['Bright'], dtype=np.float)))
