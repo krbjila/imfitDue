@@ -13,7 +13,7 @@ NATOMS = 2
 WAVELENGTHS = [767.0E-9, 780.0E-9]
 
 
-VERT_TRAP_ANGLE = 51.0 # Degrees
+VERT_TRAP_ANGLE = 45.0 # Degrees
 
 #######################################################################
 ########################  File System Parameters  #####################
@@ -69,9 +69,14 @@ CAMERA_NAME_XIMEA = 'Ximea xiQ'
 ######################     Fitting Parameters     ######################
 ########################################################################
 
-DEFAULT_REGION = [[90, 125, 80, 80], 
-                  [110, 50, 100, 100]
-                 ]
+DEFAULT_REGION_XIMEA = [[200, 400, 300, 300], 
+                  [200, 125, 300, 300]]
+DEFAULT_REGION_IXON = [[130, 30, 100, 100], 
+                  [130, 30, 100, 100]]
+DEFAULT_REGION = {
+	'XIMEA' : DEFAULT_REGION_XIMEA,
+	'IXON' : DEFAULT_REGION_IXON
+}
 
 FIT_FUNCTIONS = ['Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
 WORKSHEET_NAMES = ['Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']

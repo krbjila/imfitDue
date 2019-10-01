@@ -275,30 +275,44 @@ class regionWidget(QtGui.QWidget):
         topLabels = ['XC', 'YC', 'CrX', 'CrY']
         sideLabels = ATOM_NAMES
 
-
-
         font = QtGui.QFont()
         font.setBold(True)
         font.setPointSize(12)
 
-        grid = QtGui.QGridLayout()
+        self.grid = QtGui.QGridLayout()
         for k in range(4):
             x = QtGui.QLabel(topLabels[k])
             x.setFont(font)
-            grid.addWidget(x,0,k+1,1,1)
+            self.grid.addWidget(x,0,k+1,1,1)
         for k in range(2):
             x = QtGui.QLabel(ATOM_NAMES[k])
             x.setFont(font)
-            grid.addWidget(x,k+1,0,1,1)
+            self.grid.addWidget(x,k+1,0,1,1)
         
         self.region = [[0]*4,[0]*4]
+
+        self.setDefaultRegion('XIMEA')
+        # for i in range(2):
+        #     for j in range(4):
+        #         self.region[i][j] = QtGui.QLineEdit(str(DEFAULT_REGION.XIMEA[i][j]))
+        #         self.region[i][j].setFixedWidth(50)
+        #         grid.addWidget(self.region[i][j],i+1,j+1,1,1)
+
+        self.setLayout(self.grid)
+
+    def setDefaultRegion(self, cam):
+        try:
+            region = DEFAULT_REGION[cam]
+        except AttributeError:
+            print "regionWidget.setDefaultRegion error: requested camera doesn't exist"
+            return -1
+
         for i in range(2):
             for j in range(4):
-                self.region[i][j] = QtGui.QLineEdit(str(DEFAULT_REGION[i][j]))
+                self.region[i][j] = QtGui.QLineEdit(str(region[i][j]))
                 self.region[i][j].setFixedWidth(50)
-                grid.addWidget(self.region[i][j],i+1,j+1,1,1)
-
-        self.setLayout(grid)
+                self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
+        return 0
 
 class pathWidget(QtGui.QWidget):
     def __init__(self,Parent=None):

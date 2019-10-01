@@ -248,13 +248,22 @@ class imfitDue(QtGui.QMainWindow):
             self.figs.plotUpdate(x,y,self.odRb.ODCorrected,ch0,ch1)
             self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
 
-    def initializeGui(self):
+    def passCamToROI(self):
+        # iXon is 1, XIMEA is 0
+        if self.pf.cameraGroup.checkedId():
+            self.roi.setDefaultRegion('IXON')
+        else:
+            self.roi.setDefaultRegion('XIMEA')
 
+
+    def initializeGui(self):
 
         self.pf = pathWidget()
         self.roi = regionWidget()
         self.fo = fitOptionsWidget()
         self.av = averageWidget()
+
+        self.pf.cameraGroup.buttonClicked.connect(self.passCamToROI)
 
 
         self.figs = ImageWindows()

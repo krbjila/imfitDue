@@ -163,18 +163,11 @@ class readXimeaImage():
         self.fileTimeStamp = os.path.getctime(self.path)
 
         import json
-        from time import sleep 
+
 
 
         f = open(self.path,'r')
-        # KM 9/27/19
-        try:
-            dataTemp = json.load(f)
-        except ValueError:
-            f.close()
-            sleep(0.2)
-            f = open(self.path,'r')
-            dataTemp = json.load(f)
+        dataTemp = json.load(f)
         f.close()       
 
         self.img = np.array(dataTemp['K']['Shadow'], dtype=np.float)
