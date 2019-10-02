@@ -291,12 +291,11 @@ class regionWidget(QtGui.QWidget):
         
         self.region = [[0]*4,[0]*4]
 
-        self.setDefaultRegion('XIMEA')
-        # for i in range(2):
-        #     for j in range(4):
-        #         self.region[i][j] = QtGui.QLineEdit(str(DEFAULT_REGION.XIMEA[i][j]))
-        #         self.region[i][j].setFixedWidth(50)
-        #         grid.addWidget(self.region[i][j],i+1,j+1,1,1)
+        for i in range(2):
+            for j in range(4):
+                self.region[i][j] = QtGui.QLineEdit(str(DEFAULT_REGION['XIMEA'][i][j]))
+                self.region[i][j].setFixedWidth(50)
+                self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
 
         self.setLayout(self.grid)
 
@@ -309,9 +308,7 @@ class regionWidget(QtGui.QWidget):
 
         for i in range(2):
             for j in range(4):
-                self.region[i][j] = QtGui.QLineEdit(str(region[i][j]))
-                self.region[i][j].setFixedWidth(50)
-                self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
+                self.region[i][j].setText(str(region[i][j]))
         return 0
 
 class pathWidget(QtGui.QWidget):
