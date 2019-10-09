@@ -183,14 +183,21 @@ def upload2Origin(atom, fitFunction, data):
 def checkGuess(x0, xUpper, xLower):
     n = len(x0)
     for k in range(n):
+
+        if np.isnan(x0[k]):
+            x0[k] = xUpper[k]
+
         if x0[k] > xUpper[k]:
             x0[k] = xUpper[k]
             print("Initial guess clamped to upper bound.")
+
         elif x0[k] < xLower[k]:
             x0[k] = xLower[k]
             print("Initial guess clamped to lower bound.")
+        
         else:
             pass
+    
     return x0
 
 if __name__ == "__main__":

@@ -83,15 +83,15 @@ class calcOD():
             #Set all nans and infs to zero
             self.OD[np.isnan(self.OD)] = 0
             self.OD[np.isinf(self.OD)] = 0
-            # if self.data.camera == CAMERA_NAME_IXON:            
-            if self.data.camera == CAMERA_NAME_XIMEA:
+            if self.data.camera == CAMERA_NAME_IXON:            
                 self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
                 self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
-            elif self.data.camera == CAMERA_NAME_PI:
-                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_PI[self.atom]
-                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_PI[self.atom]
+            # elif self.data.camera == CAMERA_NAME_PI:
+            elif self.data.camera == CAMERA_NAME_XIMEA:
+                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
+                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
 
-                self.ODCorrected[self.ODCorrected > 10] = ODSAT_PI[self.atom]
+                self.ODCorrected[self.ODCorrected > 10] = ODSAT_XIMEA[self.atom]
   
     def defineROI(self):
         if self.xCenter0 > self.data.hImgSize or self.xCenter0 < 0:
