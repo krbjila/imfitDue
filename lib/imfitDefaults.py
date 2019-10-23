@@ -4,8 +4,8 @@
 #######################################################################
 
 IMAGING_PATHS = ['Axial', 'Axial (Low Mag.)', 'Vertical']
-PIXEL_SIZES = [1.8, 31.8, 1.29]
-CSATEFF = [900.0, 1.0E6, 1400.0]
+PIXEL_SIZES = [2.43, 31.8, 2.43]
+CSATEFF = [12000, 1.0E6, 1400.0]
 
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
 ATOM_NAMES = ['K','RB','KRB']
@@ -52,7 +52,7 @@ ISAT_FLUX_PI = [290.0, 260.0] #Saturation intensity flux counts/px/microsecond (
 
 CAMERA_NAME_IXON = 'Andor iXon 888'
 
-SENSOR_WIDTH_IXON = 1024
+SENSOR_WIDTH_IXON = 512 # Was 1024, but rotated camera orientation so the skinny side of the kinetics is horizontal
 
 TPROBE_IXON = [40.0, 40.0]
 ODSAT_IXON = [4.0, 4.0]
@@ -72,8 +72,8 @@ ODSAT_XIMEA = [6.0, 6.0]
 
 DEFAULT_REGION_XIMEA = [[200, 400, 300, 300], 
                   [200, 125, 300, 300]]
-DEFAULT_REGION_IXON = [[130, 30, 100, 100], 
-                  [130, 30, 100, 100]]
+DEFAULT_REGION_IXON = [[100, 200, 200, 200], 
+                  [100, 170, 200, 200]]
 DEFAULT_REGION = {
 	'XIMEA' : DEFAULT_REGION_XIMEA,
 	'IXON' : DEFAULT_REGION_IXON
