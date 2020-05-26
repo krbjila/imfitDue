@@ -3,9 +3,9 @@
 ########################    Imaging Parameters   ######################
 #######################################################################
 
-IMAGING_PATHS = ['Axial', 'Axial (Low Mag.)', 'Vertical']
-PIXEL_SIZES = [2.43, 31.8, 2.43]
-CSATEFF = [12000, 1.0E6, 1400.0]
+IMAGING_PATHS = ['Axial', 'Side', 'Vertical']
+PIXEL_SIZES = [2.58, 3.46, 1.43]
+CSATEFF = [19000, 1.0E6, 1400.0]
 
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
 ATOM_NAMES = ['K','RB','KRB']
@@ -70,10 +70,10 @@ ODSAT_XIMEA = [6.0, 6.0]
 ######################     Fitting Parameters     ######################
 ########################################################################
 
-DEFAULT_REGION_XIMEA = [[200, 400, 300, 300], 
-                  [200, 125, 300, 300]]
-DEFAULT_REGION_IXON = [[100, 200, 200, 200], 
-                  [100, 170, 200, 200]]
+DEFAULT_REGION_XIMEA = [[185, 260, 300, 300], 
+                  [185, 260, 300, 300]]
+DEFAULT_REGION_IXON = [[150, 220, 250, 250], 
+                  [150, 350, 300, 300]]
 DEFAULT_REGION = {
 	'XIMEA' : DEFAULT_REGION_XIMEA,
 	'IXON' : DEFAULT_REGION_IXON
