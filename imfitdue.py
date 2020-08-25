@@ -52,6 +52,8 @@ class imfitDue(QtGui.QMainWindow):
                 self.currentFile = readXimeaImage(path)
             elif self.pf.cameraGroup.checkedId() == 1:
                 self.currentFile = readIXONImage(path)
+            elif self.pf.cameraGroup.checkedId() == 2:
+                self.currentFile = readIXONVImage(path)
             
 
             if self.pf.autoLoad.isChecked():
@@ -96,6 +98,8 @@ class imfitDue(QtGui.QMainWindow):
             path = DEFAULT_PATH_XIMEA + "xi_{}.dat"
         elif p == 1:
             path = DEFAULT_PATH_IXON + "ixon_{}.csv"
+        elif p == 2:
+            path = DEFAULT_PATH_IXONV + "twospecies_{}.csv"
 
         firstFile = True
         if x is not None:
@@ -250,9 +254,13 @@ class imfitDue(QtGui.QMainWindow):
 
     def passCamToROI(self):
         # iXon is 1, XIMEA is 0
-        if self.pf.cameraGroup.checkedId():
+        if self.pf.cameraGroup.checkedId() == 1:
             self.roi.setDefaultRegion('IXON')
-        else:
+
+        elif self.pf.cameraGroup.checkedId() == 2:
+            self.roi.setDefaultRegion('IXONV')
+
+        elif self.pf.cameraGroup.checkedId() == 0:
             self.roi.setDefaultRegion('XIMEA')
 
 

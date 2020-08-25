@@ -29,6 +29,7 @@ DEFAULT_PATH = now.strftime('//'+ip_str+'/krbdata/data/%Y/%m/%Y%m%d/') # PolarKR
 
 DEFAULT_PATH_PI = DEFAULT_PATH + 'ximea/'
 DEFAULT_PATH_IXON = DEFAULT_PATH + 'Andor/'
+DEFAULT_PATH_IXONV = DEFAULT_PATH + 'Andor_Vertical/'
 FILESEP = '/'
 
 #######################################################################
@@ -59,6 +60,18 @@ ODSAT_IXON = [4.0, 4.0]
 ISAT_FLUX_IXON = [275.0, 275.0]
 
 #######################################################################
+###################      Andor iXon 888 Vertical   ####################
+#######################################################################
+
+CAMERA_NAME_IXONV = 'Andor iXon 888 (Vertical)'
+
+SENSOR_WIDTH_IXONV = 512 # Was 1024, but rotated camera orientation so the skinny side of the kinetics is horizontal
+
+TPROBE_IXONV = [40.0, 40.0]
+ODSAT_IXONV = [4.0, 4.0]
+ISAT_FLUX_IXONV = [275.0, 275.0]
+
+#######################################################################
 ########################        Ximea xiQ        ######################
 #######################################################################
 
@@ -74,9 +87,12 @@ DEFAULT_REGION_XIMEA = [[185, 260, 300, 300],
                   [185, 260, 300, 300]]
 DEFAULT_REGION_IXON = [[150, 220, 250, 250], 
                   [150, 350, 300, 300]]
+DEFAULT_REGION_IXONV = [[125, 280, 250, 250], 
+                  [125, 280, 250, 250]]
 DEFAULT_REGION = {
 	'XIMEA' : DEFAULT_REGION_XIMEA,
-	'IXON' : DEFAULT_REGION_IXON
+	'IXON' : DEFAULT_REGION_IXON,
+	'IXONV' : DEFAULT_REGION_IXONV
 }
 
 FIT_FUNCTIONS = ['Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']

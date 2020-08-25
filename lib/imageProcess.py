@@ -72,6 +72,10 @@ class calcOD():
                 print(CAMERA_NAME_IXON)
                 isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXON[self.atom]*TPROBE_IXON[self.atom]
                 odsat = ODSAT_IXON[self.atom]
+            elif self.data.camera == CAMERA_NAME_IXONV:
+                print(CAMERA_NAME_IXONV)
+                isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXONV[self.atom]*TPROBE_IXONV[self.atom]
+                odsat = ODSAT_IXONV[self.atom]
     
 
             # ODmod = np.log((1.0-np.exp(-odsat))/(np.exp(-self.OD)-np.exp(-odsat)))
@@ -86,7 +90,9 @@ class calcOD():
             if self.data.camera == CAMERA_NAME_IXON:            
                 self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
                 self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
-            # elif self.data.camera == CAMERA_NAME_PI:
+            elif self.data.camera == CAMERA_NAME_IXONV:            
+                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
+                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
             elif self.data.camera == CAMERA_NAME_XIMEA:
                 self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
                 self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_XIMEA[self.atom]

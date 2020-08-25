@@ -293,7 +293,7 @@ class regionWidget(QtGui.QWidget):
 
         for i in range(2):
             for j in range(4):
-                self.region[i][j] = QtGui.QLineEdit(str(DEFAULT_REGION['XIMEA'][i][j]))
+                self.region[i][j] = QtGui.QLineEdit(str(DEFAULT_REGION['IXON'][i][j]))
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
 
@@ -332,10 +332,12 @@ class pathWidget(QtGui.QWidget):
         self.cameraGroup = QtGui.QButtonGroup()
         # self.pi = QtGui.QRadioButton('Princeton Instruments')
         self.pi = QtGui.QRadioButton('Ximea xiQ')
-        self.pi.setChecked(True)
         self.ixon = QtGui.QRadioButton('Andor iXon 888')
+        self.ixon.setChecked(True)
+        self.ixonv = QtGui.QRadioButton('Andor iXon 888 (Vertical)')
         self.cameraGroup.addButton(self.pi, 0)
         self.cameraGroup.addButton(self.ixon, 1)
+        self.cameraGroup.addButton(self.ixonv, 2)
         self.cameraGroup.buttonClicked.connect(self.camChanged)        
         
         h0 = QtGui.QHBoxLayout()
@@ -347,6 +349,7 @@ class pathWidget(QtGui.QWidget):
         h0.addWidget(QtGui.QLabel('Camera: '))
         h0.addWidget(self.pi)
         h0.addWidget(self.ixon)
+        h0.addWidget(self.ixonv)
 
 
         h1.addWidget(self.filePath)
@@ -386,12 +389,21 @@ class pathWidget(QtGui.QWidget):
 
     def camChanged(self):
         self.autoLoad.setChecked(False)
-        if self.cameraGroup.checkedId():
+        if self.cameraGroup.checkedId() == 1:
             d = DEFAULT_PATH_IXON
             self.filePath.setText(d)
             if os.path.isdir(d):
                 n = getLastFile(d)
                 self.autoLoadFile.setText(str(n))
+                self.autoLoad.setChecked(False)
+
+        elif self.cameraGroup.checkedId() == 2:
+            d = DEFAULT_PATH_IXONV
+            self.filePath.setText(d)
+            if os.path.isdir(d):
+                n = getLastFile(d)
+                self.autoLoadFile.setText(str(n))
+  
         else:
             d = DEFAULT_PATH_PI
             self.filePath.setText(d)
@@ -503,6 +515,7 @@ class autoloader(QtCore.QThread):
 
         self.pathPI = DEFAULT_PATH_PI
         self.pathIXON = DEFAULT_PATH_IXON
+        self.pathIXONV = DEFAULT_PATH_IXONV
 
     def run(self):
         from os import path
@@ -537,6 +550,13 @@ class autoloader(QtCore.QThread):
 
                 elif camera == 1 and fileGood == 1:
                     nextPath = self.pathIXON + "ixon_" + nextFile + ".csv"
+                    if path.isfile(nextPath):
+                        self.msleep(100)
+                        self.mainPF.filePath.setText(nextPath)
+                        self.emit(QtCore.SIGNAL('fileArrived'))
+
+                elif camera == 2 and fileGood == 1:
+                    nextPath = self.pathIXONV + "twospecies_" + nextFile + ".csv"
                     if path.isfile(nextPath):
                         self.msleep(100)
                         self.mainPF.filePath.setText(nextPath)
