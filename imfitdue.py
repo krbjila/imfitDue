@@ -2,6 +2,7 @@ import sys, os
 sys.path.append('./lib')
 
 from PyQt4 import QtGui, QtCore
+import ctypes
 
 from imageRead import *
 from imageProcess import *
@@ -13,6 +14,8 @@ import numpy as np
 class imfitDue(QtGui.QMainWindow):
     def __init__(self,Parent=None):
         super(imfitDue, self).__init__(Parent)
+
+        self.setWindowTitle('ImfitDue: KRb Image Fitting')
 
         self.regionRb = [0]*4
         self.regionK = [0]*4
@@ -512,11 +515,16 @@ class imfitDue(QtGui.QMainWindow):
 
 
 if __name__=="__main__":
-
+    # The following two lines tell windows that python is only hosting this application
+    myappid = 'krb.imfitdue' # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    
     app = QtGui.QApplication(sys.argv)
-
     w = imfitDue()
     w.setGeometry(100,100, 1200, 800)
-    w.show()
 
+    appico = QtGui.QIcon('main.ico')
+    w.setWindowIcon(appico)
+
+    w.show()
     sys.exit(app.exec_())
