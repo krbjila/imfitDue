@@ -4,7 +4,7 @@
 #######################################################################
 
 IMAGING_PATHS = ['Axial', 'Side', 'Vertical']
-PIXEL_SIZES = [2.58, 3.46, 1.43]
+PIXEL_SIZES = [2.58, 3.46, 0.956]
 CSATEFF = [19000, 1.0E6, 1400.0]
 
 FRAMESEQUENCE = ['shadow', 'light', 'dark']
