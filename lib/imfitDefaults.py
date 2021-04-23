@@ -13,7 +13,7 @@ NATOMS = 2
 WAVELENGTHS = [767.0E-9, 780.0E-9]
 
 
-VERT_TRAP_ANGLE = 45.0 # Degrees
+VERT_TRAP_ANGLE = 30.0 # Degrees
 
 #######################################################################
 ########################  File System Parameters  #####################

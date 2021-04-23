@@ -282,8 +282,8 @@ class fitOD():
             f = interp2d(self.odImage.xRange0, self.odImage.xRange1, self.odImage.ODCorrected, kind='cubic')
 
 
-            m0 = np.tan(np.pi/2.0 - VERT_TRAP_ANGLE)
-            m1 = -np.tan(VERT_TRAP_ANGLE)
+            m0 = np.tan(np.pi/2.0 - VERT_TRAP_ANGLE*np.pi/180.)
+            m1 = -np.tan(VERT_TRAP_ANGLE*np.pi/180.)
 
             if abs(m0) > abs(m1):
                 # Ensure the that lower slope is always along x
