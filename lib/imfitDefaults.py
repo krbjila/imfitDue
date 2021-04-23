@@ -95,5 +95,5 @@ DEFAULT_REGION = {
 	'IXONV' : DEFAULT_REGION_IXONV
 }
 
-FIT_FUNCTIONS = ['Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
-WORKSHEET_NAMES = ['Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']
+FIT_FUNCTIONS = ['Gaussian', 'Gaussian w/ Gradient', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
+WORKSHEET_NAMES = ['Gauss1', 'GaussGrad', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']

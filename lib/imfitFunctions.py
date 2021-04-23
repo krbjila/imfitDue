@@ -16,6 +16,21 @@ def gaussian(p, r, y):
 
     return np.ravel(p[0] + p[1]*np.exp( -(XR-x0R)**2.0/(2.0*p[3]**2.0)  -(YR-y0R)**2.0/(2.0*p[5]**2.0)  ) - y)
 
+def gaussianGradient(p, r, y):
+    ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis, yaxis)
+
+    XR = X*np.cos(p[6]) - Y*np.sin(p[6])
+    YR = X*np.sin(p[6]) + Y*np.cos(p[6])
+
+    x0R = p[2]*np.cos(p[6]) - p[4]*np.sin(p[6])
+    y0R = p[2]*np.sin(p[6]) + p[4]*np.cos(p[6])
+
+    return np.ravel(p[0] + p[1]*np.exp( -(XR-x0R)**2.0/(2.0*p[3]**2.0)  -(YR-y0R)**2.0/(2.0*p[5]**2.0)) + p[7]*(XR-X0R) + p[8]*(YR-Y0R) - y)
+
 def gaussianNoRot(p, r, y):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy]
     xaxis = r[0]
@@ -24,6 +39,15 @@ def gaussianNoRot(p, r, y):
     X, Y = np.meshgrid(xaxis, yaxis)
 
     return np.ravel(p[0] + p[1]*np.exp( -(X-p[2])**2.0/(2.0*p[3]**2.0)  -(Y-p[4])**2.0/(2.0*p[5]**2.0)  ) - y)
+
+def gaussianNoRotGradient(p, r, y):
+    ### Parameters: [offset, amplitude, x0, wx, y0, wy, dODdx, dODdy]
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis, yaxis)
+
+    return np.ravel(p[0] + p[1]*np.exp( -(X-p[2])**2.0/(2.0*p[3]**2.0)  -(Y-p[4])**2.0/(2.0*p[5]**2.0)) + p[6]*X + p[7]*Y - y)
 
 
 def gaussianNoRotTwist(p, r, y, angle):

@@ -348,6 +348,47 @@ class fitOD():
             self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:,I0]
 
+        elif self.fitFunction == FIT_FUNCTIONS.index('Gaussian w/ Gradient'):
+
+            # Gaussian fit without rotation
+
+            r = [None,None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+    
+            
+            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0, 0]
+            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), 40, 40]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -40, -40]
+            p0 = checkGuess(p0,pUpper,pLower)
+
+            resLSQ = least_squares(gaussianNoRotGradient, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fittedImage = gaussianNoRotGradient(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
+
+            
+            ### Get radial average
+            
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+
+            ### Calculate slices through fit
+
+            self.slices.points0 = self.odImage.ODCorrected[I1,:]
+            self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1,:]
+
+            self.slices.points1 = self.odImage.ODCorrected[:,I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
+            self.slices.fit1 = self.fittedImage[:,I0]
+
 
         elif self.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
             #Bi Gaussian fit
@@ -555,6 +596,22 @@ class processFitResult():
                     }
 
             self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian w/ Gradient'):
+            
+            r = {
+                    'offset' : self.fitObject.fitData[0],
+                    'dODdx' : self.fitObject.fitData[6]/(self.bin+1.0)*self.pixelSize,
+                    'dODdy' : self.fitObject.fitData[7]/(self.bin+1.0)*self.pixelSize,
+                    'peakOD' : self.fitObject.fitData[1],
+                    'x0' : self.fitObject.fitData[2],
+                    'y0' : self.fitObject.fitData[4],
+                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
+                    'angle' : 0
+                    }
+
+            self.data = ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
 
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Twisted Gaussian'):
