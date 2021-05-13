@@ -280,12 +280,14 @@ class regionWidget(QtGui.QWidget):
         font.setPointSize(12)
 
         self.grid = QtGui.QGridLayout()
+        self.atom_labels = []
         for k in range(4):
             x = QtGui.QLabel(topLabels[k])
             x.setFont(font)
             self.grid.addWidget(x,0,k+1,1,1)
         for k in range(2):
             x = QtGui.QLabel(ATOM_NAMES[k])
+            self.atom_labels.append(x)
             x.setFont(font)
             self.grid.addWidget(x,k+1,0,1,1)
         
@@ -312,8 +314,11 @@ class regionWidget(QtGui.QWidget):
         return 0
 
 class pathWidget(QtGui.QWidget):
-    def __init__(self,Parent=None):
+    def __init__(self,fitOptions,imageWindows, roi, Parent=None):
         super(pathWidget,self).__init__(Parent)
+        self.fitOptions = fitOptions
+        self.imageWindows = imageWindows
+        self.roi = roi
         self.setup()
 
     def setup(self):
@@ -334,10 +339,12 @@ class pathWidget(QtGui.QWidget):
         self.pi = QtGui.QRadioButton('Ximea xiQ')
         self.ixon = QtGui.QRadioButton('Andor iXon 888')
         self.ixon.setChecked(True)
+        self.ixon_gsm = QtGui.QRadioButton('Andor iXon 888 (molecules)')
         self.ixonv = QtGui.QRadioButton('Andor iXon 888 (Vertical)')
         self.cameraGroup.addButton(self.pi, 0)
         self.cameraGroup.addButton(self.ixon, 1)
         self.cameraGroup.addButton(self.ixonv, 2)
+        self.cameraGroup.addButton(self.ixon_gsm, 3)
         self.cameraGroup.buttonClicked.connect(self.camChanged)        
         
         h0 = QtGui.QHBoxLayout()
@@ -349,6 +356,7 @@ class pathWidget(QtGui.QWidget):
         h0.addWidget(QtGui.QLabel('Camera: '))
         h0.addWidget(self.pi)
         h0.addWidget(self.ixon)
+        h0.addWidget(self.ixon_gsm)
         h0.addWidget(self.ixonv)
 
 
@@ -389,6 +397,34 @@ class pathWidget(QtGui.QWidget):
 
     def camChanged(self):
         self.autoLoad.setChecked(False)
+
+        if self.cameraGroup.checkedId() == 3:
+            self.fitOptions.rbFitFunction.clear()
+            self.fitOptions.rbFitFunction.addItems(KRB_FIT_FUNCTIONS)
+            self.fitOptions.kFitFunction.clear()
+            self.fitOptions.kFitFunction.addItems(KRB_FIT_FUNCTIONS)
+            kfit = self.fitOptions.kFitFunction.currentIndex()
+            self.fitOptions.rbFitFunction.setCurrentIndex(kfit)
+            self.fitOptions.rbFitFunction.setEnabled(False)
+            self.fitOptions.KLabel.setText("Fit |0,0> to")
+            self.fitOptions.RbLabel.setText("Fit |1,0> to")
+            self.imageWindows.plotTools.kSelect.setText("|0,0>")
+            self.imageWindows.plotTools.rbSelect.setText("|1,0>")
+            self.roi.atom_labels[0].setText("|0,0>")
+            self.roi.atom_labels[1].setText("|1,0>")
+        else:
+            self.fitOptions.rbFitFunction.clear()
+            self.fitOptions.rbFitFunction.addItems(FIT_FUNCTIONS)
+            self.fitOptions.kFitFunction.clear()
+            self.fitOptions.kFitFunction.addItems(FIT_FUNCTIONS)
+            self.fitOptions.rbFitFunction.setEnabled(True)
+            self.fitOptions.KLabel.setText("Fit K to")
+            self.fitOptions.RbLabel.setText("Fit Rb to")
+            self.imageWindows.plotTools.kSelect.setText("K")
+            self.imageWindows.plotTools.rbSelect.setText("Rb")
+            self.roi.atom_labels[0].setText("K")
+            self.roi.atom_labels[1].setText("Rb")
+
         if self.cameraGroup.checkedId() == 1:
             d = DEFAULT_PATH_IXON
             self.filePath.setText(d)
@@ -399,6 +435,13 @@ class pathWidget(QtGui.QWidget):
 
         elif self.cameraGroup.checkedId() == 2:
             d = DEFAULT_PATH_IXONV
+            self.filePath.setText(d)
+            if os.path.isdir(d):
+                n = getLastFile(d)
+                self.autoLoadFile.setText(str(n))
+
+        elif self.cameraGroup.checkedId() == 3:
+            d = DEFAULT_PATH_IXON_GSM
             self.filePath.setText(d)
             if os.path.isdir(d):
                 n = getLastFile(d)
@@ -416,6 +459,10 @@ class fitOptionsWidget(QtGui.QWidget):
         super(fitOptionsWidget,self).__init__(Parent)
         self.setup()
 
+    def updateRbFit(self):
+        if not self.rbFitFunction.isEnabled():
+            self.rbFitFunction.setCurrentIndex(self.kFitFunction.currentIndex())
+
     def setup(self):
 
 
@@ -423,6 +470,7 @@ class fitOptionsWidget(QtGui.QWidget):
         self.rbFitFunction.addItems(FIT_FUNCTIONS)
         self.kFitFunction = QtGui.QComboBox()
         self.kFitFunction.addItems(FIT_FUNCTIONS)
+        self.kFitFunction.currentIndexChanged.connect(self.updateRbFit)
 
         self.imagePath = QtGui.QComboBox()
         self.imagePath.addItems(IMAGING_PATHS)
@@ -443,14 +491,16 @@ class fitOptionsWidget(QtGui.QWidget):
         h0.addWidget(QtGui.QLabel("Imaging Path: "))
         h0.addWidget(self.imagePath)
         h0.addStretch(1)
-        h0.addWidget(QtGui.QLabel('Fit Rb to:'))
+        self.RbLabel = QtGui.QLabel('Fit Rb to:')
+        h0.addWidget(self.RbLabel)
         h0.addWidget(self.rbFitFunction)
 
         h1 = QtGui.QHBoxLayout()
         h1.addWidget(QtGui.QLabel('K TOF (ms):'))
         h1.addWidget(self.tof)
         h1.addStretch(1)
-        h1.addWidget(QtGui.QLabel('Fit K to:'))
+        self.KLabel = QtGui.QLabel('Fit K to:')
+        h1.addWidget(self.KLabel)
         h1.addWidget(self.kFitFunction)
 
         h2 = QtGui.QHBoxLayout()
@@ -513,20 +563,30 @@ class autoloader(QtCore.QThread):
         self.autoloadState = True
         self.camera = None
 
+        self.is_active = True
+
         self.pathPI = DEFAULT_PATH_PI
         self.pathIXON = DEFAULT_PATH_IXON
+        self.pathIXON_GSM = DEFAULT_PATH_IXON_GSM
         self.pathIXONV = DEFAULT_PATH_IXONV
+
+    def wait_a_while(self):
+        self.msleep(500)
 
     def run(self):
         from os import path
-
+        
+        inner_wait = 500
+        outer_wait = 500
+        
         while True:
-            if self.mainPF.autoLoad.isChecked():
+            if self.mainPF.autoLoad.isChecked() and self.is_active:
 
                 if self.startDate != datetime.datetime.now().strftime('%d'):
                     import imfitDefaults
                     self.pathPI = DEFAULT_PATH_PI
                     self.pathIXON = DEFAULT_PATH_IXON
+                    self.pathIXON_GSM = DEFAULT_PATH_IXON_GSM
                     self.startDate = datetime.datetime.now().strftime('%d')
 
 
@@ -540,29 +600,42 @@ class autoloader(QtCore.QThread):
                 except ValueError:
                     print("Something other than an integer is in the autoload box!")
 
+                print("Checking file {}".format(nextFile))
+
                 if camera == 0 and fileGood == 1:
                     # nextPath = self.pathPI + "pi_" + nextFile + ".spe" # Changed to ximea 9/26/2019
                     nextPath = self.pathPI + "xi_" + nextFile + ".dat"
                     if path.isfile(nextPath):
-                        self.msleep(100)
+                        self.msleep(inner_wait)
                     	self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
 
                 elif camera == 1 and fileGood == 1:
                     nextPath = self.pathIXON + "ixon_" + nextFile + ".csv"
                     if path.isfile(nextPath):
-                        self.msleep(100)
+                        self.msleep(inner_wait)
                         self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
 
                 elif camera == 2 and fileGood == 1:
                     nextPath = self.pathIXONV + "twospecies_" + nextFile + ".csv"
                     if path.isfile(nextPath):
-                        self.msleep(100)
+                        self.msleep(inner_wait)
                         self.mainPF.filePath.setText(nextPath)
                         self.emit(QtCore.SIGNAL('fileArrived'))
-            self.msleep(200)
 
+                elif camera == 3 and fileGood == 1:
+                    nextPath = self.pathIXON_GSM + "ixon_" + nextFile + ".csv"
+                    print("Setting path to: {}".format(nextPath))
+                    if path.isfile(nextPath):
+                        print("The next path is a file! Sleeping for inner wait")
+                        self.msleep(inner_wait)
+                        print("Awoken!")
+                        self.mainPF.filePath.setText(nextPath)
+                        print("Next path is set!")
+                        self.emit(QtCore.SIGNAL('fileArrived'))
+                        print("File arrived signal sent!")
+            self.msleep(outer_wait)
             
 
 def main():

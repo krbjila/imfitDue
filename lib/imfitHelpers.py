@@ -144,9 +144,9 @@ def upload2Origin(atom, fitFunction, data):
     atom = checkAtom(atom)
     fitFunction = checkFitFunction(fitFunction)
 
-
-
     if atom != -1 and fitFunction != -1:
+        worksheetName = ATOM_NAMES[atom] + WORKSHEET_NAMES[fitFunction]
+        longname = ATOM_NAMES[atom] + " " + FIT_FUNCTIONS[fitFunction]
 
         if atom == 2:
             if FIT_FUNCTIONS[fitFunction] == 'Gaussian':
@@ -154,27 +154,47 @@ def upload2Origin(atom, fitFunction, data):
             elif FIT_FUNCTIONS[fitFunction] == 'Twisted Gaussian':
                 template = 'KRbGauss1'
             else:
-                template = WORKSHEET_NAMES[fitFunction]    
+                template = WORKSHEET_NAMES[fitFunction]
+        elif atom == 3:
+            if 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
+                template = 'KRbSpinGauss'
+                worksheetName = 'KRbSpinGauss1'
+                longname = 'KRb Spin Resolved Gaussian'
         else:
             template = WORKSHEET_NAMES[fitFunction]
-        worksheetName = ATOM_NAMES[atom] + WORKSHEET_NAMES[fitFunction]
-
-        longname = ATOM_NAMES[atom] + " " + FIT_FUNCTIONS[fitFunction]
+        
+        print template, worksheetName, longname
 
         if orgApp.FindWorksheet(worksheetName) is None:
             orgApp.CreatePage(2, worksheetName, template)
         orgApp.Execute("{}!page.longname$ = {}".format(worksheetName, longname))
         # orgApp.Execute("{}!page.active$ = {}".format(worksheetName, "Sheet1")) 
 
-
-        n = 0
-        for k in data:
-            uploadSuccess = orgApp.PutWorksheet("[{}]Sheet1".format(worksheetName), k, -1, n)
-            if uploadSuccess:
-                n += 1
+        if atom == 3:
+            if FIT_FUNCTIONS[fitFunction] != 'Gaussian w/ Gradient':
+                # data is an array with [FitResultK, FitResultRb]
+                # trim off the file name for Rb
+                # if not Gaussian w/ Gradient, add extra columns for gradient columns in origin book
+                data = data[0][0:2] + [0]*2 + data[0][2:] + [data[1][1]] + [0]*2 + data[1][2:]
             else:
-                print("Failed to upload to Origin. Is Sheet1 in the proper workbook available?")
-                return -1
+                data = data[0] + data[1][1:]
+            
+            for (i, d) in enumerate(data):
+                uploadSuccess = orgApp.PutWorksheet("[{}]Sheet1".format(worksheetName), d, -1, i)
+            
+                if not uploadSuccess:
+                    print("Failed to upload to Origin. Is Sheet1 in the proper workbook available?")
+                    return -1
+            
+        else:
+            n = 0
+            for k in data:
+                uploadSuccess = orgApp.PutWorksheet("[{}]Sheet1".format(worksheetName), k, -1, n)
+                if uploadSuccess:
+                    n += 1
+                else:
+                    print("Failed to upload to Origin. Is Sheet1 in the proper workbook available?")
+                    return -1
 
     else: 
         print("Failed to upload to Origin.")

@@ -46,10 +46,17 @@ class imfitDue(QtGui.QMainWindow):
         self.fo.uploadButton.clicked.connect(self.process2Origin)
 
     def loadFile(self):
+        print("loadFile started!")
         path = str(self.pf.filePath.text())
+        print("Path read as {}".format(path))
         if os.path.isfile(path):
+            print("Path recognized as file!")
             # Terminate the autoloader thread so that the reader doesn't get bogged down
-            self.autoloader.terminate()
+            # self.autoloader.terminate()
+            # self.autoloader.wait_a_while()
+
+            self.autoloader.is_active = False
+
             if self.pf.cameraGroup.checkedId() == 0:
                 # self.currentFile = readPIImage(path) # Changed to xiQ on 9/26/2019
                 self.currentFile = readXimeaImage(path)
@@ -57,13 +64,16 @@ class imfitDue(QtGui.QMainWindow):
                 self.currentFile = readIXONImage(path)
             elif self.pf.cameraGroup.checkedId() == 2:
                 self.currentFile = readIXONVImage(path)
+            elif self.pf.cameraGroup.checkedId() == 3:
+                self.currentFile = readIXONGSMImage(path)
             
 
             if self.pf.autoLoad.isChecked():
                 t = self.pf.autoLoadFile.text()
                 self.pf.autoLoadFile.setText(str(int(t) + 1))
 
-            self.autoloader.start()
+            self.autoloader.is_active = True
+            # self.autoloader.start()
 
         else:
             print('File not found!')
@@ -71,7 +81,11 @@ class imfitDue(QtGui.QMainWindow):
         self.currentODCalc()
 
     def currentODCalc(self):
-        self.autoloader.terminate()
+        # self.autoloader.terminate()
+        # self.autoloader.wait_a_while()
+
+        self.autoloader.is_active = False
+
         for i in range(4):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
@@ -84,14 +98,22 @@ class imfitDue(QtGui.QMainWindow):
         
         if self.fo.autoFit.isChecked():
             self.fitCurrent()
+            print("Done fitting current image")
         else:
             self.fitK = None
             self.fitRb = None
             self.plotCurrent()
-        self.autoloader.start()
+        # self.autoloader.start()
+
+        self.autoloader.is_active = True
+        print("Done calculating current OD")
 
     def averageImages(self):
-        self.autoloader.terminate()
+        # self.autoloader.terminate()
+        # self.autoloader.wait_a_while()
+
+        self.autoloader.is_active = False
+
         self.pf.autoLoad.setChecked(False)
         x = self.av.getFileNumbers()
         p = self.pf.cameraGroup.checkedId() 
@@ -129,7 +151,8 @@ class imfitDue(QtGui.QMainWindow):
                     self.currentFile.img = imageMean/float(len(x))
 
             self.currentODCalc()
-            self.autoloader.start()
+            # self.autoloader.start()
+        self.autoloader.is_active = True
 
 
 
@@ -151,38 +174,49 @@ class imfitDue(QtGui.QMainWindow):
 
         if self.fo.autoUpload.isChecked():
             self.process2Origin()
+        print("Done fitting and uploading current shot")
 
     def process2Origin(self):
         
         imagePath = self.fo.imagePath.currentText()
 
         if self.fitK is not None and self.fitRb is not None:
+            print("Processing K fit result")
             KProcess = processFitResult(self.fitK, imagePath)
+            print("Processing Rb fit result")
             RbProcess = processFitResult(self.fitRb, imagePath)
 
             KProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
             RbProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
 
-
-
-            upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
-
-            if self.fitK.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
-                if self.fo.moleculeBook.isChecked():
-                    KProcess.data[1] = 'KRb'
-                else:
-                    KProcess.data[1] = 'K'
-
-                upload2Origin('K', self.fitK.fitFunction, KProcess.data)
-                return 1
-
-
-            if self.fo.moleculeBook.isChecked():
-                upload2Origin('KRb', self.fitK.fitFunction, KProcess.data)
+            if self.pf.cameraGroup.checkedId() == 3: # Molecule In situ FK
+                print("Uploading KRb to Origin")
+                upload2Origin('KRbInSitu', self.fitK.fitFunction,
+                                        [KProcess.data, RbProcess.data])
                 return 1
             else:
-                upload2Origin('K', self.fitK.fitFunction, KProcess.data)
-                return 1
+
+                print("Uploading Rb to Origin")
+                upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
+
+                if self.fitK.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
+                    if self.fo.moleculeBook.isChecked():
+                        KProcess.data[1] = 'KRb'
+                    else:
+                        KProcess.data[1] = 'K'
+
+                    upload2Origin('K', self.fitK.fitFunction, KProcess.data)
+                    return 1
+
+
+                if self.fo.moleculeBook.isChecked():
+                    print("Uploading KRb to Origin")
+                    upload2Origin('KRb', self.fitK.fitFunction, KProcess.data)
+                    return 1
+                else:
+                    print("Uploading K to Origin")
+                    upload2Origin('K', self.fitK.fitFunction, KProcess.data)
+                    return 1
             
 
 
@@ -263,21 +297,24 @@ class imfitDue(QtGui.QMainWindow):
         elif self.pf.cameraGroup.checkedId() == 2:
             self.roi.setDefaultRegion('IXONV')
 
+        elif self.pf.cameraGroup.checkedId() == 3:
+            self.roi.setDefaultRegion('IXON_GSM')
+
         elif self.pf.cameraGroup.checkedId() == 0:
             self.roi.setDefaultRegion('XIMEA')
 
 
     def initializeGui(self):
 
-        self.pf = pathWidget()
-        self.roi = regionWidget()
         self.fo = fitOptionsWidget()
+        self.figs = ImageWindows()
+        self.roi = regionWidget()
+        self.pf = pathWidget(self.fo, self.figs, self.roi)
         self.av = averageWidget()
 
         self.pf.cameraGroup.buttonClicked.connect(self.passCamToROI)
 
 
-        self.figs = ImageWindows()
         
         gb1 = QtGui.QGroupBox('File Path')
         gb1.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
@@ -335,11 +372,14 @@ class imfitDue(QtGui.QMainWindow):
         self.setCentralWidget(self.mainWidget)
 
     def refreshGui(self):
-        self.autoloader.terminate()
+        # self.autoloader.terminate()
+        # self.autoloader.wait_a_while()
         self.initializeGui()
 
         self.autoloader = autoloader(self.pf)
         self.autoloader.connect(self.autoloader, QtCore.SIGNAL('fileArrived'), self.loadFile)
+
+        self.autoloader.is_active = True
         self.autoloader.start()
 
     def saveMainImage(self):

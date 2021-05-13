@@ -7,6 +7,9 @@ from imfitFunctions import *
 from scipy.optimize import least_squares 
 from scipy.interpolate import interp2d
 
+from skimage.feature import peak_local_max
+from scipy import ndimage as ndimage
+
 class calcOD():
 
     def __init__(self,data,atom,imagePath,region=[]):
@@ -72,6 +75,10 @@ class calcOD():
                 print(CAMERA_NAME_IXON)
                 isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXON[self.atom]*TPROBE_IXON[self.atom]
                 odsat = ODSAT_IXON[self.atom]
+            elif self.data.camera == CAMERA_NAME_IXON_GSM:
+                print(CAMERA_NAME_IXON_GSM)
+                isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXON_GSM[self.atom]*TPROBE_IXON_GSM[self.atom]
+                odsat = ODSAT_IXON_GSM[self.atom]
             elif self.data.camera == CAMERA_NAME_IXONV:
                 print(CAMERA_NAME_IXONV)
                 isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXONV[self.atom]*TPROBE_IXONV[self.atom]
@@ -90,6 +97,9 @@ class calcOD():
             if self.data.camera == CAMERA_NAME_IXON:            
                 self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
                 self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
+            elif self.data.camera == CAMERA_NAME_IXON_GSM:            
+                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
+                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
             elif self.data.camera == CAMERA_NAME_IXONV:            
                 self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
                 self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
@@ -350,11 +360,27 @@ class fitOD():
 
         elif self.fitFunction == FIT_FUNCTIONS.index('Gaussian w/ Gradient'):
 
+            def subtract_gradient(od):
+                (dy, dx) = np.shape(od)
+                X2D,Y2D = np.meshgrid(np.arange(dx),np.arange(dy))
+                A = np.matrix(np.column_stack((X2D.ravel(),Y2D.ravel(),np.ones(dx*dy))))
+                B = od.flatten()
+                C = np.dot((A.T * A).I * A.T, B).flatten()
+                bg=np.reshape(C*A.T, (dy,dx))
+                return np.asarray(od - bg)
+
             # Gaussian fit without rotation
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
 
             r = [None,None]
             r[0] = self.odImage.xRange0
             r[1] = self.odImage.xRange1
+            xmin = np.min(r[0])
+            ymin = np.min(r[1])
+
+            data = self.odImage.ODCorrected
+            od_no_bg = subtract_gradient(data)
+            blur = ndimage.gaussian_filter(od_no_bg,5,mode='constant')
     
             
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0, 0]
@@ -362,11 +388,39 @@ class fitOD():
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -40, -40]
             p0 = checkGuess(p0,pUpper,pLower)
 
-            resLSQ = least_squares(gaussianNoRotGradient, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+            pks=peak_local_max(blur, min_distance=20,exclude_border=2, num_peaks=3)
+            guesses = [p0]
+            for pk in pks:
+                yc = pk[0]
+                xc = pk[1]
+                peak = data[yc, xc]
+                offset = np.mean(data)
+                if peak > 0:
+                    (sigx, sigy) = 15, 15
+                    guess = [offset, peak, xmin+xc, sigx, ymin+yc, sigy, 0.0, 0.0]
+                    guesses.append(checkGuess(guess,pUpper,pLower))
 
-            self.fitDataConf = confidenceIntervals(resLSQ)
-            self.fitData = resLSQ.x
-            self.fittedImage = gaussianNoRotGradient(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
+            best_fit = None
+            best_guess = np.inf		
+            for guess in guesses:
+                try:
+                    print("Trying guess: {}".format(guess))
+                    res = least_squares(gaussianNoRotGradient, guess, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+                    print("Cost: {}".format(res.cost))
+                    if not res.success:
+                        print("Warning: fit did not converge.")
+                    elif res.cost < best_guess:
+                        best_guess = res.cost
+                        best_fit = res
+                except ValueError as e:
+                    print(e)
+
+            resLSQ = best_fit
+            print("Best fit: {}".format(resLSQ))
+            if resLSQ is not None:
+                self.fitDataConf = confidenceIntervals(resLSQ)
+                self.fitData = resLSQ.x
+                self.fittedImage = gaussianNoRotGradient(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
 
             
             ### Get radial average
@@ -388,6 +442,8 @@ class fitOD():
             self.slices.points1 = self.odImage.ODCorrected[:,I0]
             self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:,I0]
+
+            print("Done with fit function!")
 
 
         elif self.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
@@ -558,6 +614,7 @@ class processFitResult():
 
     def getResults(self):
 
+        print("Processing fit result!")
         
         if self.fitObject.fitFunction == FIT_FUNCTIONS.index('Rotated Gaussian'):
             
@@ -681,3 +738,6 @@ class processFitResult():
         else:
             print('Fit function undefined! Something went wrong!')
             return -1
+
+        print("Done processing fit result!")
+        
