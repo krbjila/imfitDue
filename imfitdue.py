@@ -32,6 +32,8 @@ class imfitDue(QtGui.QMainWindow):
         self.fitK = None
         self.fitRb = None
 
+        self.mode = 'Axial iXon'
+
     def makeConnections(self):
         self.pf.loadButton.clicked.connect(self.loadFile)
         self.fo.fitButton.clicked.connect(self.fitCurrent)
@@ -51,21 +53,11 @@ class imfitDue(QtGui.QMainWindow):
         print("Path read as {}".format(path))
         if os.path.isfile(path):
             print("Path recognized as file!")
-            # Terminate the autoloader thread so that the reader doesn't get bogged down
-            # self.autoloader.terminate()
-            # self.autoloader.wait_a_while()
 
             self.autoloader.is_active = False
 
-            if self.pf.cameraGroup.checkedId() == 0:
-                # self.currentFile = readPIImage(path) # Changed to xiQ on 9/26/2019
-                self.currentFile = readXimeaImage(path)
-            elif self.pf.cameraGroup.checkedId() == 1:
-                self.currentFile = readIXONImage(path)
-            elif self.pf.cameraGroup.checkedId() == 2:
-                self.currentFile = readIXONVImage(path)
-            elif self.pf.cameraGroup.checkedId() == 3:
-                self.currentFile = readIXONGSMImage(path)
+            # TODO: Implement readImage
+            self.currentFile = readImage(self.mode, path)
             
 
             if self.pf.autoLoad.isChecked():
@@ -73,7 +65,6 @@ class imfitDue(QtGui.QMainWindow):
                 self.pf.autoLoadFile.setText(str(int(t) + 1))
 
             self.autoloader.is_active = True
-            # self.autoloader.start()
 
         else:
             print('File not found!')
@@ -81,9 +72,6 @@ class imfitDue(QtGui.QMainWindow):
         self.currentODCalc()
 
     def currentODCalc(self):
-        # self.autoloader.terminate()
-        # self.autoloader.wait_a_while()
-
         self.autoloader.is_active = False
 
         for i in range(4):
@@ -91,9 +79,9 @@ class imfitDue(QtGui.QMainWindow):
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
 
-        imagePath = IMAGING_PATHS.index(self.fo.imagePath.currentText())
-        self.odK = calcOD(self.currentFile,'K', imagePath,self.regionK)
-        self.odRb = calcOD(self.currentFile, 'Rb', imagePath, self.regionRb)
+        #TODO: Replace imagePath with mode in calcOD
+        self.odK = calcOD(self.currentFile,'K', self.mode, self.regionK)
+        self.odRb = calcOD(self.currentFile, 'Rb', self.mode, self.regionRb)
 
         
         if self.fo.autoFit.isChecked():
@@ -103,62 +91,39 @@ class imfitDue(QtGui.QMainWindow):
             self.fitK = None
             self.fitRb = None
             self.plotCurrent()
-        # self.autoloader.start()
 
         self.autoloader.is_active = True
         print("Done calculating current OD")
 
     def averageImages(self):
-        # self.autoloader.terminate()
-        # self.autoloader.wait_a_while()
-
         self.autoloader.is_active = False
 
         self.pf.autoLoad.setChecked(False)
         x = self.av.getFileNumbers()
-        p = self.pf.cameraGroup.checkedId() 
 
-        if p == 0:
-            # path = DEFAULT_PATH_PI + "pi_{}.spe"  # Changed to xiQ on 9/26/2019
-            path = DEFAULT_PATH_XIMEA + "xi_{}.dat"
-        elif p == 1:
-            path = DEFAULT_PATH_IXON + "ixon_{}.csv"
-        elif p == 2:
-            path = DEFAULT_PATH_IXONV + "twospecies_{}.csv"
+        path = modes[self.mode]["Default Path"]
 
         firstFile = True
         if x is not None:
             for k in x:
                 print(path.format(k))
-                if p == 0:
-                    # self.currentFile = readPIImage(path.format(k)) # Changed to xiQ on 9/26/2019
-                    self.currentFile = readXimeaImage(path.format(k))
-                    if firstFile:
-                        imageMean = self.currentFile.img
-                        firstFile = False
-                    else:
-                        imageMean += self.currentFile.img
-                    
-                    self.currentFile.img = imageMean/float(len(x))
-                elif p == 1:
-                    self.currentFile = readIXONImage(path.format(k))
-                    if firstFile:
-                        imageMean = self.currentFile.img
-                        firstFile = False
-                    else:
-                        imageMean += self.currentFile.img
-                    
-                    self.currentFile.img = imageMean/float(len(x))
+                # TODO: Implement readImage(mode, path)
+                self.currentFile = readImage(self.mode, path.format(k))
+                if firstFile:
+                    imageMean = self.currentFile.img
+                    firstFile = False
+                else:
+                    imageMean += self.currentFile.img
+                
+                self.currentFile.img = imageMean/float(len(x))
 
             self.currentODCalc()
-            # self.autoloader.start()
         self.autoloader.is_active = True
 
 
 
     def fitCurrent(self):
-       
-
+        # TODO: Understand what this does and adjust to be more readable
         if self.fo.moleculeBook.isChecked():
             kAtom = 2
         else:
@@ -166,8 +131,9 @@ class imfitDue(QtGui.QMainWindow):
 
         rbAtom = 1
         TOF = float(self.fo.tof.text())
-        pxl = PIXEL_SIZES[IMAGING_PATHS.index(self.fo.imagePath.currentText())]
+        pxl = modes[self.mode]["Pixel Size"]
 
+        # TODO: Is it possible/ useful to generalize to an arbitrary number of fits with different names?
         self.fitK = fitOD(self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
         self.fitRb = fitOD(self.odRb, str(self.fo.rbFitFunction.currentText()), rbAtom, TOF + 6,pxl)
         self.plotCurrent()
@@ -177,8 +143,7 @@ class imfitDue(QtGui.QMainWindow):
         print("Done fitting and uploading current shot")
 
     def process2Origin(self):
-        
-        imagePath = self.fo.imagePath.currentText()
+        imagePath = modes[self.mode]["Image Path"]
 
         if self.fitK is not None and self.fitRb is not None:
             print("Processing K fit result")
@@ -186,16 +151,15 @@ class imfitDue(QtGui.QMainWindow):
             print("Processing Rb fit result")
             RbProcess = processFitResult(self.fitRb, imagePath)
 
-            KProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
-            RbProcess.data[0] = self.currentFile.fileName[0] + "-" + IMAGING_PATHS[KProcess.imagePath]
+            KProcess.data[0] = self.currentFile.fileName[0] + "-" + imagePath
+            RbProcess.data[0] = self.currentFile.fileName[0] + "-" + imagePath
 
-            if self.pf.cameraGroup.checkedId() == 3: # Molecule In situ FK
+            if self.mode == 'Axial iXon Molecules': # Molecule In situ FK
                 print("Uploading KRb to Origin")
                 upload2Origin('KRbInSitu', self.fitK.fitFunction,
                                         [KProcess.data, RbProcess.data])
                 return 1
             else:
-
                 print("Uploading Rb to Origin")
                 upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
 
@@ -208,7 +172,6 @@ class imfitDue(QtGui.QMainWindow):
                     upload2Origin('K', self.fitK.fitFunction, KProcess.data)
                     return 1
 
-
                 if self.fo.moleculeBook.isChecked():
                     print("Uploading KRb to Origin")
                     upload2Origin('KRb', self.fitK.fitFunction, KProcess.data)
@@ -218,12 +181,6 @@ class imfitDue(QtGui.QMainWindow):
                     upload2Origin('K', self.fitK.fitFunction, KProcess.data)
                     return 1
             
-
-
-
-
-
-
     def plotCurrent(self):
         
         if self.figs.plotTools.kSelect.isChecked():
@@ -290,19 +247,7 @@ class imfitDue(QtGui.QMainWindow):
             self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
 
     def passCamToROI(self):
-        # iXon is 1, XIMEA is 0
-        if self.pf.cameraGroup.checkedId() == 1:
-            self.roi.setDefaultRegion('IXON')
-
-        elif self.pf.cameraGroup.checkedId() == 2:
-            self.roi.setDefaultRegion('IXONV')
-
-        elif self.pf.cameraGroup.checkedId() == 3:
-            self.roi.setDefaultRegion('IXON_GSM')
-
-        elif self.pf.cameraGroup.checkedId() == 0:
-            self.roi.setDefaultRegion('XIMEA')
-
+        self.roi.setDefaultRegion(self.mode)
 
     def initializeGui(self):
 
@@ -372,8 +317,6 @@ class imfitDue(QtGui.QMainWindow):
         self.setCentralWidget(self.mainWidget)
 
     def refreshGui(self):
-        # self.autoloader.terminate()
-        # self.autoloader.wait_a_while()
         self.initializeGui()
 
         self.autoloader = autoloader(self.pf)
@@ -493,7 +436,6 @@ class imfitDue(QtGui.QMainWindow):
         if self.pf.cameraGroup.checkedId():
             ext = '*.csv'
         else:
-            # ext = '*.spe'
             ext = '*.dat'
 
         x = QtGui.QFileDialog()

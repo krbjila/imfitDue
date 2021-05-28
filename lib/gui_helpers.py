@@ -18,13 +18,10 @@ import datetime
 class ImageWindows(QtGui.QWidget):
     def __init__(self, Parent=None):
         super(ImageWindows,self).__init__(Parent)
-        # self.setGeometry(10,10,600,400)
-        # self.setGeometry(10,10,1000,600)
         
         pal = QtGui.QPalette()
         pal.setColor(QtGui.QPalette.Background, QtCore.Qt.white)
         self.setPalette(pal)
-        
         
         self.setup()
 
@@ -90,11 +87,7 @@ class ImageWindows(QtGui.QWidget):
         self.setLayout(vbox)
 
 
-
     def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None):
-
-
-
         colorMap = KRbCustomColors().whiteJet
         levelLow = float(self.plotTools.odMinEdit.text())
         levelHigh = float(self.plotTools.odMaxEdit.text())
@@ -128,8 +121,6 @@ class ImageWindows(QtGui.QWidget):
             self.ax1.cla()
             self.ax2.cla()
 
-            
-
             for k in range(len(Lx)):
             	plotStyles = ['ok', 'r']
                 self.ax1.plot(x,Lx[k],plotStyles[k])
@@ -148,7 +139,6 @@ class ImageWindows(QtGui.QWidget):
             self.plotTools.setCHY.setText('{0:.1f}'.format(event.ydata))
 
             self.setCrossHair()
-#            self.plotUpdate()
 
     def removeCrossHair(self):
         self.crossHairV.set_xdata([])
@@ -188,10 +178,8 @@ class plotTools(QtGui.QWidget):
         self.setFixedHeight(650)
 
     def setup(self):
-
         ODMAXDEFAULT = '2'
         ODMINDEFAULT = '0'
-
 
         self.odMaxEdit = QtGui.QLineEdit(ODMAXDEFAULT)
         self.odMaxEdit.setFixedWidth(60)
@@ -239,12 +227,9 @@ class plotTools(QtGui.QWidget):
         vbox.addWidget(self.kSelect)
         vbox.addWidget(self.rbSelect)
 
-
-        #self.addLayout(vbox)
         self.setLayout(vbox)
 
     def updateSlider(self):
-        
         odmax = self.odMaxEdit.text()
         odmin = self.odMinEdit.text()
         sv = self.odSlider.value()
@@ -295,17 +280,17 @@ class regionWidget(QtGui.QWidget):
 
         for i in range(2):
             for j in range(4):
-                self.region[i][j] = QtGui.QLineEdit(str(DEFAULT_REGION['IXON'][i][j]))
+                self.region[i][j] = QtGui.QLineEdit(str(modes[self.mode]["Default Region"][i][j]))
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
 
         self.setLayout(self.grid)
 
-    def setDefaultRegion(self, cam):
+    def setDefaultRegion(self, mode):
         try:
-            region = DEFAULT_REGION[cam]
+            region = modes[mode]["Default Region"]
         except AttributeError:
-            print "regionWidget.setDefaultRegion error: requested camera doesn't exist"
+            print("regionWidget.setDefaultRegion error: requested mode doesn't exist")
             return -1
 
         for i in range(2):
@@ -334,18 +319,11 @@ class pathWidget(QtGui.QWidget):
         self.autoLoad = QtGui.QCheckBox('AutoLoad')
 
 
-        self.cameraGroup = QtGui.QButtonGroup()
-        # self.pi = QtGui.QRadioButton('Princeton Instruments')
-        self.pi = QtGui.QRadioButton('Ximea xiQ')
-        self.ixon = QtGui.QRadioButton('Andor iXon 888')
-        self.ixon.setChecked(True)
-        self.ixon_gsm = QtGui.QRadioButton('Andor iXon 888 (molecules)')
-        self.ixonv = QtGui.QRadioButton('Andor iXon 888 (Vertical)')
-        self.cameraGroup.addButton(self.pi, 0)
-        self.cameraGroup.addButton(self.ixon, 1)
-        self.cameraGroup.addButton(self.ixonv, 2)
-        self.cameraGroup.addButton(self.ixon_gsm, 3)
-        self.cameraGroup.buttonClicked.connect(self.camChanged)        
+        self.cameraGroup = QtGui.QComboBox()
+        # TODO: make this set the mode of the parent, not here
+        self.cameraGroup.addItems(self.modes.keys())
+        self.cameraGroup.setCurrentIndex(0)
+        self.cameraGroup.currentIndexChanged.connect(self.camChanged)        
         
         h0 = QtGui.QHBoxLayout()
         h1  = QtGui.QHBoxLayout()
@@ -382,13 +360,8 @@ class pathWidget(QtGui.QWidget):
         if not os.path.isdir(d):
             d = DEFAULT_PATH        
         
-        
-        if self.cameraGroup.checkedId():
-            ext = '*.csv'
-        else:
-            # ext = '*.spe'
-            ext = '*.dat'
-
+        # TODO: make this get the mode of the parent, not this class
+        ext = modes[self.mode]["Extension Filter"]
 
         x = QtGui.QFileDialog()
         path = x.getOpenFileName(self,'Select a file to load' ,filter=ext, directory=d, options=QtGui.QFileDialog.DontUseNativeDialog)
@@ -398,61 +371,31 @@ class pathWidget(QtGui.QWidget):
     def camChanged(self):
         self.autoLoad.setChecked(False)
 
-        if self.cameraGroup.checkedId() == 3:
-            self.fitOptions.rbFitFunction.clear()
-            self.fitOptions.rbFitFunction.addItems(KRB_FIT_FUNCTIONS)
-            self.fitOptions.kFitFunction.clear()
-            self.fitOptions.kFitFunction.addItems(KRB_FIT_FUNCTIONS)
+        # TODO: make this set the mode of the parent, not this class
+        self.mode = self.cameraGroup.currentText()
+
+        self.fitOptions.rbFitFunction.clear()
+        self.fitOptions.rbFitFunction.addItems(modes[self.mode]["Fit Functions"])
+        self.fitOptions.kFitFunction.clear()
+        self.fitOptions.kFitFunction.addItems(modes[self.mode]["Fit Functions"])
+        if modes[self.mode]["Enforce same fit for both"]:
             kfit = self.fitOptions.kFitFunction.currentIndex()
             self.fitOptions.rbFitFunction.setCurrentIndex(kfit)
             self.fitOptions.rbFitFunction.setEnabled(False)
-            self.fitOptions.KLabel.setText("Fit |0,0> to")
-            self.fitOptions.RbLabel.setText("Fit |1,0> to")
-            self.imageWindows.plotTools.kSelect.setText("|0,0>")
-            self.imageWindows.plotTools.rbSelect.setText("|1,0>")
-            self.roi.atom_labels[0].setText("|0,0>")
-            self.roi.atom_labels[1].setText("|1,0>")
         else:
-            self.fitOptions.rbFitFunction.clear()
-            self.fitOptions.rbFitFunction.addItems(FIT_FUNCTIONS)
-            self.fitOptions.kFitFunction.clear()
-            self.fitOptions.kFitFunction.addItems(FIT_FUNCTIONS)
             self.fitOptions.rbFitFunction.setEnabled(True)
-            self.fitOptions.KLabel.setText("Fit K to")
-            self.fitOptions.RbLabel.setText("Fit Rb to")
-            self.imageWindows.plotTools.kSelect.setText("K")
-            self.imageWindows.plotTools.rbSelect.setText("Rb")
-            self.roi.atom_labels[0].setText("K")
-            self.roi.atom_labels[1].setText("Rb")
+        self.fitOptions.KLabel.setText("Fit {} to".format(modes[self.mode]["Images"][0]))
+        self.fitOptions.RbLabel.setText("Fit {} to".format(modes[self.mode]["Images"][1]))
+        self.imageWindows.plotTools.kSelect.setText(modes[self.mode]["Images"][0])
+        self.imageWindows.plotTools.rbSelect.setText(modes[self.mode]["Images"][1])
+        self.roi.atom_labels[0].setText(modes[self.mode]["Images"][0])
+        self.roi.atom_labels[1].setText(modes[self.mode]["Images"][1])
 
-        if self.cameraGroup.checkedId() == 1:
-            d = DEFAULT_PATH_IXON
-            self.filePath.setText(d)
-            if os.path.isdir(d):
-                n = getLastFile(d)
-                self.autoLoadFile.setText(str(n))
-                self.autoLoad.setChecked(False)
-
-        elif self.cameraGroup.checkedId() == 2:
-            d = DEFAULT_PATH_IXONV
-            self.filePath.setText(d)
-            if os.path.isdir(d):
-                n = getLastFile(d)
-                self.autoLoadFile.setText(str(n))
-
-        elif self.cameraGroup.checkedId() == 3:
-            d = DEFAULT_PATH_IXON_GSM
-            self.filePath.setText(d)
-            if os.path.isdir(d):
-                n = getLastFile(d)
-                self.autoLoadFile.setText(str(n))
-  
-        else:
-            d = DEFAULT_PATH_PI
-            self.filePath.setText(d)
-            if os.path.isdir(d):
-                n = getLastFile(d)
-                self.autoLoadFile.setText(str(n))
+        d = modes[self.mode]["Default Path"]
+        self.filePath.setText(d)
+        if os.path.isdir(d):
+            n = getLastFile(d)
+            self.autoLoadFile.setText(str(n))
 
 class fitOptionsWidget(QtGui.QWidget):
     def __init__(self,Parent=None):
@@ -487,6 +430,7 @@ class fitOptionsWidget(QtGui.QWidget):
 
         #### Layout Stuff
 
+        # TODO: Remove imaging path widget since information is encapsulated in mode
         h0 = QtGui.QHBoxLayout()
         h0.addWidget(QtGui.QLabel("Imaging Path: "))
         h0.addWidget(self.imagePath)
@@ -553,7 +497,7 @@ class averageWidget(QtGui.QWidget):
 
 
 class autoloader(QtCore.QThread):
-
+    # TODO: Redo this to support autoloading differently based on self.modes (for creating class, not this one)
 
     def __init__(self, mainPF, Parent=None):
         super(autoloader, self).__init__(Parent)

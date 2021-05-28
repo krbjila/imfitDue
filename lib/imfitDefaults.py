@@ -25,7 +25,7 @@ now = datetime.datetime.now()
 # with open('./lib/ip.txt') as f:
 # 	ip_str = f.read(100)
 # DEFAULT_PATH = now.strftime('//'+ip_str+'/krbdata/data/%Y/%m/%Y%m%d/') # PolarKRB's IP address
-DEFAULT_PATH = now.strftime('K:/data/%Y/%m/%Y%m%d/') # PolarKRB's IP address
+DEFAULT_PATH = now.strftime('K:/data/%Y/%m/%Y%m%d/') # The dataserver is mounted to K: on the Windows computers.
 
 
 DEFAULT_PATH_PI = DEFAULT_PATH + 'ximea/'
@@ -117,3 +117,58 @@ DEFAULT_REGION = {
 FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
 KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian']
 WORKSHEET_NAMES = [ 'GaussGrad', 'Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']
+
+modes = {
+    'Ximea': {
+        ### Mode 0 - Ximea
+        'Default Path': DEFAULT_PATH + 'ximea/',
+        'Default Suffix': 'xi_{}.csv',
+        'Pixel Size': 3.46,
+        'Images': ['K', 'Rb'],
+        'Image Path': 'Side',
+        'Default Region': [[185, 260, 300, 300], 
+                  [185, 260, 300, 300]],
+        'Extension Filter': '*.dat',
+        'Fit Functions': FIT_FUNCTIONS,
+        'Enforce same fit for both': False
+    },
+    'Axial iXon': {
+        ### Mode 1 - Axial iXon
+        'Default Path': DEFAULT_PATH + 'Andor/',
+        'Default Suffix': 'ixon_{}.csv',
+        'Pixel Size': 2.58,
+        'Images': ['K', 'Rb'],
+        'Image Path': 'Axial',
+        'Default Region': [[150, 220, 250, 250], 
+                  [150, 350, 300, 300]],
+        'Extension Filter': '*.csv',
+        'Fit Functions': FIT_FUNCTIONS,
+        'Enforce same fit for both': False
+    },
+    'Vertical iXon': {
+        ### Mode 2 - Vertical iXon
+        'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
+        'Default Suffix': 'twospecies_{}.csv',
+        'Pixel Size': 0.956,
+        'Images': ['K', 'Rb'],
+        'Image Path': 'Vertical',
+        'Default Region': [[125, 280, 250, 250], 
+                  [125, 280, 250, 250]],
+        'Extension Filter': '*.csv',
+        'Fit Functions': FIT_FUNCTIONS,
+        'Enforce same fit for both': False
+    },
+    'Axial iXon Molecules': {
+        ### Mode 3 - Axial iXon Molecules
+        'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
+        'Default Suffix': 'ixon_{}.csv',
+        'Pixel Size': 2.58,
+        'Images': ['|0,0>', '|1,0>'],
+        'Image Path': 'Axial',
+        'Default Region': [[280, 240, 60, 40], 
+                  [280, 240, 60, 40]],
+        'Extension Filter': '*.csv',
+        'Fit Functions': KRB_FIT_FUNCTIONS,
+        'Enforce same fit for both': True
+    }
+}
