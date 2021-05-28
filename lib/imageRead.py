@@ -13,8 +13,8 @@ def readImage(mode, path):
 
     if extension == '*.csv':
         reader = CsvReader(mode)
-    else:
-        pass # TODO: fill these in
+    elif extension == '*.npz':
+        reader = NpzReader(mode)
     reader.setPath(path)
     return reader
 
@@ -28,10 +28,13 @@ class Reader(object):
         self.frames = {}
 
         self.n_frames = self.config['Number of Frames']
-        self.array_width = self.config['Array Width']
-        self.auto_detect_binning = self.config['Auto Detect Binning']
         self.frame_order = self.config['Frame Order']
 
+        # Need to know the size of the array if we are to auto detect binning
+        self.auto_detect_binning = self.config['Auto Detect Binning']
+        if self.auto_detect_binning:
+            self.array_width = self.config['Array Width']
+        
         # self.nFrames = None
         # self.hImgSize = None
         # self.vImgSize = None
@@ -97,6 +100,10 @@ class CsvReader(Reader):
 class NpzReader(Reader):
     def __init__(self, mode):
         super(NpzReader, self).__init__(mode)
+
+    def getData(self):
+        data = np.load(self.path, allow_pickle=True)
+        return (data['data'], data['meta'])
     
 class DatReader(Reader):
     def __init__(self, mode):

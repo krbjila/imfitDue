@@ -185,6 +185,35 @@ IMFIT_MODES = OrderedDict([
         },
         'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
+    ('Pixelfly Test', {
+        ### PLACEHOLDER
+        ### TODO: put in finalized values
+        'Default Path': DEFAULT_PATH + 'Pixelfly/',
+        'Default Suffix': 'pixelfly_{}.npz',
+        'Pixel Size': 2.58,
+        'Species': ['K', 'Rb'],
+        'Image Path': 'Axial',
+        'Default Region': [[150, 220, 250, 250], 
+                  [150, 350, 300, 300]],
+        'Extension Filter': '*.npz',
+        'Fit Functions': FIT_FUNCTIONS,
+        'Enforce same fit for both': False,
+        'Auto Detect Binning': False,
+        'Number of Frames': 6,
+        'Frame Order': {
+            'K': {
+                'Shadow': 0,
+                'Light': 2,
+                'Dark': 4,
+            },
+            'Rb': {
+                'Shadow': 1,
+                'Light': 3,
+                'Dark': 5
+            }
+        },
+        'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
+    }),
     ('Vertical iXon', {
         ### Mode 2 - Vertical iXon
         'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
