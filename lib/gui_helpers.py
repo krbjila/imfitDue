@@ -1,4 +1,5 @@
-from lib.imfitDefaults import DEFAULT_MODE, IMFIT_MODES
+from numpy.ma.core import set_fill_value
+from lib.imfitDefaults import AUTOSCALE_HEADROOM, AUTOSCALE_MIN, DEFAULT_MODE, IMFIT_MODES
 import sys
 
 from PyQt4 import QtGui, QtCore
@@ -17,6 +18,8 @@ import os
 import datetime 
 
 class ImageWindows(QtGui.QWidget):
+    signalFrameChanged = QtCore.pyqtSignal(str)
+
     def __init__(self, Parent=None):
         super(ImageWindows,self).__init__(Parent)
         
@@ -24,8 +27,9 @@ class ImageWindows(QtGui.QWidget):
         pal.setColor(QtGui.QPalette.Background, QtCore.Qt.white)
         self.setPalette(pal)
         
+        self.frames = {}
+        self.species = None
         self.setup()
-
 
     def setup(self):
         self.figure = Figure(facecolor='white',tight_layout=True)
@@ -68,6 +72,7 @@ class ImageWindows(QtGui.QWidget):
         self.plotTools.odSlider.valueChanged.connect(self.plotUpdate)
         self.plotTools.odMinEdit.returnPressed.connect(self.plotUpdate)
 
+        self.plotTools.frameSelect.currentIndexChanged.connect(self.frameChanged)
 
         ######### Layout Nonsense
 
@@ -87,19 +92,30 @@ class ImageWindows(QtGui.QWidget):
 
         self.setLayout(vbox)
 
-
+    def frameChanged(self):
+        frame = str(self.plotTools.frameSelect.currentText())
+        self.signalFrameChanged.emit(frame)
+           
     def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None):
         colorMap = KRbCustomColors().whiteJet
         levelLow = float(self.plotTools.odMinEdit.text())
-        levelHigh = float(self.plotTools.odMaxEdit.text())
 
+        # self.xlims = x
+        # self.ylims = y
+        # self.od_image = image
+        # self.ch0 = ch0
+        # self.ch1 = ch1
+    
         if image is not None:
+            self.plotTools.setImage(image)
+
             self.ax0.cla()
 
             crossHairColor = [0.,0.,0.,1]
             self.crossHairV, = self.ax0.plot([],[],color=crossHairColor)
             self.crossHairH, = self.ax0.plot([],[],color=crossHairColor)
             
+            print(image.shape)
             self.mainImage = self.ax0.imshow(image,cmap=colorMap, extent=(min(x),max(x),max(y),min(y)))
             self.ax0.set_xlim((min(x), max(x)))
             self.ax0.set_ylim((max(y), min(y)))
@@ -175,8 +191,10 @@ class ImageWindows(QtGui.QWidget):
 class plotTools(QtGui.QWidget):
     def __init__(self,Parent=None):
         super(plotTools,self).__init__(Parent)
-        self.setup()
         self.setFixedHeight(650)
+        self.mode = DEFAULT_MODE
+        self.image = []
+        self.setup()
 
     def setup(self):
         ODMAXDEFAULT = '2'
@@ -212,6 +230,16 @@ class plotTools(QtGui.QWidget):
         self.atomSelectGroup.addButton(self.rbSelect)
         self.atomSelectGroup.addButton(self.kSelect)
 
+        self.frameSelect = QtGui.QComboBox()
+        self.frameSelect.addItem("OD")
+        self.frameSelect.addItem("Shadow")
+        self.frameSelect.addItem("Light")
+        self.frameSelect.addItem("Dark")
+        self.frameSelect.setCurrentIndex(0)
+
+        self.autoscaler = QtGui.QPushButton("Autoscale me!")
+        self.autoscaler.clicked.connect(self.autoscaleSlider)
+
         hbox = QtGui.QHBoxLayout()
         hbox.addWidget(self.setCHX)
         hbox.addWidget(self.setCHY)
@@ -220,6 +248,7 @@ class plotTools(QtGui.QWidget):
         vbox.addWidget(self.odMaxEdit,QtCore.Qt.AlignCenter)
         vbox.addWidget(self.odSlider)
         vbox.addWidget(self.odMinEdit)
+        vbox.addWidget(self.autoscaler)
         vbox.addWidget(self.removeCHButton)
         vbox.addLayout(hbox)
         vbox.addWidget(QtGui.QLabel('Crosshair     (X,Y)'))
@@ -227,6 +256,8 @@ class plotTools(QtGui.QWidget):
         vbox.addStretch(1)
         vbox.addWidget(self.kSelect)
         vbox.addWidget(self.rbSelect)
+
+        vbox.addWidget(self.frameSelect)
 
         self.setLayout(vbox)
 
@@ -249,7 +280,17 @@ class plotTools(QtGui.QWidget):
         if odmin > sv:
             self.odSlider.setValue(odmin)
         self.odSlider.setMinimum(odmin+0.5)
-            
+
+    def setImage(self, image):
+        self.image = image
+
+    def autoscaleSlider(self):
+        if len(self.image):
+            (low, high) = np.percentile(self.image, [AUTOSCALE_MIN, 100])
+            self.odMaxEdit.setText("{:0.1f}".format(high * AUTOSCALE_HEADROOM))
+            self.odMinEdit.setText("{:0.1f}".format(low))
+            self.updateSlider()
+            self.odSlider.setValue(high * 10.0)
 
 class regionWidget(QtGui.QWidget):
     def __init__(self, Parent=None):
@@ -338,7 +379,7 @@ class pathWidget(QtGui.QWidget):
         # h0.addWidget(self.ixon_gsm)
         # h0.addWidget(self.ixonv)
         h0.addStretch(1)
-        h0.addWidget(QtGui.QLabel('Camera: '))
+        h0.addWidget(QtGui.QLabel('Imaging/Analysis mode: '))
         h0.addWidget(self.cameraGroup)
 
         h1.addWidget(self.filePath)
@@ -432,7 +473,7 @@ class fitOptionsWidget(QtGui.QWidget):
 
         # TODO: Remove imaging path widget since information is encapsulated in mode
         h0 = QtGui.QHBoxLayout()
-        h0.addWidget(QtGui.QLabel("Imaging Path: "))
+        # h0.addWidget(QtGui.QLabel("Imaging Path: "))
         # h0.addWidget(self.imagePath)
         h0.addStretch(1)
         self.RbLabel = QtGui.QLabel('Fit Rb to:')

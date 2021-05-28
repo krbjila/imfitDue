@@ -17,7 +17,6 @@ class calcOD():
         ### Note that the region is passed as [x0, y0, xcrop, ycrop]
         ### Crop is symmetric about center (x0,y0)
 
-
         self.data = data
         self.xRange0 = None
         self.xRange1 = None

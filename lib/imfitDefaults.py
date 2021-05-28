@@ -20,6 +20,8 @@ VERT_TRAP_ANGLE = 30.0 # Degrees
 #######################################################################
 
 import datetime
+
+from matplotlib.pyplot import autoscale
 now = datetime.datetime.now()
 
 # with open('./lib/ip.txt') as f:
@@ -113,6 +115,9 @@ DEFAULT_REGION = {
 	'IXON_GSM' : DEFAULT_REGION_IXON_GSM,
 	'IXONV' : DEFAULT_REGION_IXONV
 }
+
+AUTOSCALE_MIN = 2 # percentile
+AUTOSCALE_HEADROOM = 1.1 # factor above max
 
 FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
 KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian']

@@ -34,6 +34,7 @@ class imfitDue(QtGui.QMainWindow):
         self.fitRb = None
 
         self.mode = DEFAULT_MODE
+        self.frame = 'OD'
 
     def makeConnections(self):
         self.pf.signalCamChanged.connect(self.camChanged)
@@ -41,6 +42,7 @@ class imfitDue(QtGui.QMainWindow):
         self.fo.fitButton.clicked.connect(self.fitCurrent)
 
         self.figs.plotTools.atomSelectGroup.buttonClicked.connect(self.plotCurrent)
+        self.figs.signalFrameChanged.connect(self.frameChanged)
 
         for i in range(2):
             for j in range(4):
@@ -53,6 +55,10 @@ class imfitDue(QtGui.QMainWindow):
         self.mode = str(new_cam)
         self.autoloader.modeChanged(self.mode)
         self.passCamToROI()
+
+    def frameChanged(self, frame):
+        self.frame = str(frame)
+        self.plotCurrent()
 
     def loadFile(self):
         print("loadFile started!")
@@ -84,7 +90,6 @@ class imfitDue(QtGui.QMainWindow):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
-        #TODO: Replace imagePath with mode in calcOD
         species = IMFIT_MODES[self.mode]['Species']
         self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
         self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
@@ -185,7 +190,8 @@ class imfitDue(QtGui.QMainWindow):
                     return 1
             
     def plotCurrent(self):
-        
+        frames = self.currentFile.frames
+        species = IMFIT_MODES[self.mode]['Species']
         if self.figs.plotTools.kSelect.isChecked():
 
             x = self.odK.xRange0
@@ -216,13 +222,20 @@ class imfitDue(QtGui.QMainWindow):
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
 
-            self.figs.plotUpdate(x,y,self.odK.ODCorrected,ch0,ch1)
-
-            if self.fitK is not None:
-                if self.fitK.fitFunction==FIT_FUNCTIONS.index('Fermi-Dirac'):
-                    self.figs.plotSliceUpdate(x,[Sx,Fx],np.arange(len(R)),[R,RG,RF])
-                else:
-                    self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
+            if self.frame == 'OD':
+                image = self.odK.ODCorrected
+            else:
+                print(x)
+                print(y)
+                image = frames[species[0]][self.frame][y[0]:y[-1], x[0]:x[-1]]
+            self.figs.plotUpdate(x,y,image,ch0,ch1)
+    
+            if self.frame == 'OD':
+                if self.fitK is not None:
+                    if self.fitK.fitFunction==FIT_FUNCTIONS.index('Fermi-Dirac'):
+                        self.figs.plotSliceUpdate(x,[Sx,Fx],np.arange(len(R)),[R,RG,RF])
+                    else:
+                        self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
 
         if self.figs.plotTools.rbSelect.isChecked():
 
@@ -246,8 +259,14 @@ class imfitDue(QtGui.QMainWindow):
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
 
-            self.figs.plotUpdate(x,y,self.odRb.ODCorrected,ch0,ch1)
-            self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
+            if self.frame == 'OD':
+                image = self.odRb.ODCorrected
+            else:
+                image = frames[species[1]][self.frame][y[0]:y[-1], x[0]:x[-1]]
+            self.figs.plotUpdate(x,y,image,ch0,ch1)
+
+            if self.frame == 'OD':
+                self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)
