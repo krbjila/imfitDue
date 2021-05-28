@@ -1,3 +1,4 @@
+from lib.imfitDefaults import DEFAULT_MODE
 import sys
 
 from PyQt4 import QtGui, QtCore
@@ -280,7 +281,7 @@ class regionWidget(QtGui.QWidget):
 
         for i in range(2):
             for j in range(4):
-                self.region[i][j] = QtGui.QLineEdit(str(modes[self.mode]["Default Region"][i][j]))
+                self.region[i][j] = QtGui.QLineEdit(str(IMFIT_MODES[DEFAULT_MODE]["Default Region"][i][j]))
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
 
@@ -288,7 +289,7 @@ class regionWidget(QtGui.QWidget):
 
     def setDefaultRegion(self, mode):
         try:
-            region = modes[mode]["Default Region"]
+            region = IMFIT_MODES[mode]["Default Region"]
         except AttributeError:
             print("regionWidget.setDefaultRegion error: requested mode doesn't exist")
             return -1
@@ -299,17 +300,19 @@ class regionWidget(QtGui.QWidget):
         return 0
 
 class pathWidget(QtGui.QWidget):
+    signalCamChanged = QtCore.pyqtSignal(str)
+
     def __init__(self,fitOptions,imageWindows, roi, Parent=None):
         super(pathWidget,self).__init__(Parent)
         self.fitOptions = fitOptions
         self.imageWindows = imageWindows
         self.roi = roi
+        self.mode = DEFAULT_MODE
         self.setup()
 
     def setup(self):
 
-
-        self.filePath = QtGui.QLineEdit(DEFAULT_PATH)
+        self.filePath = QtGui.QLineEdit(IMFIT_MODES[self.mode]['Default Path'])
         self.filePath.setFixedWidth(300)
         self.browseButton = QtGui.QPushButton('Browse')
         self.browseButton.clicked.connect(self.browseFile)
@@ -320,8 +323,7 @@ class pathWidget(QtGui.QWidget):
 
 
         self.cameraGroup = QtGui.QComboBox()
-        # TODO: make this set the mode of the parent, not here
-        self.cameraGroup.addItems(self.modes.keys())
+        self.cameraGroup.addItems(IMFIT_MODES.keys())
         self.cameraGroup.setCurrentIndex(0)
         self.cameraGroup.currentIndexChanged.connect(self.camChanged)        
         
@@ -330,13 +332,14 @@ class pathWidget(QtGui.QWidget):
         h2  = QtGui.QHBoxLayout()
         v  = QtGui.QVBoxLayout()
 
+        # h0.addStretch(1)
+        # h0.addWidget(self.pi)
+        # h0.addWidget(self.ixon)
+        # h0.addWidget(self.ixon_gsm)
+        # h0.addWidget(self.ixonv)
         h0.addStretch(1)
         h0.addWidget(QtGui.QLabel('Camera: '))
-        h0.addWidget(self.pi)
-        h0.addWidget(self.ixon)
-        h0.addWidget(self.ixon_gsm)
-        h0.addWidget(self.ixonv)
-
+        h0.addWidget(self.cameraGroup)
 
         h1.addWidget(self.filePath)
         h1.addWidget(self.browseButton)
@@ -358,10 +361,9 @@ class pathWidget(QtGui.QWidget):
         
         d = self.filePath.text()
         if not os.path.isdir(d):
-            d = DEFAULT_PATH        
+            d = IMFIT_MODES[DEFAULT_MODE]['Default Path']        
         
-        # TODO: make this get the mode of the parent, not this class
-        ext = modes[self.mode]["Extension Filter"]
+        ext = IMFIT_MODES[self.mode]["Extension Filter"]
 
         x = QtGui.QFileDialog()
         path = x.getOpenFileName(self,'Select a file to load' ,filter=ext, directory=d, options=QtGui.QFileDialog.DontUseNativeDialog)
@@ -371,27 +373,27 @@ class pathWidget(QtGui.QWidget):
     def camChanged(self):
         self.autoLoad.setChecked(False)
 
-        # TODO: make this set the mode of the parent, not this class
-        self.mode = self.cameraGroup.currentText()
+        self.mode = str(self.cameraGroup.currentText())
+        self.signalCamChanged.emit(self.mode) # sets self.mode in top-level class
 
         self.fitOptions.rbFitFunction.clear()
-        self.fitOptions.rbFitFunction.addItems(modes[self.mode]["Fit Functions"])
+        self.fitOptions.rbFitFunction.addItems(IMFIT_MODES[self.mode]["Fit Functions"])
         self.fitOptions.kFitFunction.clear()
-        self.fitOptions.kFitFunction.addItems(modes[self.mode]["Fit Functions"])
-        if modes[self.mode]["Enforce same fit for both"]:
+        self.fitOptions.kFitFunction.addItems(IMFIT_MODES[self.mode]["Fit Functions"])
+        if IMFIT_MODES[self.mode]["Enforce same fit for both"]:
             kfit = self.fitOptions.kFitFunction.currentIndex()
             self.fitOptions.rbFitFunction.setCurrentIndex(kfit)
             self.fitOptions.rbFitFunction.setEnabled(False)
         else:
             self.fitOptions.rbFitFunction.setEnabled(True)
-        self.fitOptions.KLabel.setText("Fit {} to".format(modes[self.mode]["Images"][0]))
-        self.fitOptions.RbLabel.setText("Fit {} to".format(modes[self.mode]["Images"][1]))
-        self.imageWindows.plotTools.kSelect.setText(modes[self.mode]["Images"][0])
-        self.imageWindows.plotTools.rbSelect.setText(modes[self.mode]["Images"][1])
-        self.roi.atom_labels[0].setText(modes[self.mode]["Images"][0])
-        self.roi.atom_labels[1].setText(modes[self.mode]["Images"][1])
+        self.fitOptions.KLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Images"][0]))
+        self.fitOptions.RbLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Images"][1]))
+        self.imageWindows.plotTools.kSelect.setText(IMFIT_MODES[self.mode]["Images"][0])
+        self.imageWindows.plotTools.rbSelect.setText(IMFIT_MODES[self.mode]["Images"][1])
+        self.roi.atom_labels[0].setText(IMFIT_MODES[self.mode]["Images"][0])
+        self.roi.atom_labels[1].setText(IMFIT_MODES[self.mode]["Images"][1])
 
-        d = modes[self.mode]["Default Path"]
+        d = IMFIT_MODES[self.mode]["Default Path"]
         self.filePath.setText(d)
         if os.path.isdir(d):
             n = getLastFile(d)
@@ -407,16 +409,14 @@ class fitOptionsWidget(QtGui.QWidget):
             self.rbFitFunction.setCurrentIndex(self.kFitFunction.currentIndex())
 
     def setup(self):
-
-
         self.rbFitFunction = QtGui.QComboBox()
-        self.rbFitFunction.addItems(FIT_FUNCTIONS)
+        self.rbFitFunction.addItems(IMFIT_MODES[DEFAULT_MODE]['Fit Functions'])
         self.kFitFunction = QtGui.QComboBox()
-        self.kFitFunction.addItems(FIT_FUNCTIONS)
+        self.kFitFunction.addItems(IMFIT_MODES[DEFAULT_MODE]['Fit Functions'])
         self.kFitFunction.currentIndexChanged.connect(self.updateRbFit)
 
-        self.imagePath = QtGui.QComboBox()
-        self.imagePath.addItems(IMAGING_PATHS)
+        # self.imagePath = QtGui.QComboBox()
+        # self.imagePath.addItems(IMAGING_PATHS)
 
         self.autoFit = QtGui.QCheckBox('AutoFit')
         self.autoUpload = QtGui.QCheckBox('Auto Origin')
@@ -433,7 +433,7 @@ class fitOptionsWidget(QtGui.QWidget):
         # TODO: Remove imaging path widget since information is encapsulated in mode
         h0 = QtGui.QHBoxLayout()
         h0.addWidget(QtGui.QLabel("Imaging Path: "))
-        h0.addWidget(self.imagePath)
+        # h0.addWidget(self.imagePath)
         h0.addStretch(1)
         self.RbLabel = QtGui.QLabel('Fit Rb to:')
         h0.addWidget(self.RbLabel)

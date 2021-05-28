@@ -118,21 +118,11 @@ FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twiste
 KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian']
 WORKSHEET_NAMES = [ 'GaussGrad', 'Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']
 
-modes = {
-    'Ximea': {
-        ### Mode 0 - Ximea
-        'Default Path': DEFAULT_PATH + 'ximea/',
-        'Default Suffix': 'xi_{}.csv',
-        'Pixel Size': 3.46,
-        'Images': ['K', 'Rb'],
-        'Image Path': 'Side',
-        'Default Region': [[185, 260, 300, 300], 
-                  [185, 260, 300, 300]],
-        'Extension Filter': '*.dat',
-        'Fit Functions': FIT_FUNCTIONS,
-        'Enforce same fit for both': False
-    },
-    'Axial iXon': {
+DEFAULT_MODE = 'Axial iXon'
+
+from collections import OrderedDict
+IMFIT_MODES = OrderedDict([
+    ('Axial iXon', {
         ### Mode 1 - Axial iXon
         'Default Path': DEFAULT_PATH + 'Andor/',
         'Default Suffix': 'ixon_{}.csv',
@@ -143,22 +133,24 @@ modes = {
                   [150, 350, 300, 300]],
         'Extension Filter': '*.csv',
         'Fit Functions': FIT_FUNCTIONS,
-        'Enforce same fit for both': False
-    },
-    'Vertical iXon': {
-        ### Mode 2 - Vertical iXon
-        'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
-        'Default Suffix': 'twospecies_{}.csv',
-        'Pixel Size': 0.956,
-        'Images': ['K', 'Rb'],
-        'Image Path': 'Vertical',
-        'Default Region': [[125, 280, 250, 250], 
-                  [125, 280, 250, 250]],
-        'Extension Filter': '*.csv',
-        'Fit Functions': FIT_FUNCTIONS,
-        'Enforce same fit for both': False
-    },
-    'Axial iXon Molecules': {
+        'Enforce same fit for both': False,
+        'Auto Detect Binning': True,
+        'Array Width': 512,
+        'Number of Frames': 6,
+        'Frame Order': {
+            'K': {
+                'Shadow': 0,
+                'Light': 2,
+                'Dark': 4,
+            },
+            'Rb': {
+                'Shadow': 1,
+                'Light': 3,
+                'Dark': 5
+            }
+        }
+    }),
+    ('Axial iXon Molecules', {
         ### Mode 3 - Axial iXon Molecules
         'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
         'Default Suffix': 'ixon_{}.csv',
@@ -170,5 +162,31 @@ modes = {
         'Extension Filter': '*.csv',
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True
-    }
-}
+    }),
+    ('Vertical iXon', {
+        ### Mode 2 - Vertical iXon
+        'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
+        'Default Suffix': 'twospecies_{}.csv',
+        'Pixel Size': 0.956,
+        'Images': ['K', 'Rb'],
+        'Image Path': 'Vertical',
+        'Default Region': [[125, 280, 250, 250], 
+                  [125, 280, 250, 250]],
+        'Extension Filter': '*.csv',
+        'Fit Functions': FIT_FUNCTIONS,
+        'Enforce same fit for both': False
+    }),
+    ('Ximea', {
+        ### Mode 0 - Ximea
+        'Default Path': DEFAULT_PATH + 'ximea/',
+        'Default Suffix': 'xi_{}.csv',
+        'Pixel Size': 3.46,
+        'Images': ['K', 'Rb'],
+        'Image Path': 'Side',
+        'Default Region': [[185, 260, 300, 300], 
+                  [185, 260, 300, 300]],
+        'Extension Filter': '*.dat',
+        'Fit Functions': FIT_FUNCTIONS,
+        'Enforce same fit for both': False
+    }),
+])

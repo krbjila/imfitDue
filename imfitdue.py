@@ -32,9 +32,10 @@ class imfitDue(QtGui.QMainWindow):
         self.fitK = None
         self.fitRb = None
 
-        self.mode = 'Axial iXon'
+        self.mode = DEFAULT_MODE
 
     def makeConnections(self):
+        self.pf.signalCamChanged.connect(self.camChanged)
         self.pf.loadButton.clicked.connect(self.loadFile)
         self.fo.fitButton.clicked.connect(self.fitCurrent)
 
@@ -46,6 +47,10 @@ class imfitDue(QtGui.QMainWindow):
         
         self.av.averageButton.clicked.connect(self.averageImages)
         self.fo.uploadButton.clicked.connect(self.process2Origin)
+
+    def camChanged(self, new_cam):
+        self.mode = str(new_cam)
+        self.passCamToROI()
 
     def loadFile(self):
         print("loadFile started!")
@@ -59,7 +64,6 @@ class imfitDue(QtGui.QMainWindow):
             # TODO: Implement readImage
             self.currentFile = readImage(self.mode, path)
             
-
             if self.pf.autoLoad.isChecked():
                 t = self.pf.autoLoadFile.text()
                 self.pf.autoLoadFile.setText(str(int(t) + 1))
@@ -101,7 +105,7 @@ class imfitDue(QtGui.QMainWindow):
         self.pf.autoLoad.setChecked(False)
         x = self.av.getFileNumbers()
 
-        path = modes[self.mode]["Default Path"]
+        path = IMFIT_MODES[self.mode]["Default Path"]
 
         firstFile = True
         if x is not None:
@@ -120,8 +124,6 @@ class imfitDue(QtGui.QMainWindow):
             self.currentODCalc()
         self.autoloader.is_active = True
 
-
-
     def fitCurrent(self):
         # TODO: Understand what this does and adjust to be more readable
         if self.fo.moleculeBook.isChecked():
@@ -131,7 +133,7 @@ class imfitDue(QtGui.QMainWindow):
 
         rbAtom = 1
         TOF = float(self.fo.tof.text())
-        pxl = modes[self.mode]["Pixel Size"]
+        pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
         # TODO: Is it possible/ useful to generalize to an arbitrary number of fits with different names?
         self.fitK = fitOD(self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
@@ -143,7 +145,7 @@ class imfitDue(QtGui.QMainWindow):
         print("Done fitting and uploading current shot")
 
     def process2Origin(self):
-        imagePath = modes[self.mode]["Image Path"]
+        imagePath = IMFIT_MODES[self.mode]["Image Path"]
 
         if self.fitK is not None and self.fitRb is not None:
             print("Processing K fit result")
@@ -257,9 +259,7 @@ class imfitDue(QtGui.QMainWindow):
         self.pf = pathWidget(self.fo, self.figs, self.roi)
         self.av = averageWidget()
 
-        self.pf.cameraGroup.buttonClicked.connect(self.passCamToROI)
-
-
+        # self.pf.cameraGroup.buttonClicked.connect(self.passCamToROI)
         
         gb1 = QtGui.QGroupBox('File Path')
         gb1.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))

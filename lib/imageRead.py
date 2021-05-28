@@ -8,6 +8,116 @@ import os
 ### camera or the Andor iXon 888. Regardless of the camera, the classes have the same
 ### member variables, and the data is structured in the same way.
 
+def readImage(mode, path):
+    extension = IMFIT_MODES[mode]['Extension Filter']
+
+    if extension == '*.csv':
+        reader = CsvReader(mode)
+    else:
+        pass # TODO: fill these in
+    reader.setPath(path)
+
+    print(reader.frames)
+    return reader
+
+class Reader(object):
+    def __init__(self, mode):
+        self.mode = mode
+
+        self.config = IMFIT_MODES[self.mode]
+        self.path = self.config['Default Path']
+        self.metadata = {}
+        self.frames = {}
+
+        self.n_frames = self.config['Number of Frames']
+        self.array_width = self.config['Array Width']
+        self.auto_detect_binning = self.config['Auto Detect Binning']
+        self.frame_order = self.config['Frame Order']
+
+        print(self.frame_order.items())
+
+        # self.nFrames = None
+        # self.hImgSize = None
+        # self.vImgSize = None
+        # self.bin = None
+
+        # self.fileLocation = None
+        # self.fileName = None 
+        # self.fileNumber = None
+        # self.fileTimeStamp = None
+
+        # self.camera = None
+        # self.img = None
+
+    def setPath(self,path):
+        self.path = path 
+        return self.updateAll()
+
+    def updateAll(self):
+        if not os.path.isfile(self.path):
+            print('No such file or directory: ' + self.path)
+            return 0
+
+        self.fileLocation = FILESEP.join(self.path.split(FILESEP)[0:-1]) + FILESEP
+        self.fileName = self.path.split(FILESEP)[-1]
+
+        # Convention: "filebase_shot.extension"
+        self.fileNumber =  int(self.path.split('_')[-1].split('.')[0])
+        self.fileTimeStamp = os.path.getctime(self.path)
+        
+        (frame_list, metadata) = self.getData()
+
+        frames  = {}
+        for species, frame_dict in self.config['Frame Order'].items():
+            temp = {}
+            for frame_name, frame_index in frame_dict.items():
+                temp.update({frame_name: frame_list[frame_index]})
+            frames.update({species: temp})
+        self.frames = frames
+
+        # self.frames = {
+        #     {
+        #         species: {
+        #             frame_name: frames[frame_index] for (frame_name, frame_index) in frame_dict.items()
+        #         } for (species, frame_dict) in self.frame_order.items() 
+        #     }
+        # }
+        self.metadata = metadata
+
+    def getFrame(self, atom, frame):
+        return self.frames[atom][frame]
+
+class CsvReader(Reader):
+    def __init__(self, mode, delimiter=','):
+        super(CsvReader, self).__init__(mode)
+        self.delimiter = delimiter
+
+    def getData(self):
+        data = np.genfromtxt(self.path, delimiter=self.delimiter)
+
+        # We don't really have metadata from csv's, except for binning info
+        metadata = {}
+        if self.auto_detect_binning:
+            bins = self.array_width / int(data.shape[1])
+            metadata['bins'] = (bins, bins)
+        else:
+            # Assume no binning for now
+            # TODO: check this intelligently
+            metadata['bins'] = (1,1)
+
+        frame_size = data.shape[0] / self.n_frames # concatenated along vertical dimension
+        frames = [data[i*frame_size:(i+1)*frame_size,:] for i in range(self.n_frames)]    
+
+        return (frames, metadata)
+
+class NpzReader(Reader):
+    def __init__(self, mode):
+        super(NpzReader, self).__init__(mode)
+    
+class DatReader(Reader):
+    def __init__(self, mode):
+        super(DatReader, self).__init__(mode)
+
 class readPIImage():
 
     def __init__(self,path):
