@@ -140,15 +140,16 @@ IMFIT_MODES = OrderedDict([
         'Frame Order': {
             'K': {
                 'Shadow': 0,
-                'Light': 2,
-                'Dark': 4,
+                'Light': 1,
+                'Dark': 2,
             },
             'Rb': {
-                'Shadow': 1,
-                'Light': 3,
+                'Shadow': 3,
+                'Light': 4,
                 'Dark': 5
             }
-        }
+        },
+        'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
     ('Axial iXon Molecules', {
         ### Mode 3 - Axial iXon Molecules

@@ -12,7 +12,7 @@ from scipy import ndimage as ndimage
 
 class calcOD():
 
-    def __init__(self,data,atom,imagePath,region=[]):
+    def __init__(self,data,species,mode,region=[]):
 
         ### Note that the region is passed as [x0, y0, xcrop, ycrop]
         ### Crop is symmetric about center (x0,y0)
@@ -21,12 +21,15 @@ class calcOD():
         self.data = data
         self.xRange0 = None
         self.xRange1 = None
-        self.imagePath = imagePath
+
+        self.mode = mode
+        self.config = IMFIT_MODES[mode]
+        self.species = species
     
-        if checkAtom(atom) < 0:
+        if checkAtom(species) < 0:
             pass
         else:
-            self.atom = checkAtom(atom)
+            self.atom = checkAtom(species)
             if len(region) == 4:
                 self.xCenter0 = region[0]
                 self.xCenter1 = region[1]
@@ -48,7 +51,6 @@ class calcOD():
             print('The region of interest was not properly defined.')
 
     
-    
     def updateAll(self):
         self.defineROI()
         self.calculateOD()
@@ -56,58 +58,47 @@ class calcOD():
 
     def calculateOD(self):
         with np.errstate(divide='ignore',invalid='ignore'):
-            shadow = self.data.getFrame(self.atom,'Shadow')
-            light = self.data.getFrame(self.atom,'Light')
-            dark = self.data.getFrame(self.atom,'Dark')
+            shadow = self.data.getFrame(self.species,'Shadow')
+            light = self.data.getFrame(self.species,'Light')
+            dark = self.data.getFrame(self.species,'Dark')
     
             shadowCrop = cropArray(shadow, self.xRange1, self.xRange0)
             lightCrop = cropArray(light, self.xRange1, self.xRange0)
             darkCrop = cropArray(dark, self.xRange1, self.xRange0)
-    
-            self.OD = np.log((lightCrop-darkCrop)/(shadowCrop-darkCrop))
-    
-            # if self.data.camera == CAMERA_NAME_XIMEA: #Changed to ximea 9/26/2019
-            if self.data.camera == CAMERA_NAME_XIMEA:
-                print(CAMERA_NAME_PI)
-                isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_PI[self.atom]*TPROBE_PI[self.atom]
-                odsat = ODSAT_PI[self.atom]
-            elif self.data.camera == CAMERA_NAME_IXON:
-                print(CAMERA_NAME_IXON)
-                isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXON[self.atom]*TPROBE_IXON[self.atom]
-                odsat = ODSAT_IXON[self.atom]
-            elif self.data.camera == CAMERA_NAME_IXON_GSM:
-                print(CAMERA_NAME_IXON_GSM)
-                isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXON_GSM[self.atom]*TPROBE_IXON_GSM[self.atom]
-                odsat = ODSAT_IXON_GSM[self.atom]
-            elif self.data.camera == CAMERA_NAME_IXONV:
-                print(CAMERA_NAME_IXONV)
-                isat = (self.data.bin+1.0)**2.0*ISAT_FLUX_IXONV[self.atom]*TPROBE_IXONV[self.atom]
-                odsat = ODSAT_IXONV[self.atom]
-    
 
-            # ODmod = np.log((1.0-np.exp(-odsat))/(np.exp(-self.OD)-np.exp(-odsat)))
-            # self.ODCorrected = ODmod + (1-np.exp(-ODmod))*lightCrop/isat
-            
-            Ceff = CSATEFF[self.imagePath]
-            self.ODCorrected = self.OD + (lightCrop - shadowCrop)/Ceff
+            s1 = shadowCrop - darkCrop
+            s2 = lightCrop - darkCrop
+            self.OD = -np.log(s1/s2)
+
+            Ceff = self.config['CSat'][self.species]
+            bins = self.data.bin
+            if isinstance(bins, tuple):
+                Ceff *= float(bins[0] * bins[1])
+            elif isinstance(bins, int):
+                Ceff *= float(bins**2)
+            self.ODCorrected = self.OD + (s2 - s1)/Ceff
 
             #Set all nans and infs to zero
-            self.OD[np.isnan(self.OD)] = 0
-            self.OD[np.isinf(self.OD)] = 0
-            if self.data.camera == CAMERA_NAME_IXON:            
-                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
-                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
-            elif self.data.camera == CAMERA_NAME_IXON_GSM:            
-                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
-                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
-            elif self.data.camera == CAMERA_NAME_IXONV:            
-                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
-                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
-            elif self.data.camera == CAMERA_NAME_XIMEA:
-                self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
-                self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
+            self.ODCorrected[np.isnan(self.ODCorrected)] = 0
+            self.ODCorrected[np.isinf(self.ODCorrected)] = 0
 
-                self.ODCorrected[self.ODCorrected > 10] = ODSAT_XIMEA[self.atom]
+            # self.ODCorrected[np.isnan(self.ODCorrected)] = odsat
+            # self.ODCorrected[np.isinf(self.ODCorrected)] = odsat
+
+            # if self.data.camera == CAMERA_NAME_IXON:            
+            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
+            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
+            # elif self.data.camera == CAMERA_NAME_IXON_GSM:            
+            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
+            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
+            # elif self.data.camera == CAMERA_NAME_IXONV:            
+            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
+            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
+            # elif self.data.camera == CAMERA_NAME_XIMEA:
+            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
+            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
+
+            #     self.ODCorrected[self.ODCorrected > 10] = ODSAT_XIMEA[self.atom]
   
     def defineROI(self):
         if self.xCenter0 > self.data.hImgSize or self.xCenter0 < 0:
@@ -143,6 +134,7 @@ class fitOD():
 
         self.atom = atom
         self.TOF = TOF
+
         self.pxl = pxl*(1.0 + odImage.data.bin)
 
         self.fitFunction = None
@@ -151,7 +143,6 @@ class fitOD():
         self.fitData = None
         self.fitDataConf = None
         self.fittedImage = None
-
 
         self.slices = self.fitSlices()
         

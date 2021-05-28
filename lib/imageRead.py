@@ -16,8 +16,6 @@ def readImage(mode, path):
     else:
         pass # TODO: fill these in
     reader.setPath(path)
-
-    print(reader.frames)
     return reader
 
 class Reader(object):
@@ -34,20 +32,10 @@ class Reader(object):
         self.auto_detect_binning = self.config['Auto Detect Binning']
         self.frame_order = self.config['Frame Order']
 
-        print(self.frame_order.items())
-
         # self.nFrames = None
         # self.hImgSize = None
         # self.vImgSize = None
         # self.bin = None
-
-        # self.fileLocation = None
-        # self.fileName = None 
-        # self.fileNumber = None
-        # self.fileTimeStamp = None
-
-        # self.camera = None
-        # self.img = None
 
     def setPath(self,path):
         self.path = path 
@@ -67,25 +55,20 @@ class Reader(object):
         
         (frame_list, metadata) = self.getData()
 
-        frames  = {}
+        self.frames  = {}
         for species, frame_dict in self.config['Frame Order'].items():
             temp = {}
             for frame_name, frame_index in frame_dict.items():
-                temp.update({frame_name: frame_list[frame_index]})
-            frames.update({species: temp})
-        self.frames = frames
-
-        # self.frames = {
-        #     {
-        #         species: {
-        #             frame_name: frames[frame_index] for (frame_name, frame_index) in frame_dict.items()
-        #         } for (species, frame_dict) in self.frame_order.items() 
-        #     }
-        # }
+                temp.update({frame_name: np.array(frame_list[frame_index])})
+            self.frames.update({species: temp})
+        
         self.metadata = metadata
+        self.bin = metadata['bins']
+        self.hImgSize = metadata['hImgSize']
+        self.vImgSize = metadata['vImgSize']
 
-    def getFrame(self, atom, frame):
-        return self.frames[atom][frame]
+    def getFrame(self, species, frame):
+        return self.frames[species][frame]
 
 class CsvReader(Reader):
     def __init__(self, mode, delimiter=','):
@@ -99,15 +82,16 @@ class CsvReader(Reader):
         metadata = {}
         if self.auto_detect_binning:
             bins = self.array_width / int(data.shape[1])
-            metadata['bins'] = (bins, bins)
+            metadata['bins'] = bins
         else:
             # Assume no binning for now
             # TODO: check this intelligently
-            metadata['bins'] = (1,1)
-
+            metadata['bins'] = 1
         frame_size = data.shape[0] / self.n_frames # concatenated along vertical dimension
         frames = [data[i*frame_size:(i+1)*frame_size,:] for i in range(self.n_frames)]    
 
+        metadata['hImgSize'] = data.shape[1]
+        metadata['vImgSize'] = frame_size
         return (frames, metadata)
 
 class NpzReader(Reader):

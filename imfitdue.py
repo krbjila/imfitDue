@@ -82,11 +82,9 @@ class imfitDue(QtGui.QMainWindow):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
-
         #TODO: Replace imagePath with mode in calcOD
         self.odK = calcOD(self.currentFile,'K', self.mode, self.regionK)
         self.odRb = calcOD(self.currentFile, 'Rb', self.mode, self.regionRb)
-
         
         if self.fo.autoFit.isChecked():
             self.fitCurrent()
@@ -427,9 +425,6 @@ class imfitDue(QtGui.QMainWindow):
         else:
             print("No file to save!")
 
-                
-            
-
     def loadFromMenu(self): 
 
         d = str(self.pf.filePath.text())
@@ -443,7 +438,6 @@ class imfitDue(QtGui.QMainWindow):
 
         self.pf.filePath.setText(xp)
         self.loadFile()
-
 
     def getStyleSheet(self,path):
         f = QtCore.QFile(path)
