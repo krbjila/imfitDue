@@ -127,7 +127,7 @@ IMFIT_MODES = OrderedDict([
         'Default Path': DEFAULT_PATH + 'Andor/',
         'Default Suffix': 'ixon_{}.csv',
         'Pixel Size': 2.58,
-        'Images': ['K', 'Rb'],
+        'Species': ['K', 'Rb'],
         'Image Path': 'Axial',
         'Default Region': [[150, 220, 250, 250], 
                   [150, 350, 300, 300]],
@@ -156,20 +156,36 @@ IMFIT_MODES = OrderedDict([
         'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
         'Default Suffix': 'ixon_{}.csv',
         'Pixel Size': 2.58,
-        'Images': ['|0,0>', '|1,0>'],
+        'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
         'Default Region': [[280, 240, 60, 40], 
                   [280, 240, 60, 40]],
         'Extension Filter': '*.csv',
         'Fit Functions': KRB_FIT_FUNCTIONS,
-        'Enforce same fit for both': True
+        'Enforce same fit for both': True,
+                'Auto Detect Binning': True,
+        'Array Width': 512,
+        'Number of Frames': 6,
+        'Frame Order': {
+            '|0,0>': {
+                'Shadow': 0,
+                'Light': 1,
+                'Dark': 2,
+            },
+            '|1,0>': {
+                'Shadow': 3,
+                'Light': 4,
+                'Dark': 5
+            }
+        },
+        'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
     ('Vertical iXon', {
         ### Mode 2 - Vertical iXon
         'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
         'Default Suffix': 'twospecies_{}.csv',
         'Pixel Size': 0.956,
-        'Images': ['K', 'Rb'],
+        'Species': ['K', 'Rb'],
         'Image Path': 'Vertical',
         'Default Region': [[125, 280, 250, 250], 
                   [125, 280, 250, 250]],
@@ -182,7 +198,7 @@ IMFIT_MODES = OrderedDict([
         'Default Path': DEFAULT_PATH + 'ximea/',
         'Default Suffix': 'xi_{}.csv',
         'Pixel Size': 3.46,
-        'Images': ['K', 'Rb'],
+        'Species': ['K', 'Rb'],
         'Image Path': 'Side',
         'Default Region': [[185, 260, 300, 300], 
                   [185, 260, 300, 300]],

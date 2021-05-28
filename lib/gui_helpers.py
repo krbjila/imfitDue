@@ -386,12 +386,12 @@ class pathWidget(QtGui.QWidget):
             self.fitOptions.rbFitFunction.setEnabled(False)
         else:
             self.fitOptions.rbFitFunction.setEnabled(True)
-        self.fitOptions.KLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Images"][0]))
-        self.fitOptions.RbLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Images"][1]))
-        self.imageWindows.plotTools.kSelect.setText(IMFIT_MODES[self.mode]["Images"][0])
-        self.imageWindows.plotTools.rbSelect.setText(IMFIT_MODES[self.mode]["Images"][1])
-        self.roi.atom_labels[0].setText(IMFIT_MODES[self.mode]["Images"][0])
-        self.roi.atom_labels[1].setText(IMFIT_MODES[self.mode]["Images"][1])
+        self.fitOptions.KLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Species"][0]))
+        self.fitOptions.RbLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Species"][1]))
+        self.imageWindows.plotTools.kSelect.setText(IMFIT_MODES[self.mode]["Species"][0])
+        self.imageWindows.plotTools.rbSelect.setText(IMFIT_MODES[self.mode]["Species"][1])
+        self.roi.atom_labels[0].setText(IMFIT_MODES[self.mode]["Species"][0])
+        self.roi.atom_labels[1].setText(IMFIT_MODES[self.mode]["Species"][1])
 
         d = IMFIT_MODES[self.mode]["Default Path"]
         self.filePath.setText(d)

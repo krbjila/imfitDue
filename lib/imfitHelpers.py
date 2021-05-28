@@ -134,43 +134,42 @@ def getImagesFromRange(stringIn):
     
     return l
 
-def upload2Origin(atom, fitFunction, data):
+def upload2Origin(species, fitFunction, data):
     import win32com.client
 
     progID = 'Origin.ApplicationSI'
     orgApp = win32com.client.Dispatch(progID)
 
-
-    atom = checkAtom(atom)
+    # species = checkAtom(species)
     fitFunction = checkFitFunction(fitFunction)
 
-    if atom != -1 and fitFunction != -1:
-        worksheetName = ATOM_NAMES[atom] + WORKSHEET_NAMES[fitFunction]
-        longname = ATOM_NAMES[atom] + " " + FIT_FUNCTIONS[fitFunction]
+    if fitFunction != -1:
+        worksheetName = species + WORKSHEET_NAMES[fitFunction]
+        longname = species + " " + FIT_FUNCTIONS[fitFunction]
 
-        if atom == 2:
-            if FIT_FUNCTIONS[fitFunction] == 'Gaussian':
-                template = 'KRbGauss1'
-            elif FIT_FUNCTIONS[fitFunction] == 'Twisted Gaussian':
-                template = 'KRbGauss1'
-            else:
-                template = WORKSHEET_NAMES[fitFunction]
-        elif atom == 3:
+        # if species == 2:
+        #     if FIT_FUNCTIONS[fitFunction] == 'Gaussian':
+        #         template = 'KRbGauss1'
+        #     elif FIT_FUNCTIONS[fitFunction] == 'Twisted Gaussian':
+        #         template = 'KRbGauss1'
+        #     else:
+        #         template = WORKSHEET_NAMES[fitFunction]
+        if species == 'KRbSpinGauss':
             if 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
                 template = 'KRbSpinGauss'
-                worksheetName = 'KRbSpinGauss1'
+                worksheetName = 'KRbSpinGaus1'
                 longname = 'KRb Spin Resolved Gaussian'
         else:
             template = WORKSHEET_NAMES[fitFunction]
         
-        print template, worksheetName, longname
+        print(template, worksheetName, longname)
 
         if orgApp.FindWorksheet(worksheetName) is None:
             orgApp.CreatePage(2, worksheetName, template)
         orgApp.Execute("{}!page.longname$ = {}".format(worksheetName, longname))
         # orgApp.Execute("{}!page.active$ = {}".format(worksheetName, "Sheet1")) 
 
-        if atom == 3:
+        if species == 'KRbSpinGauss':
             if FIT_FUNCTIONS[fitFunction] != 'Gaussian w/ Gradient':
                 # data is an array with [FitResultK, FitResultRb]
                 # trim off the file name for Rb

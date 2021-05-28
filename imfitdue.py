@@ -1,3 +1,4 @@
+from lib.imfitDefaults import IMFIT_MODES
 import sys, os
 sys.path.append('./lib')
 
@@ -84,8 +85,9 @@ class imfitDue(QtGui.QMainWindow):
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
         #TODO: Replace imagePath with mode in calcOD
-        self.odK = calcOD(self.currentFile,'K', self.mode, self.regionK)
-        self.odRb = calcOD(self.currentFile, 'Rb', self.mode, self.regionRb)
+        species = IMFIT_MODES[self.mode]['Species']
+        self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
+        self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
         
         if self.fo.autoFit.isChecked():
             self.fitCurrent()
@@ -157,7 +159,7 @@ class imfitDue(QtGui.QMainWindow):
 
             if self.mode == 'Axial iXon Molecules': # Molecule In situ FK
                 print("Uploading KRb to Origin")
-                upload2Origin('KRbInSitu', self.fitK.fitFunction,
+                upload2Origin('KRbSpinGauss', self.fitK.fitFunction,
                                         [KProcess.data, RbProcess.data])
                 return 1
             else:

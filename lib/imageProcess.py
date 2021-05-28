@@ -26,18 +26,28 @@ class calcOD():
         self.config = IMFIT_MODES[mode]
         self.species = species
     
-        if checkAtom(species) < 0:
-            pass
+        if len(region) == 4:
+            self.xCenter0 = region[0]
+            self.xCenter1 = region[1]
+            self.xCrop0 = region[2]
+            self.xCrop1 = region[3]
+            self.updateAll()
         else:
-            self.atom = checkAtom(species)
-            if len(region) == 4:
-                self.xCenter0 = region[0]
-                self.xCenter1 = region[1]
-                self.xCrop0 = region[2]
-                self.xCrop1 = region[3]
-                self.updateAll()
-            else:
-                print('The region of interest was not properly defined.')
+            print('The region of interest was not properly defined.')
+
+
+        # if checkAtom(species) < 0:
+        #     pass
+        # else:
+        #     self.atom = checkAtom(species)
+        #     if len(region) == 4:
+        #         self.xCenter0 = region[0]
+        #         self.xCenter1 = region[1]
+        #         self.xCrop0 = region[2]
+        #         self.xCrop1 = region[3]
+        #         self.updateAll()
+        #     else:
+        #         print('The region of interest was not properly defined.')
 
 
     def setRegion(self, region):
@@ -130,9 +140,9 @@ class calcOD():
         
 class fitOD():
 
-    def __init__(self, odImage, fitFunction, atom, TOF, pxl):
+    def __init__(self, odImage, fitFunction, species, TOF, pxl):
 
-        self.atom = atom
+        self.species = species
         self.TOF = TOF
 
         self.pxl = pxl*(1.0 + odImage.data.bin)
@@ -556,7 +566,7 @@ class fitOD():
             pLower = [-np.inf, 0.0, 0.0, 0.0,  0.0, np.min(r[1]), 0.0, np.min(r[0])]
             p0 = checkGuess(p0,pUpper,pLower)
 
-            imageDetails = [self.atom, self.TOF, self.pxl]
+            imageDetails = [self.species, self.TOF, self.pxl]
 
             resLSQ = least_squares(bandmapV, p0, args=(r,self.odImage.ODCorrected, imageDetails),bounds=(pLower,pUpper))
             
@@ -595,7 +605,7 @@ class processFitResult():
 
         self.fitObject = fitObject 
         self.bin = self.fitObject.odImage.data.bin
-        self.atom = self.fitObject.odImage.atom
+        # self.atom = self.fitObject.odImage.atom
         self.imagePath = IMAGING_PATHS.index(imagePath)
         self.pixelSize = PIXEL_SIZES[self.imagePath]
 
