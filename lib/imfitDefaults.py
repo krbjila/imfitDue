@@ -151,7 +151,7 @@ IMFIT_MODES = OrderedDict([
         },
         'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
-    ('Axial iXon Molecules', {
+    ('Axial iXon Molecules In Situ', {
         ### Mode 3 - Axial iXon Molecules
         'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
         'Default Suffix': 'ixon_{}.csv',

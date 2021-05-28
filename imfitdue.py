@@ -154,10 +154,10 @@ class imfitDue(QtGui.QMainWindow):
             print("Processing Rb fit result")
             RbProcess = processFitResult(self.fitRb, imagePath)
 
-            KProcess.data[0] = self.currentFile.fileName[0] + "-" + imagePath
-            RbProcess.data[0] = self.currentFile.fileName[0] + "-" + imagePath
+            KProcess.data[0] = self.currentFile.fileName + "-" + imagePath
+            RbProcess.data[0] = self.currentFile.fileName + "-" + imagePath
 
-            if self.mode == 'Axial iXon Molecules': # Molecule In situ FK
+            if self.mode == 'Axial iXon Molecules In Situ': # Molecule In situ FK
                 print("Uploading KRb to Origin")
                 upload2Origin('KRbSpinGauss', self.fitK.fitFunction,
                                         [KProcess.data, RbProcess.data])

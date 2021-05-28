@@ -1,3 +1,4 @@
+from lib.imfitDefaults import IMFIT_MODES, WORKSHEET_NAMES
 from imfitDefaults import *
 import polylog
 import numpy as np
@@ -134,6 +135,7 @@ def getImagesFromRange(stringIn):
     
     return l
 
+# TODO: control based on Imfit mode
 def upload2Origin(species, fitFunction, data):
     import win32com.client
 
