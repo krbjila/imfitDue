@@ -56,7 +56,7 @@ class SpeFile(object):
 				val += ord(f.read(1)) << (8 * i)
 			return val
 		except:
-			print "Error reading from file."
+			print("Error reading from file.")
 
 	def getData(self, f, xdim, ydim, frames, data_length):
 		data = np.zeros((frames, ydim, xdim))
@@ -68,8 +68,8 @@ class SpeFile(object):
 			img = np.fromfile(f, np.uint32, frames*stride)
 			return img.reshape((frames, ydim, xdim))
 		except Exception as e:
-			print e
-			print "Error reading data from file."
+			print(e)
+			print("Error reading data from file.")
 
 		# try:
 		# 	for i in range(0, frames):
@@ -78,4 +78,4 @@ class SpeFile(object):
 		# 				data[i, j, k] = self.readBytes(f, 0, data_length)
 		# 	return data
 		# except:
-		# 	print "Error reading data from file."
+		# 	print("Error reading data from file.")
