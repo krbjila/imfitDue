@@ -50,6 +50,7 @@ class imfitDue(QtGui.QMainWindow):
 
     def camChanged(self, new_cam):
         self.mode = str(new_cam)
+        self.autoloader.modeChanged(self.mode)
         self.passCamToROI()
 
     def loadFile(self):

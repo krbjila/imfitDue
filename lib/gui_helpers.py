@@ -1,4 +1,4 @@
-from lib.imfitDefaults import DEFAULT_MODE
+from lib.imfitDefaults import DEFAULT_MODE, IMFIT_MODES
 import sys
 
 from PyQt4 import QtGui, QtCore
@@ -505,7 +505,10 @@ class autoloader(QtCore.QThread):
         self.mainPF = mainPF
         self.startDate = datetime.datetime.now().strftime('%d')
         self.autoloadState = True
-        self.camera = None
+        # self.camera = None
+
+        self.mode = DEFAULT_MODE
+        self.config = IMFIT_MODES
 
         self.is_active = True
 
@@ -517,6 +520,9 @@ class autoloader(QtCore.QThread):
     def wait_a_while(self):
         self.msleep(500)
 
+    def modeChanged(self, mode):
+        self.mode = mode
+
     def run(self):
         from os import path
         
@@ -527,14 +533,14 @@ class autoloader(QtCore.QThread):
             if self.mainPF.autoLoad.isChecked() and self.is_active:
 
                 if self.startDate != datetime.datetime.now().strftime('%d'):
-                    import imfitDefaults
-                    self.pathPI = DEFAULT_PATH_PI
-                    self.pathIXON = DEFAULT_PATH_IXON
-                    self.pathIXON_GSM = DEFAULT_PATH_IXON_GSM
+                    import imfitDefaults # Force reload date in path
+                    # self.pathPI = DEFAULT_PATH_PI
+                    # self.pathIXON = DEFAULT_PATH_IXON
+                    # self.pathIXON_GSM = DEFAULT_PATH_IXON_GSM
+                    self.config = imfitDefaults.IMFIT_MODES
                     self.startDate = datetime.datetime.now().strftime('%d')
 
-
-                camera = self.mainPF.cameraGroup.checkedId()
+                camera = self.mainPF.cameraGroup.currentIndex()
                 nextFile = self.mainPF.autoLoadFile.text()
 
                 fileGood = 0
@@ -546,39 +552,46 @@ class autoloader(QtCore.QThread):
 
                 print("Checking file {}".format(nextFile))
 
-                if camera == 0 and fileGood == 1:
-                    # nextPath = self.pathPI + "pi_" + nextFile + ".spe" # Changed to ximea 9/26/2019
-                    nextPath = self.pathPI + "xi_" + nextFile + ".dat"
-                    if path.isfile(nextPath):
-                        self.msleep(inner_wait)
-                    	self.mainPF.filePath.setText(nextPath)
-                        self.emit(QtCore.SIGNAL('fileArrived'))
+                nextPath = self.config[self.mode]['Default Path'] + self.config[self.mode]['Default Suffix'].format(nextFile)
+                if path.isfile(nextPath):
+                    self.msleep(inner_wait)
+                    self.mainPF.filePath.setText(nextPath)
+                    self.emit(QtCore.SIGNAL('fileArrived'))
 
-                elif camera == 1 and fileGood == 1:
-                    nextPath = self.pathIXON + "ixon_" + nextFile + ".csv"
-                    if path.isfile(nextPath):
-                        self.msleep(inner_wait)
-                        self.mainPF.filePath.setText(nextPath)
-                        self.emit(QtCore.SIGNAL('fileArrived'))
 
-                elif camera == 2 and fileGood == 1:
-                    nextPath = self.pathIXONV + "twospecies_" + nextFile + ".csv"
-                    if path.isfile(nextPath):
-                        self.msleep(inner_wait)
-                        self.mainPF.filePath.setText(nextPath)
-                        self.emit(QtCore.SIGNAL('fileArrived'))
+                # if camera == 0 and fileGood == 1:
+                #     # nextPath = self.pathPI + "pi_" + nextFile + ".spe" # Changed to ximea 9/26/2019
+                #     nextPath = self.pathPI + "xi_" + nextFile + ".dat"
+                #     if path.isfile(nextPath):
+                #         self.msleep(inner_wait)
+                #     	self.mainPF.filePath.setText(nextPath)
+                #         self.emit(QtCore.SIGNAL('fileArrived'))
 
-                elif camera == 3 and fileGood == 1:
-                    nextPath = self.pathIXON_GSM + "ixon_" + nextFile + ".csv"
-                    print("Setting path to: {}".format(nextPath))
-                    if path.isfile(nextPath):
-                        print("The next path is a file! Sleeping for inner wait")
-                        self.msleep(inner_wait)
-                        print("Awoken!")
-                        self.mainPF.filePath.setText(nextPath)
-                        print("Next path is set!")
-                        self.emit(QtCore.SIGNAL('fileArrived'))
-                        print("File arrived signal sent!")
+                # elif camera == 1 and fileGood == 1:
+                #     nextPath = self.pathIXON + "ixon_" + nextFile + ".csv"
+                #     if path.isfile(nextPath):
+                #         self.msleep(inner_wait)
+                #         self.mainPF.filePath.setText(nextPath)
+                #         self.emit(QtCore.SIGNAL('fileArrived'))
+
+                # elif camera == 2 and fileGood == 1:
+                #     nextPath = self.pathIXONV + "twospecies_" + nextFile + ".csv"
+                #     if path.isfile(nextPath):
+                #         self.msleep(inner_wait)
+                #         self.mainPF.filePath.setText(nextPath)
+                #         self.emit(QtCore.SIGNAL('fileArrived'))
+
+                # elif camera == 3 and fileGood == 1:
+                #     nextPath = self.pathIXON_GSM + "ixon_" + nextFile + ".csv"
+                #     print("Setting path to: {}".format(nextPath))
+                #     if path.isfile(nextPath):
+                #         print("The next path is a file! Sleeping for inner wait")
+                #         self.msleep(inner_wait)
+                #         print("Awoken!")
+                #         self.mainPF.filePath.setText(nextPath)
+                #         print("Next path is set!")
+                #         self.emit(QtCore.SIGNAL('fileArrived'))
+                #         print("File arrived signal sent!")
             self.msleep(outer_wait)
             
 
