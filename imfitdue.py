@@ -123,6 +123,8 @@ class imfitDue(QtWidgets.QMainWindow):
             for k in x:
                 print(path.format(k))
                 self.currentFile = readImage(self.mode, path.format(k))
+                if self.currentFile is None:
+                    return
                 if firstFile:
                     imageMean = self.currentFile.img
                     firstFile = False
