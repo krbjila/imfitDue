@@ -102,8 +102,11 @@ class NpzReader(Reader):
         super(NpzReader, self).__init__(mode)
 
     def getData(self):
-        data = np.load(self.path, allow_pickle=True)
-        return (data['data'], data['meta'])
+        f = np.load(self.path, allow_pickle=True)
+        data = f['data']
+        metadata = f['meta']
+        # TODO: restructure metadata??? see Reader.updateAll()
+        return (data, metadata)
     
 class DatReader(Reader):
     def __init__(self, mode):
