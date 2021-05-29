@@ -2,7 +2,7 @@ from numpy.ma.core import set_fill_value
 from lib.imfitDefaults import AUTOSCALE_HEADROOM, AUTOSCALE_MIN, DEFAULT_MODE, IMFIT_MODES
 import sys
 
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar 
@@ -17,7 +17,7 @@ from imfitHelpers import *
 import os
 import datetime 
 
-class ImageWindows(QtGui.QWidget):
+class ImageWindows(QtWidgets.QWidget):
     signalFrameChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, Parent=None):
@@ -76,15 +76,15 @@ class ImageWindows(QtGui.QWidget):
 
         ######### Layout Nonsense
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         vbox.addWidget(self.toolbar)
 
-        vbox2 = QtGui.QVBoxLayout()
+        vbox2 = QtWidgets.QVBoxLayout()
         vbox2.addWidget(self.plotTools)
         vbox2.addStretch(1)
 
 
-        box = QtGui.QHBoxLayout()
+        box = QtWidgets.QHBoxLayout()
         box.addWidget(self.canvas)
         box.addLayout(vbox2)
         
@@ -139,11 +139,11 @@ class ImageWindows(QtGui.QWidget):
             self.ax2.cla()
 
             for k in range(len(Lx)):
-            	plotStyles = ['ok', 'r']
+                plotStyles = ['ok', 'r']
                 self.ax1.plot(x,Lx[k],plotStyles[k])
             
             for k in range(len(Ly)):
-            	plotStyles = ['ok', 'g', 'r']
+                plotStyles = ['ok', 'g', 'r']
                 self.ax2.plot(y,Ly[k],plotStyles[k])
 
             self.canvas.draw()
@@ -188,7 +188,7 @@ class ImageWindows(QtGui.QWidget):
         return 1
 
 
-class plotTools(QtGui.QWidget):
+class plotTools(QtWidgets.QWidget):
     def __init__(self,Parent=None):
         super(plotTools,self).__init__(Parent)
         self.setFixedHeight(650)
@@ -200,16 +200,16 @@ class plotTools(QtGui.QWidget):
         ODMAXDEFAULT = '2'
         ODMINDEFAULT = '0'
 
-        self.odMaxEdit = QtGui.QLineEdit(ODMAXDEFAULT)
+        self.odMaxEdit = QtWidgets.QLineEdit(ODMAXDEFAULT)
         self.odMaxEdit.setFixedWidth(60)
 
-        self.odMinEdit = QtGui.QLineEdit(ODMINDEFAULT)
+        self.odMinEdit = QtWidgets.QLineEdit(ODMINDEFAULT)
         self.odMinEdit.setFixedWidth(60)
 
         self.odMaxEdit.returnPressed.connect(self.updateSlider)
         self.odMinEdit.returnPressed.connect(self.updateSlider)
         
-        self.odSlider = QtGui.QSlider(QtCore.Qt.Vertical)
+        self.odSlider = QtWidgets.QSlider(QtCore.Qt.Vertical)
         self.odSlider.setFixedHeight(400)
         self.odSlider.setMaximum(float(ODMAXDEFAULT)*10.0)
         self.odSlider.setMinimum(float(ODMINDEFAULT)*10.0+0.5)
@@ -218,40 +218,40 @@ class plotTools(QtGui.QWidget):
         self.odSlider.setTickInterval(5)
         self.odSlider.setPageStep(2)
 
-        self.removeCHButton = QtGui.QPushButton('Remove\nCrosshair')
+        self.removeCHButton = QtWidgets.QPushButton('Remove\nCrosshair')
 
-        self.setCHX = QtGui.QLineEdit('0')
-        self.setCHY = QtGui.QLineEdit('0')
+        self.setCHX = QtWidgets.QLineEdit('0')
+        self.setCHY = QtWidgets.QLineEdit('0')
 
-        self.atomSelectGroup = QtGui.QButtonGroup()
-        self.rbSelect = QtGui.QRadioButton('Rb')
-        self.kSelect = QtGui.QRadioButton('K')
+        self.atomSelectGroup = QtWidgets.QButtonGroup()
+        self.rbSelect = QtWidgets.QRadioButton('Rb')
+        self.kSelect = QtWidgets.QRadioButton('K')
         self.kSelect.setChecked(True)
         self.atomSelectGroup.addButton(self.rbSelect)
         self.atomSelectGroup.addButton(self.kSelect)
 
-        self.frameSelect = QtGui.QComboBox()
+        self.frameSelect = QtWidgets.QComboBox()
         self.frameSelect.addItem("OD")
         self.frameSelect.addItem("Shadow")
         self.frameSelect.addItem("Light")
         self.frameSelect.addItem("Dark")
         self.frameSelect.setCurrentIndex(0)
 
-        self.autoscaler = QtGui.QPushButton("Autoscale me!")
+        self.autoscaler = QtWidgets.QPushButton("Autoscale me!")
         self.autoscaler.clicked.connect(self.autoscaleSlider)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.addWidget(self.setCHX)
         hbox.addWidget(self.setCHY)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         vbox.addWidget(self.odMaxEdit,QtCore.Qt.AlignCenter)
         vbox.addWidget(self.odSlider)
         vbox.addWidget(self.odMinEdit)
         vbox.addWidget(self.autoscaler)
         vbox.addWidget(self.removeCHButton)
         vbox.addLayout(hbox)
-        vbox.addWidget(QtGui.QLabel('Crosshair     (X,Y)'))
+        vbox.addWidget(QtWidgets.QLabel('Crosshair     (X,Y)'))
 
         vbox.addStretch(1)
         vbox.addWidget(self.kSelect)
@@ -292,7 +292,7 @@ class plotTools(QtGui.QWidget):
             self.updateSlider()
             self.odSlider.setValue(high * 10.0)
 
-class regionWidget(QtGui.QWidget):
+class regionWidget(QtWidgets.QWidget):
     def __init__(self, Parent=None):
         super(regionWidget, self).__init__(Parent)
         self.setup()
@@ -306,14 +306,14 @@ class regionWidget(QtGui.QWidget):
         font.setBold(True)
         font.setPointSize(12)
 
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.atom_labels = []
         for k in range(4):
-            x = QtGui.QLabel(topLabels[k])
+            x = QtWidgets.QLabel(topLabels[k])
             x.setFont(font)
             self.grid.addWidget(x,0,k+1,1,1)
         for k in range(2):
-            x = QtGui.QLabel(ATOM_NAMES[k])
+            x = QtWidgets.QLabel(ATOM_NAMES[k])
             self.atom_labels.append(x)
             x.setFont(font)
             self.grid.addWidget(x,k+1,0,1,1)
@@ -322,7 +322,7 @@ class regionWidget(QtGui.QWidget):
 
         for i in range(2):
             for j in range(4):
-                self.region[i][j] = QtGui.QLineEdit(str(IMFIT_MODES[DEFAULT_MODE]["Default Region"][i][j]))
+                self.region[i][j] = QtWidgets.QLineEdit(str(IMFIT_MODES[DEFAULT_MODE]["Default Region"][i][j]))
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
 
@@ -340,7 +340,7 @@ class regionWidget(QtGui.QWidget):
                 self.region[i][j].setText(str(region[i][j]))
         return 0
 
-class pathWidget(QtGui.QWidget):
+class pathWidget(QtWidgets.QWidget):
     signalCamChanged = QtCore.pyqtSignal(str)
 
     def __init__(self,fitOptions,imageWindows, roi, Parent=None):
@@ -353,25 +353,25 @@ class pathWidget(QtGui.QWidget):
 
     def setup(self):
 
-        self.filePath = QtGui.QLineEdit(IMFIT_MODES[self.mode]['Default Path'])
+        self.filePath = QtWidgets.QLineEdit(IMFIT_MODES[self.mode]['Default Path'])
         self.filePath.setFixedWidth(300)
-        self.browseButton = QtGui.QPushButton('Browse')
+        self.browseButton = QtWidgets.QPushButton('Browse')
         self.browseButton.clicked.connect(self.browseFile)
-        self.loadButton = QtGui.QPushButton('Load')
-        self.autoLoadFile = QtGui.QLineEdit('0')
+        self.loadButton = QtWidgets.QPushButton('Load')
+        self.autoLoadFile = QtWidgets.QLineEdit('0')
         self.autoLoadFile.setFixedWidth(60)
-        self.autoLoad = QtGui.QCheckBox('AutoLoad')
+        self.autoLoad = QtWidgets.QCheckBox('AutoLoad')
 
 
-        self.cameraGroup = QtGui.QComboBox()
+        self.cameraGroup = QtWidgets.QComboBox()
         self.cameraGroup.addItems(IMFIT_MODES.keys())
         self.cameraGroup.setCurrentIndex(0)
         self.cameraGroup.currentIndexChanged.connect(self.camChanged)        
         
-        h0 = QtGui.QHBoxLayout()
-        h1  = QtGui.QHBoxLayout()
-        h2  = QtGui.QHBoxLayout()
-        v  = QtGui.QVBoxLayout()
+        h0 = QtWidgets.QHBoxLayout()
+        h1  = QtWidgets.QHBoxLayout()
+        h2  = QtWidgets.QHBoxLayout()
+        v  = QtWidgets.QVBoxLayout()
 
         # h0.addStretch(1)
         # h0.addWidget(self.pi)
@@ -379,7 +379,7 @@ class pathWidget(QtGui.QWidget):
         # h0.addWidget(self.ixon_gsm)
         # h0.addWidget(self.ixonv)
         h0.addStretch(1)
-        h0.addWidget(QtGui.QLabel('Imaging/Analysis mode: '))
+        h0.addWidget(QtWidgets.QLabel('Imaging/Analysis mode: '))
         h0.addWidget(self.cameraGroup)
 
         h1.addWidget(self.filePath)
@@ -387,7 +387,7 @@ class pathWidget(QtGui.QWidget):
         h1.addWidget(self.loadButton)
 
         h2.addStretch(1)
-        h2.addWidget(QtGui.QLabel('File #:'))
+        h2.addWidget(QtWidgets.QLabel('File #:'))
         h2.addWidget(self.autoLoadFile)
         h2.addWidget(self.autoLoad)
 
@@ -406,8 +406,8 @@ class pathWidget(QtGui.QWidget):
         
         ext = IMFIT_MODES[self.mode]["Extension Filter"]
 
-        x = QtGui.QFileDialog()
-        path = x.getOpenFileName(self,'Select a file to load' ,filter=ext, directory=d, options=QtGui.QFileDialog.DontUseNativeDialog)
+        x = QtWidgets.QFileDialog()
+        (path, _) = x.getOpenFileName(self,'Select a file to load' ,filter=ext, directory=d, options=QtWidgets.QFileDialog.DontUseNativeDialog)
         self.filePath.setText(path)
 
 
@@ -440,7 +440,7 @@ class pathWidget(QtGui.QWidget):
             n = getLastFile(d)
             self.autoLoadFile.setText(str(n))
 
-class fitOptionsWidget(QtGui.QWidget):
+class fitOptionsWidget(QtWidgets.QWidget):
     def __init__(self,Parent=None):
         super(fitOptionsWidget,self).__init__(Parent)
         self.setup()
@@ -450,77 +450,77 @@ class fitOptionsWidget(QtGui.QWidget):
             self.rbFitFunction.setCurrentIndex(self.kFitFunction.currentIndex())
 
     def setup(self):
-        self.rbFitFunction = QtGui.QComboBox()
+        self.rbFitFunction = QtWidgets.QComboBox()
         self.rbFitFunction.addItems(IMFIT_MODES[DEFAULT_MODE]['Fit Functions'])
-        self.kFitFunction = QtGui.QComboBox()
+        self.kFitFunction = QtWidgets.QComboBox()
         self.kFitFunction.addItems(IMFIT_MODES[DEFAULT_MODE]['Fit Functions'])
         self.kFitFunction.currentIndexChanged.connect(self.updateRbFit)
 
-        # self.imagePath = QtGui.QComboBox()
+        # self.imagePath = QtWidgets.QComboBox()
         # self.imagePath.addItems(IMAGING_PATHS)
 
-        self.autoFit = QtGui.QCheckBox('AutoFit')
-        self.autoUpload = QtGui.QCheckBox('Auto Origin')
-        self.moleculeBook = QtGui.QCheckBox('Molecules?')
+        self.autoFit = QtWidgets.QCheckBox('AutoFit')
+        self.autoUpload = QtWidgets.QCheckBox('Auto Origin')
+        self.moleculeBook = QtWidgets.QCheckBox('Molecules?')
 
-        self.fitButton = QtGui.QPushButton('Fit')
-        self.uploadButton = QtGui.QPushButton('Upload to Origin')
+        self.fitButton = QtWidgets.QPushButton('Fit')
+        self.uploadButton = QtWidgets.QPushButton('Upload to Origin')
 
-        self.tof = QtGui.QLineEdit('6')
+        self.tof = QtWidgets.QLineEdit('6')
         self.tof.setFixedWidth(30)
 
         #### Layout Stuff
 
         # TODO: Remove imaging path widget since information is encapsulated in mode
-        h0 = QtGui.QHBoxLayout()
-        # h0.addWidget(QtGui.QLabel("Imaging Path: "))
+        h0 = QtWidgets.QHBoxLayout()
+        # h0.addWidget(QtWidgets.QLabel("Imaging Path: "))
         # h0.addWidget(self.imagePath)
         h0.addStretch(1)
-        self.RbLabel = QtGui.QLabel('Fit Rb to:')
+        self.RbLabel = QtWidgets.QLabel('Fit Rb to:')
         h0.addWidget(self.RbLabel)
         h0.addWidget(self.rbFitFunction)
 
-        h1 = QtGui.QHBoxLayout()
-        h1.addWidget(QtGui.QLabel('K TOF (ms):'))
+        h1 = QtWidgets.QHBoxLayout()
+        h1.addWidget(QtWidgets.QLabel('K TOF (ms):'))
         h1.addWidget(self.tof)
         h1.addStretch(1)
-        self.KLabel = QtGui.QLabel('Fit K to:')
+        self.KLabel = QtWidgets.QLabel('Fit K to:')
         h1.addWidget(self.KLabel)
         h1.addWidget(self.kFitFunction)
 
-        h2 = QtGui.QHBoxLayout()
+        h2 = QtWidgets.QHBoxLayout()
         h2.addWidget(self.fitButton)
         h2.addWidget(self.uploadButton)
 
-        v0 = QtGui.QVBoxLayout()
+        v0 = QtWidgets.QVBoxLayout()
         v0.addLayout(h0)
         v0.addLayout(h1)
         v0.addLayout(h2)
 
-        v1 = QtGui.QGridLayout()
+        v1 = QtWidgets.QGridLayout()
         v1.addWidget(self.autoFit)
         v1.addWidget(self.autoUpload)
         v1.addWidget(self.moleculeBook)
 
-        h = QtGui.QHBoxLayout()
+        h = QtWidgets.QHBoxLayout()
         h.addLayout(v0)
         h.addLayout(v1)
 
         self.setLayout(h)
 
 
-class averageWidget(QtGui.QWidget):
+class averageWidget(QtWidgets.QWidget):
     def __init__(self, Parent=None):
         super(averageWidget,self).__init__(Parent) 
         self.setup()
 
     def setup(self):
 
-        self.averageEdit = QtGui.QLineEdit() 
-        self.averageButton = QtGui.QPushButton("Average")
+        self.averageEdit = QtWidgets.QLineEdit() 
+        self.averageButton = QtWidgets.QPushButton("Average")
 
-        box = QtGui.QHBoxLayout()
-        box.addWidget(QtGui.QLabel("Images to Average: "))
+        box = QtWidgets.QHBoxLayout()
+        box.addWidget(QtWidgets.QLabel("Images to Average: "))
         box.addWidget(self.averageEdit)
         box.addWidget(self.averageButton)
 
@@ -537,11 +537,13 @@ class averageWidget(QtGui.QWidget):
 
 
 
-class autoloader(QtCore.QThread):
+class Autoloader(QtCore.QThread):
     # TODO: Redo this to support autoloading differently based on self.modes (for creating class, not this one)
 
+    signalFileArrived = QtCore.pyqtSignal()
+
     def __init__(self, mainPF, Parent=None):
-        super(autoloader, self).__init__(Parent)
+        super(Autoloader, self).__init__(Parent)
 
         self.mainPF = mainPF
         self.startDate = datetime.datetime.now().strftime('%d')
@@ -582,12 +584,12 @@ class autoloader(QtCore.QThread):
                 if path.isfile(nextPath):
                     self.msleep(inner_wait)
                     self.mainPF.filePath.setText(nextPath)
-                    self.emit(QtCore.SIGNAL('fileArrived'))
+                    self.signalFileArrived.emit()
             self.msleep(outer_wait)
             
 
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     w = averageWidget()
 

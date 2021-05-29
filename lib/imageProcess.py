@@ -172,7 +172,7 @@ class fitOD():
 
     def setFitFunction(self, fitFunction):
        
-        if not isinstance(fitFunction, basestring):
+        if not isinstance(fitFunction, str):
             print('Fit function must be one of: ' + ', '.join(FIT_FUNCTIONS)) 
             return -1
 

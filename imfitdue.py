@@ -2,7 +2,7 @@ from lib.imfitDefaults import IMFIT_MODES
 import sys, os
 sys.path.append('./lib')
 
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore
 import ctypes
 
 from imageRead import *
@@ -12,7 +12,7 @@ from gui_helpers import *
 
 import numpy as np
 
-class imfitDue(QtGui.QMainWindow):
+class imfitDue(QtWidgets.QMainWindow):
     def __init__(self,Parent=None):
         super(imfitDue, self).__init__(Parent)
 
@@ -26,8 +26,9 @@ class imfitDue(QtGui.QMainWindow):
         self.createToolbar()
         self.makeConnections()
 
-        self.autoloader = autoloader(self.pf)
-        self.autoloader.connect(self.autoloader, QtCore.SIGNAL('fileArrived'), self.loadFile)
+        self.autoloader = Autoloader(self.pf)
+        self.autoloader.signalFileArrived.connect(self.loadFile)
+        # self.autoloader.connect(self.autoloader, QtCore.SIGNAL('fileArrived'), self.loadFile)
         self.autoloader.start()
 
         self.fitK = None
@@ -94,7 +95,7 @@ class imfitDue(QtGui.QMainWindow):
         self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
         self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
         
-        if self.fo.autoFit.isChecked():
+        if self.fo.autoFit.isChecked() and self.frame == 'OD':
             self.fitCurrent()
             print("Done fitting current image")
         else:
@@ -281,21 +282,21 @@ class imfitDue(QtGui.QMainWindow):
 
         # self.pf.cameraGroup.buttonClicked.connect(self.passCamToROI)
         
-        gb1 = QtGui.QGroupBox('File Path')
+        gb1 = QtWidgets.QGroupBox('File Path')
         gb1.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
-        gb1l = QtGui.QVBoxLayout()
+        gb1l = QtWidgets.QVBoxLayout()
         gb1l.addWidget(self.pf)
         gb1.setLayout(gb1l)
 
-        v0 = QtGui.QVBoxLayout()
+        v0 = QtWidgets.QVBoxLayout()
         v0.addStretch(4)
         v0.addWidget(gb1)
         v0.addStretch(1)
 
-        gb2 = QtGui.QGroupBox('Region Selection')
+        gb2 = QtWidgets.QGroupBox('Region Selection')
         gb2.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
-        gb2l = QtGui.QVBoxLayout()
-        h0 = QtGui.QHBoxLayout()
+        gb2l = QtWidgets.QVBoxLayout()
+        h0 = QtWidgets.QHBoxLayout()
         h0.addStretch(1)
         h0.addWidget(self.roi)
         h0.addStretch(1)
@@ -305,9 +306,9 @@ class imfitDue(QtGui.QMainWindow):
         v0.addWidget(gb2)
         v0.addStretch(1)
         
-        gb4 = QtGui.QGroupBox('Averaging')
+        gb4 = QtWidgets.QGroupBox('Averaging')
         gb4.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
-        gb4l = QtGui.QVBoxLayout()
+        gb4l = QtWidgets.QVBoxLayout()
         gb4l.addWidget(self.av)
         gb4.setLayout(gb4l)
 
@@ -315,19 +316,19 @@ class imfitDue(QtGui.QMainWindow):
         v0.addStretch(1)
 
 
-        gb3 = QtGui.QGroupBox('Fitting Options')
+        gb3 = QtWidgets.QGroupBox('Fitting Options')
         gb3.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
-        gb3l = QtGui.QVBoxLayout()
+        gb3l = QtWidgets.QVBoxLayout()
         gb3l.addWidget(self.fo)
         gb3.setLayout(gb3l)
 
         v0.addWidget(gb3)
 
-        h = QtGui.QHBoxLayout()
+        h = QtWidgets.QHBoxLayout()
         h.addLayout(v0)
         h.addWidget(self.figs)
 
-        self.mainWidget = QtGui.QWidget()
+        self.mainWidget = QtWidgets.QWidget()
         self.mainWidget.setAutoFillBackground(True)
         p = self.mainWidget.palette()
         p.setColor(self.mainWidget.backgroundRole(), QtCore.Qt.white)
@@ -346,8 +347,8 @@ class imfitDue(QtGui.QMainWindow):
         self.autoloader.start()
 
     def saveMainImage(self):
-        x = QtGui.QFileDialog()
-        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtGui.QFileDialog.DontUseNativeDialog)
+        x = QtWidgets.QFileDialog()
+        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
 
         ok2write = False
         if self.figs.plotTools.kSelect.isChecked():
@@ -374,8 +375,8 @@ class imfitDue(QtGui.QMainWindow):
             print("No file to save!")
 
     def saveOSliceImage(self):
-        x = QtGui.QFileDialog()
-        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtGui.QFileDialog.DontUseNativeDialog)
+        x = QtWidgets.QFileDialog()
+        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
 
         ok2write = False
         if self.figs.plotTools.kSelect.isChecked():
@@ -419,8 +420,8 @@ class imfitDue(QtGui.QMainWindow):
 
 
     def saveRSliceImage(self):
-        x = QtGui.QFileDialog()
-        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtGui.QFileDialog.DontUseNativeDialog)
+        x = QtWidgets.QFileDialog()
+        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
 
         ok2write = False
         if self.figs.plotTools.kSelect.isChecked():
@@ -455,8 +456,8 @@ class imfitDue(QtGui.QMainWindow):
         else:
             ext = '*.dat'
 
-        x = QtGui.QFileDialog()
-        xp = x.getOpenFileName(self,'Select a file to load', filter=ext, directory=d,options=QtGui.QFileDialog.DontUseNativeDialog)
+        x = QtWidgets.QFileDialog()
+        xp = x.getOpenFileName(self,'Select a file to load', filter=ext, directory=d,options=QtWidgets.QFileDialog.DontUseNativeDialog)
 
         self.pf.filePath.setText(xp)
         self.loadFile()
@@ -471,24 +472,24 @@ class imfitDue(QtGui.QMainWindow):
 
     def createToolbar(self):
 
-        exitAction = QtGui.QAction("Exit",self)
+        exitAction = QtWidgets.QAction("Exit",self)
         exitAction.setShortcut('Ctrl+Q')
-        exitAction.triggered.connect(QtGui.qApp.quit)
+        exitAction.triggered.connect(QtWidgets.qApp.quit)
 
-        loadAction = QtGui.QAction("Load Image",self)
+        loadAction = QtWidgets.QAction("Load Image",self)
         loadAction.setShortcut('Ctrl+O')
         loadAction.triggered.connect(self.loadFromMenu)
 
-        refreshAction = QtGui.QAction("Refresh all", self)
+        refreshAction = QtWidgets.QAction("Refresh all", self)
         refreshAction.setShortcut('Ctrl+R')
         refreshAction.triggered.connect(self.refreshGui)
 
-        saveMain = QtGui.QAction("Save Main Image", self)
+        saveMain = QtWidgets.QAction("Save Main Image", self)
         saveMain.setShortcut('Ctrl+S')
         saveMain.triggered.connect(self.saveMainImage)
-        saveOSlice = QtGui.QAction("Save Ortho Slice", self)
+        saveOSlice = QtWidgets.QAction("Save Ortho Slice", self)
         saveOSlice.triggered.connect(self.saveOSliceImage)
-        saveRSlice = QtGui.QAction("Save Radial Slice", self)
+        saveRSlice = QtWidgets.QAction("Save Radial Slice", self)
         saveRSlice.triggered.connect(self.saveRSliceImage)
 
 
@@ -508,16 +509,12 @@ class imfitDue(QtGui.QMainWindow):
     def closeEvent(self, event):
         self.autoloader.terminate()
 
-
-
-
-
 if __name__=="__main__":
     # The following two lines tell windows that python is only hosting this application
     myappid = 'krb.imfitdue' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     w = imfitDue()
     w.setGeometry(100,100, 1200, 800)
 

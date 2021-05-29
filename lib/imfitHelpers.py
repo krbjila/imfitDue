@@ -5,7 +5,7 @@ import numpy as np
 
 def checkAtom(atom):
 
-    if isinstance(atom, basestring):
+    if isinstance(atom, str):
         atom = atom.upper()
         if atom not in ATOM_NAMES:
             print('Error: Atom must be one of: ' + ', '.join(ATOM_NAMES))
@@ -26,7 +26,7 @@ def checkAtom(atom):
 
 def checkFrame(frame):
 
-        if isinstance(frame, basestring):
+        if isinstance(frame, str):
             frame = frame.lower()
             if frame not in FRAMESEQUENCE:
                 print('Error: Frame must be one of: ' + ', '.join(FRAMESEQUENCE))
@@ -44,7 +44,7 @@ def checkFrame(frame):
 
 def checkFitFunction(fitFunction):
 
-    if isinstance(fitFunction, basestring):
+    if isinstance(fitFunction, str):
         if fitFunction in FIT_FUNCTIONS:
             return FIT_FUNCTIONS.index(fitFunction)
         else:

@@ -90,7 +90,7 @@ class CsvReader(Reader):
             # Assume no binning for now
             # TODO: check this intelligently
             metadata['bins'] = 1
-        frame_size = data.shape[0] / self.n_frames # concatenated along vertical dimension
+        frame_size = int(data.shape[0] / self.n_frames) # concatenated along vertical dimension
         frames = [data[i*frame_size:(i+1)*frame_size,:] for i in range(self.n_frames)]    
 
         metadata['hImgSize'] = data.shape[1]
