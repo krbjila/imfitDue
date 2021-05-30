@@ -37,6 +37,10 @@ class imfitDue(QtWidgets.QMainWindow):
         self.mode = DEFAULT_MODE
         self.frame = 'OD'
 
+        self.currentFile = None
+        self.odK = None
+        self.odRb = None
+
     def makeConnections(self):
         self.pf.signalCamChanged.connect(self.camChanged)
         self.pf.loadButton.clicked.connect(self.loadFile)
@@ -78,11 +82,11 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.pf.autoLoadFile.setText(str(int(t) + 1))
 
             self.autoloader.is_active = True
-
+            self.currentODCalc()
         else:
             print('File not found!')
 
-        self.currentODCalc()
+        
 
     def currentODCalc(self):
         self.autoloader.is_active = False
@@ -118,8 +122,9 @@ class imfitDue(QtWidgets.QMainWindow):
         if x is not None:
             for k in x:
                 print(path.format(k))
-                # TODO: Implement readImage(mode, path)
                 self.currentFile = readImage(self.mode, path.format(k))
+                if self.currentFile is None:
+                    return
                 if firstFile:
                     imageMean = self.currentFile.img
                     firstFile = False
@@ -143,8 +148,10 @@ class imfitDue(QtWidgets.QMainWindow):
         pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
         # TODO: Is it possible/ useful to generalize to an arbitrary number of fits with different names?
-        self.fitK = fitOD(self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
-        self.fitRb = fitOD(self.odRb, str(self.fo.rbFitFunction.currentText()), rbAtom, TOF + 6,pxl)
+        if self.odK is not None:
+            self.fitK = fitOD(self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
+        if self.odRb is not None:
+            self.fitRb = fitOD(self.odRb, str(self.fo.rbFitFunction.currentText()), rbAtom, TOF + 6,pxl)
         self.plotCurrent()
 
         if self.fo.autoUpload.isChecked():
@@ -191,6 +198,8 @@ class imfitDue(QtWidgets.QMainWindow):
                     return 1
             
     def plotCurrent(self):
+        if self.currentFile is None:
+            return
         frames = self.currentFile.frames
         species = IMFIT_MODES[self.mode]['Species']
         if self.figs.plotTools.kSelect.isChecked():
@@ -512,7 +521,8 @@ class imfitDue(QtWidgets.QMainWindow):
 if __name__=="__main__":
     # The following two lines tell windows that python is only hosting this application
     myappid = 'krb.imfitdue' # arbitrary string
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    if os.name == 'nt':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     
     app = QtWidgets.QApplication(sys.argv)
     w = imfitDue()

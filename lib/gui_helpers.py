@@ -578,7 +578,7 @@ class Autoloader(QtCore.QThread):
                 except ValueError:
                     print("Something other than an integer is in the autoload box!")
 
-                print("Checking file {}".format(nextFile))
+                # print("Checking file {}".format(nextFile))
 
                 nextPath = self.config[self.mode]['Default Path'] + self.config[self.mode]['Default Suffix'].format(nextFile)
                 if path.isfile(nextPath):

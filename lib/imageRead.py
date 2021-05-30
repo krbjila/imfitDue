@@ -1,3 +1,4 @@
+import warnings
 from imfitDefaults import *
 from imfitHelpers import *
 from spe import SpeFile
@@ -15,7 +16,14 @@ def readImage(mode, path):
         reader = CsvReader(mode)
     elif extension == '*.npz':
         reader = NpzReader(mode)
-    reader.setPath(path)
+    else:
+        print("Could not load {}: extension {} invalid.".format(path, extension))
+        return None
+    try:
+        reader.setPath(path)
+    except Exception as e:
+        print("Could not load {}: {}".format(path, e))
+        return None
     return reader
 
 class Reader(object):
@@ -42,12 +50,11 @@ class Reader(object):
 
     def setPath(self,path):
         self.path = path 
-        return self.updateAll()
+        self.updateAll()
 
     def updateAll(self):
         if not os.path.isfile(self.path):
-            print('No such file or directory: ' + self.path)
-            return 0
+            raise(IOError('No such file or directory: ' + self.path))
 
         self.fileLocation = FILESEP.join(self.path.split(FILESEP)[0:-1]) + FILESEP
         self.fileName = self.path.split(FILESEP)[-1]
@@ -112,310 +119,7 @@ class NpzReader(Reader):
         # TODO: restructure metadata??? see Reader.updateAll()
         return (data, metadata)
     
+    # TODO: Implement this!
 class DatReader(Reader):
     def __init__(self, mode):
         super(DatReader, self).__init__(mode)
-
-class readPIImage():
-
-    def __init__(self,path):
-        self.path = path
-
-        self.nFrames = None
-        self.hImgSize = None
-        self.vImgSize = None
-        self.bin = None
-
-        self.fileLocation = None
-        self.fileName = None 
-        self.fileNumber = None
-        self.fileTimeStamp = None
-
-        self.camera = CAMERA_NAME_PI
-        self.img = None
-
-        self.updateAll()
-
-    def setPath(self,path):
-        self.path = path 
-        return self.updateAll()
-
-    def updateAll(self):
-    
-        if not os.path.isfile(self.path):
-            print('No such file or directory: ' + self.path)
-            return 0 
-
-        self.fileLocation = FILESEP.join(self.path.split(FILESEP)[0:-1]) + FILESEP,
-        self.fileName = self.path.split(FILESEP)[-1],
-        self.fileNumber =  int(self.path.split('_')[-1].split('.')[0]),
-        self.fileTimeStamp = os.path.getctime(self.path)
-
-        x = SpeFile(self.path)
-        
-        self.nFrames = int(x.data.shape[0])
-        self.hImgSize = int(x.data.shape[2]/NATOMS) #Account for the number of shifts
-        self.vImgSize = int(x.data.shape[1])
-
-        if self.hImgSize*NATOMS == SENSOR_WIDTH_PI:
-            self.bin = False
-        elif self.hImgSize*NATOMS == SENSOR_WIDTH_PI/2:
-            self.bin = True
-        else:
-            print('Oh No! Something weird happened with the binning of pixels!')
-
-
-        self.img = np.zeros((int(NATOMS*self.vImgSize*self.nFrames),int(self.hImgSize)))
-
-        for n in range(NATOMS):
-            for k in range(self.nFrames):
-                self.img[(k + n*self.nFrames)*self.vImgSize:(k + n*self.nFrames+1)*self.vImgSize,:] = x.data[k,:,n*self.hImgSize:(n+1)*self.hImgSize]
-
-        return 1
-
-    def getFrame(self, atom, frame):
-        atom = checkAtom(atom)
-        frame = checkFrame(frame)
-
-        return self.img[(frame + atom*self.nFrames)*self.vImgSize:(frame + atom*self.nFrames+1)*self.vImgSize,:]
-
-class readIXONImage():
-
-    def __init__(self, path):
-        self.path = path
-
-        self.nFrames = None
-        self.hImgSize = None
-        self.vImgSize = None
-
-        self.fileLocation = None
-        self.fileName = None 
-        self.fileNumber = None
-        self.fileTimeStamp = None
-
-        self.camera = CAMERA_NAME_IXON
-        self.img = None
-
-        self.updateAll()
-
-    def setPath(self,path):
-        self.path = path 
-        return self.updateAll()
-
-    def updateAll(self):
-    
-        if not os.path.isfile(self.path):
-            print('No such file or directory: ' + self.path)
-            return 0 
-
-        self.fileLocation = FILESEP.join(self.path.split(FILESEP)[0:-1]) + FILESEP,
-        self.fileName = self.path.split(FILESEP)[-1],
-        self.fileNumber =  int(self.path.split('_')[-1].split('.')[0]),
-        self.fileTimeStamp = os.path.getctime(self.path)
-
-        self.img = np.genfromtxt(self.path, delimiter=',')
-        
-        self.nFrames = 3
-        self.hImgSize = int(self.img.shape[1])
-        self.vImgSize = int(self.img.shape[0]/(NATOMS*self.nFrames))
-
-        
-        if self.hImgSize == SENSOR_WIDTH_IXON:
-            self.bin = False
-        elif self.hImgSize == SENSOR_WIDTH_IXON/2:
-            self.bin = True
-        else:
-            print('Oh No! Something weird happened with the binning of pixels!')
-
-        return 1
-
-    def getFrame(self, atom, frame):
-        atom = checkAtom(atom)
-        frame = checkFrame(frame)
-
-        return self.img[(frame + atom*self.nFrames)*self.vImgSize:(frame + atom*self.nFrames+1)*self.vImgSize,:]
-
-class readIXONGSMImage():
-
-    def __init__(self, path):
-        self.path = path
-
-        self.nFrames = None
-        self.hImgSize = None
-        self.vImgSize = None
-
-        self.fileLocation = None
-        self.fileName = None 
-        self.fileNumber = None
-        self.fileTimeStamp = None
-
-        self.camera = CAMERA_NAME_IXON_GSM
-        self.img = None
-
-        self.updateAll()
-
-    def setPath(self,path):
-        self.path = path 
-        return self.updateAll()
-
-    def updateAll(self):
-    
-        if not os.path.isfile(self.path):
-            print('No such file or directory: ' + self.path)
-            return 0 
-
-        self.fileLocation = FILESEP.join(self.path.split(FILESEP)[0:-1]) + FILESEP,
-        self.fileName = self.path.split(FILESEP)[-1],
-        self.fileNumber =  int(self.path.split('_')[-1].split('.')[0]),
-        self.fileTimeStamp = os.path.getctime(self.path)
-
-        self.img = np.genfromtxt(self.path, delimiter=',')
-        
-        self.nFrames = 3
-        self.hImgSize = int(self.img.shape[1])
-        self.vImgSize = int(self.img.shape[0]/(NATOMS*self.nFrames))
-
-        
-        if self.hImgSize == SENSOR_WIDTH_IXON_GSM:
-            self.bin = False
-        elif self.hImgSize == SENSOR_WIDTH_IXON_GSM/2:
-            self.bin = True
-        else:
-            print('Oh No! Something weird happened with the binning of pixels!')
-
-        return 1
-
-    def getFrame(self, atom, frame):
-        atom = checkAtom(atom)
-        frame = checkFrame(frame)
-
-        return self.img[(frame + atom*self.nFrames)*self.vImgSize:(frame + atom*self.nFrames+1)*self.vImgSize,:]
-
-class readIXONVImage():
-
-    def __init__(self, path):
-        self.path = path
-
-        self.nFrames = None
-        self.hImgSize = None
-        self.vImgSize = None
-
-        self.fileLocation = None
-        self.fileName = None 
-        self.fileNumber = None
-        self.fileTimeStamp = None
-
-        self.camera = CAMERA_NAME_IXONV
-        self.img = None
-
-        self.updateAll()
-
-    def setPath(self,path):
-        self.path = path 
-        return self.updateAll()
-
-    def updateAll(self):
-    
-        if not os.path.isfile(self.path):
-            print('No such file or directory: ' + self.path)
-            return 0 
-
-        self.fileLocation = FILESEP.join(self.path.split(FILESEP)[0:-1]) + FILESEP,
-        self.fileName = self.path.split(FILESEP)[-1],
-        self.fileNumber =  int(self.path.split('_')[-1].split('.')[0]),
-        self.fileTimeStamp = os.path.getctime(self.path)
-
-        self.img = np.genfromtxt(self.path, delimiter=',')
-        
-        self.nFrames = 3
-        self.hImgSize = int(self.img.shape[1])
-        self.vImgSize = int(self.img.shape[0]/(NATOMS*self.nFrames))
-
-        
-        if self.hImgSize == SENSOR_WIDTH_IXONV:
-            self.bin = False
-        elif self.hImgSize == SENSOR_WIDTH_IXONV/2:
-            self.bin = True
-        else:
-            print('Oh No! Something weird happened with the binning of pixels!')
-
-        return 1
-
-    def getFrame(self, atom, frame):
-        atom = checkAtom(atom)
-        frame = checkFrame(frame)
-
-        return self.img[(frame + atom*self.nFrames)*self.vImgSize:(frame + atom*self.nFrames+1)*self.vImgSize,:]
-
-class readXimeaImage():
-
-    def __init__(self,path):
-        self.path = path
-
-        self.nFrames = None
-        self.hImgSize = None
-        self.vImgSize = None
-        self.bin = None
-
-        self.fileLocation = None
-        self.fileName = None 
-        self.fileNumber = None
-        self.fileTimeStamp = None
-
-        self.camera = CAMERA_NAME_XIMEA
-        self.img = None
-
-        self.updateAll()
-
-    def setPath(self,path):
-        self.path = path 
-        return self.updateAll()
-
-    def updateAll(self):
-    
-        if not os.path.isfile(self.path):
-            print('No such file or directory: ' + self.path)
-            return 0 
-
-        self.fileLocation = FILESEP.join(self.path.split(FILESEP)[0:-1]) + FILESEP,
-        self.fileName = self.path.split(FILESEP)[-1],
-        self.fileNumber =  int(self.path.split('_')[-1].split('.')[0]),
-        self.fileTimeStamp = os.path.getctime(self.path)
-
-        import json
-
-
-
-        f = open(self.path,'r')
-        dataTemp = json.load(f)
-        f.close()       
-
-        self.img = np.array(dataTemp['K']['Shadow'], dtype=np.float)
-        self.img = np.vstack((self.img, np.array(dataTemp['K']['Bright'], dtype=np.float)))
-        self.img = np.vstack((self.img, np.array(dataTemp['K']['Dark'], dtype=np.float)))
-        self.img = np.vstack((self.img, np.array(dataTemp['Rb']['Shadow'], dtype=np.float)))
-        self.img = np.vstack((self.img, np.array(dataTemp['Rb']['Bright'], dtype=np.float)))
-        self.img = np.vstack((self.img, np.array(dataTemp['Rb']['Dark'], dtype=np.float)))
-
-        # self.img = np.genfromtxt(self.path, delimiter=',')
-        
-        self.nFrames = 3
-        self.hImgSize = int(self.img.shape[1])
-        self.vImgSize = int(self.img.shape[0]/(NATOMS*self.nFrames))
-
-
-        self.bin = False        
-        # if self.hImgSize == SENSOR_WIDTH_IXON:
-        #     self.bin = False
-        # elif self.hImgSize == SENSOR_WIDTH_IXON/2:
-        #     self.bin = True
-        # else:
-        #     print('Oh No! Something weird happened with the binning of pixels!')
-
-        return 1
-
-    def getFrame(self, atom, frame):
-        atom = checkAtom(atom)
-        frame = checkFrame(frame)
-
-        return self.img[(frame + atom*self.nFrames)*self.vImgSize:(frame + atom*self.nFrames+1)*self.vImgSize,:]
