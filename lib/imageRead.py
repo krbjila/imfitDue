@@ -104,7 +104,11 @@ class NpzReader(Reader):
     def getData(self):
         f = np.load(self.path, allow_pickle=True)
         data = f['data']
-        metadata = f['meta']
+        metadata = f['meta'].item()
+        # Assume symmetric binning
+        metadata['bins'] = metadata['binning'][0]
+        metadata['hImgSize'] = data.shape[2]
+        metadata['vImgSize'] = data.shape[1]
         # TODO: restructure metadata??? see Reader.updateAll()
         return (data, metadata)
     
