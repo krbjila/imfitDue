@@ -163,9 +163,9 @@ class imfitDue(QtWidgets.QMainWindow):
 
         if self.fitK is not None and self.fitRb is not None:
             print("Processing K fit result")
-            KProcess = processFitResult(self.fitK, imagePath)
+            KProcess = processFitResult(self.fitK, self.mode)
             print("Processing Rb fit result")
-            RbProcess = processFitResult(self.fitRb, imagePath)
+            RbProcess = processFitResult(self.fitRb, self.mode)
 
             KProcess.data[0] = self.currentFile.fileName + "-" + imagePath
             RbProcess.data[0] = self.currentFile.fileName + "-" + imagePath
