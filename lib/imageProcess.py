@@ -375,6 +375,7 @@ class fitOD():
             r = [None,None]
             r[0] = self.odImage.xRange0
             r[1] = self.odImage.xRange1
+
             xmin = np.min(r[0])
             ymin = np.min(r[1])
 
@@ -383,8 +384,8 @@ class fitOD():
             blur = ndimage.gaussian_filter(od_no_bg,5,mode='constant')
     
             
-            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0, 0]
-            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), 40, 40]
+            p0 = [0, M, self.odImage.xRange0[I1], len(r[0])*0.2, self.odImage.xRange1[I0], len(r[0])*0.2, 0, 0]
+            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0])*0.5, np.max(r[1]), len(r[1])*0.5, 40, 40]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -40, -40]
             p0 = checkGuess(p0,pUpper,pLower)
 
