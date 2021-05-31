@@ -81,10 +81,9 @@ class calcOD():
 
             Ceff = self.config['CSat'][self.species]
             bins = self.data.bin
-            if isinstance(bins, tuple):
-                Ceff *= float(bins[0] * bins[1])
-            elif isinstance(bins, int):
-                Ceff *= float(bins**2)
+            Ceff *= float(bins**2)
+
+            print(Ceff)
             self.ODCorrected = self.OD + (s2 - s1)/Ceff
 
             #Set all nans and infs to zero
@@ -600,13 +599,13 @@ class fitOD():
 
 class processFitResult():
 
-    def __init__(self,fitObject, imagePath='Axial'):
+    def __init__(self,fitObject, mode):
 
         self.fitObject = fitObject 
         self.bin = self.fitObject.odImage.data.bin
         # self.atom = self.fitObject.odImage.atom
-        self.imagePath = IMAGING_PATHS.index(imagePath)
-        self.pixelSize = PIXEL_SIZES[self.imagePath]
+        self.config = IMFIT_MODES[mode]
+        self.pixelSize = self.config['Pixel Size']
 
         self.data = None
 
@@ -623,9 +622,9 @@ class processFitResult():
                     'peakOD' : self.fitObject.fitData[1],
                     'x0' : self.fitObject.fitData[2],
                     'y0' : self.fitObject.fitData[4],
-                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
-                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
-                    'angle' : self.fitObject.fitData[6]*180.0/3.141592
+                    'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
+                    'angle' : self.fitObject.fitData[6]*180.0/np.pi
                     }
 
             self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
@@ -635,9 +634,9 @@ class processFitResult():
                     'peakOD' : self.fitObject.fitDataConf[1],
                     'x0' : self.fitObject.fitDataConf[2],
                     'y0' : self.fitObject.fitDataConf[4],
-                    'wx' : self.fitObject.fitDataConf[3]*(self.bin+1.0)*self.pixelSize,
-                    'wy' : self.fitObject.fitDataConf[5]*(self.bin+1.0)*self.pixelSize,
-                    'angle' : self.fitObject.fitDataConf[6]*180.0/3.141592
+                    'wx' : self.fitObject.fitDataConf[3]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitDataConf[5]*self.bin*self.pixelSize,
+                    'angle' : self.fitObject.fitDataConf[6]*180.0/np.pi
                     }
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian'):
@@ -647,8 +646,8 @@ class processFitResult():
                     'peakOD' : self.fitObject.fitData[1],
                     'x0' : self.fitObject.fitData[2],
                     'y0' : self.fitObject.fitData[4],
-                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
-                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
+                    'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
                     'angle' : 0
                     }
 
@@ -658,13 +657,13 @@ class processFitResult():
             
             r = {
                     'offset' : self.fitObject.fitData[0],
-                    'dODdx' : self.fitObject.fitData[6]/(self.bin+1.0)*self.pixelSize,
-                    'dODdy' : self.fitObject.fitData[7]/(self.bin+1.0)*self.pixelSize,
+                    'dODdx' : self.fitObject.fitData[6]/self.bin*self.pixelSize,
+                    'dODdy' : self.fitObject.fitData[7]/self.bin*self.pixelSize,
                     'peakOD' : self.fitObject.fitData[1],
                     'x0' : self.fitObject.fitData[2],
                     'y0' : self.fitObject.fitData[4],
-                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
-                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
+                    'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
                     'angle' : 0
                     }
 
@@ -678,8 +677,8 @@ class processFitResult():
                     'peakOD' : self.fitObject.fitData[1],
                     'x0' : self.fitObject.fitData[2],
                     'y0' : self.fitObject.fitData[4],
-                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
-                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
+                    'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
                     'angle' : VERT_TRAP_ANGLE
                     }
 
@@ -690,11 +689,11 @@ class processFitResult():
             r = {
                     'offset' : self.fitObject.fitData[0],
                     'peakODBEC' : self.fitObject.fitData[1],
-                    'wxBEC' : self.fitObject.fitData[2]*(self.bin+1.0)*self.pixelSize,
-                    'wyBEC' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
+                    'wxBEC' : self.fitObject.fitData[2]*self.bin*self.pixelSize,
+                    'wyBEC' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
                     'peakODThermal' : self.fitObject.fitData[4],
-                    'wxThermal' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
-                    'wyThermal' : self.fitObject.fitData[6]*(self.bin+1.0)*self.pixelSize,
+                    'wxThermal' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
+                    'wyThermal' : self.fitObject.fitData[6]*self.bin*self.pixelSize,
                     'x0': self.fitObject.fitData[7],
                     'y0': self.fitObject.fitData[8],
                     }
@@ -708,12 +707,12 @@ class processFitResult():
                     'peakOD' : self.fitObject.fitData[1],
                     'x0' : self.fitObject.fitData[2],
                     'y0' : self.fitObject.fitData[4],
-                    'wx' : self.fitObject.fitData[3]*(self.bin+1.0)*self.pixelSize,
-                    'wy' : self.fitObject.fitData[5]*(self.bin+1.0)*self.pixelSize,
+                    'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
                     'q' : self.fitObject.fitData[6],
                     'TTF': getTTF(self.fitObject)[0][0],
-                    'wxClassical' : self.fitObject.fitDataGauss[3]*(self.bin+1.0)*self.pixelSize,
-                    'wyClassical' : self.fitObject.fitDataGauss[5]*(self.bin+1.0)*self.pixelSize,
+                    'wxClassical' : self.fitObject.fitDataGauss[3]*self.bin*self.pixelSize,
+                    'wyClassical' : self.fitObject.fitDataGauss[5]*self.bin*self.pixelSize,
                     'peakODClassical' : self.fitObject.fitDataGauss[1]
                     }
 
@@ -726,8 +725,8 @@ class processFitResult():
                     'Band0' : self.fitObject.fitData[1],
                     'Band1' : self.fitObject.fitData[2],
                     'Band2' : self.fitObject.fitData[3],
-                    'wy' : self.fitObject.fitData[4]*(self.bin+1.0)*self.pixelSize,
-                    'wx' : self.fitObject.fitData[6]*(self.bin+1.0)*self.pixelSize,
+                    'wy' : self.fitObject.fitData[4]*self.bin*self.pixelSize,
+                    'wx' : self.fitObject.fitData[6]*self.bin*self.pixelSize,
                     'x0': self.fitObject.fitData[7],
                     'y0': self.fitObject.fitData[5],
                     'TOF': self.fitObject.TOF,
