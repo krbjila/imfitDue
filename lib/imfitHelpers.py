@@ -159,7 +159,7 @@ def upload2Origin(species, fitFunction, data):
         if species == 'KRbSpinGauss':
             if 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
                 template = 'KRbSpinGauss'
-                worksheetName = 'KRbSpinGaus1'
+                worksheetName = 'KRbSpinGauss1'
                 longname = 'KRb Spin Resolved Gaussian'
         else:
             template = WORKSHEET_NAMES[fitFunction]
