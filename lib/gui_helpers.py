@@ -300,7 +300,8 @@ class regionWidget(QtWidgets.QWidget):
     def setup(self):
 
         topLabels = ['XC', 'YC', 'CrX', 'CrY']
-        sideLabels = ATOM_NAMES
+        # sideLabels = ATOM_NAMES
+        sideLabels = IMFIT_MODES[DEFAULT_MODE]['Species']
 
         font = QtGui.QFont()
         font.setBold(True)
@@ -313,7 +314,7 @@ class regionWidget(QtWidgets.QWidget):
             x.setFont(font)
             self.grid.addWidget(x,0,k+1,1,1)
         for k in range(2):
-            x = QtWidgets.QLabel(ATOM_NAMES[k])
+            x = QtWidgets.QLabel(sideLabels[k])
             self.atom_labels.append(x)
             x.setFont(font)
             self.grid.addWidget(x,k+1,0,1,1)
