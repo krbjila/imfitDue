@@ -153,20 +153,17 @@ def upload2Origin(species, fitFunction, data):
         worksheetName = species + WORKSHEET_NAMES[fitFunction]
         longname = species + " " + FIT_FUNCTIONS[fitFunction]
 
-        if species == 'KRbSpinGauss':
-            if 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
-                template = 'KRbSpinGauss'
-                worksheetName = 'KRbSpinGauss1'
-                longname = 'KRb Spin Resolved Gaussian'
-        if species == 'KRbFKGauss1':
-            if 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
-                template = 'KRbFKGauss'
-                worksheetName = 'KRbFKGauss1'
-                longname = 'KRb FK Gaussian'
+        if species == 'KRbSpinGauss' and 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
+            template = 'KRbSpinGauss'
+            worksheetName = 'KRbSpinGauss1'
+            longname = 'KRb Spin Resolved Gaussian'
+        elif species == 'KRbFKGauss1' and 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
+            template = 'KRbFKGauss'
+            worksheetName = 'KRbFKGauss1'
+            longname = 'KRb FK Gaussian'
         else:
             template = WORKSHEET_NAMES[fitFunction]
-        
-        print(template, worksheetName, longname)
+        print(fitFunction, species, template, worksheetName, longname)
 
         if orgApp.FindWorksheet(worksheetName) is None:
             orgApp.CreatePage(2, worksheetName, template)
@@ -197,7 +194,7 @@ def upload2Origin(species, fitFunction, data):
                 # if not Gaussian w/ Gradient, add extra columns for gradient columns in origin book
                 data = [data[0]] + [0]*2 + data[1:] + [0]*2
             else:
-                data = [data[0]] + [0]*2 + [data[1]] + data[4:] + data[2:4]
+                data = [data[0]] + [0]*2 + [data[1]] + data[4:-1] + data[2:4]
             
             for (i, d) in enumerate(data):
                 uploadSuccess = orgApp.PutWorksheet("[{}]Sheet1".format(worksheetName), d, -1, i)

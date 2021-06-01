@@ -176,7 +176,23 @@ IMFIT_MODES = OrderedDict([
                   [125, 280, 250, 250]],
         'Extension Filter': '*.csv',
         'Fit Functions': FIT_FUNCTIONS,
-        'Enforce same fit for both': False
+        'Enforce same fit for both': False,
+        'Auto Detect Binning': True,
+        'Array Width': 512,
+        'Number of Frames': 6,
+        'Frame Order': {
+            'K': {
+                'Shadow': 0,
+                'Light': 1,
+                'Dark': 2,
+            },
+            'Rb': {
+                'Shadow': 3,
+                'Light': 4,
+                'Dark': 5
+            }
+        },
+        'CSat': {'K': 1400 / 4.0, 'Rb': 1400 / 4.0}, # Unbinned effective C_sat
     }),
     ('Ximea', {
         ### Mode 0 - Ximea
