@@ -96,8 +96,11 @@ class imfitDue(QtWidgets.QMainWindow):
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
         species = IMFIT_MODES[self.mode]['Species']
-        self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
-        self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+        try:
+            self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
+            self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+        except Exception as e:
+            print("Could not calculate OD: {}".format(e))
         
         if self.fo.autoFit.isChecked() and self.frame == 'OD':
             self.fitCurrent()
