@@ -100,12 +100,16 @@ def azimuthalAverage(data, center):
     return tbin/nr
 
 
-def getLastFile(path):
+def getLastFile(path, ext=None):
 
     import os
     d = os.listdir(path)
 
-    d1 = [i.split('.')[0] for i in d]
+    if ext is None:
+        d0 = d
+    else:
+        d0 = [i for i in d if ext.split(".")[-1] in i]
+    d1 = [i.split('.')[0] for i in d0]
     d2 = [i.split('_')[-1] for i in d1]
 
     if not d2:

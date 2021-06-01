@@ -448,7 +448,7 @@ class pathWidget(QtWidgets.QWidget):
         d = IMFIT_MODES[self.mode]["Default Path"]
         self.filePath.setText(d)
         if os.path.isdir(d):
-            n = getLastFile(d)
+            n = getLastFile(d, IMFIT_MODES[self.mode]['Extension Filter'])
             self.autoLoadFile.setText(str(n))
 
 class fitOptionsWidget(QtWidgets.QWidget):
