@@ -138,12 +138,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
     def fitCurrent(self):
         # TODO: Understand what this does and adjust to be more readable
-        if self.fo.moleculeBook.isChecked():
-            kAtom = 2
-        else:
-            kAtom = 0
-
         rbAtom = 1
+        kAtom = 0
         TOF = float(self.fo.tof.text())
         pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
@@ -170,32 +166,33 @@ class imfitDue(QtWidgets.QMainWindow):
             KProcess.data[0] = self.currentFile.fileName + "-" + imagePath
             RbProcess.data[0] = self.currentFile.fileName + "-" + imagePath
 
-            if self.mode == 'Axial iXon Molecules In Situ': # Molecule In situ FK
-                print("Uploading KRb to Origin")
-                upload2Origin('KRbSpinGauss', self.fitK.fitFunction,
-                                        [KProcess.data, RbProcess.data])
-                return 1
+            if 'Axial iXon Molecules' in self.mode: # Molecule In situ FK
+                if not self.fo.fitBothCheckbox.isChecked() and self.fo.fitBothCheckbox.isEnabled():
+                    print("Uploading |0,0> KRb to Origin")
+                    upload2Origin('KRbFKGauss1', self.fitK.fitFunction, KProcess.data)
+                    return 1
+                else:
+                    print("Uploading KRb to Origin")
+                    upload2Origin('KRbSpinGauss', self.fitK.fitFunction,
+                                            [KProcess.data, RbProcess.data])
+                    return 1
             else:
                 print("Uploading Rb to Origin")
                 upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
 
-                if self.fitK.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
-                    if self.fo.moleculeBook.isChecked():
-                        KProcess.data[1] = 'KRb'
-                    else:
-                        KProcess.data[1] = 'K'
+                # TODO: Fix how Vertical BandMap handles mass.
+                # if self.fitK.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
+                #     if self.fo.fitBothCheckbox.isChecked():
+                #         KProcess.data[1] = 'KRb'
+                #     else:
+                #         KProcess.data[1] = 'K'
 
-                    upload2Origin('K', self.fitK.fitFunction, KProcess.data)
-                    return 1
+                #     upload2Origin('K', self.fitK.fitFunction, KProcess.data)
+                #     return 1
 
-                if self.fo.moleculeBook.isChecked():
-                    print("Uploading KRb to Origin")
-                    upload2Origin('KRb', self.fitK.fitFunction, KProcess.data)
-                    return 1
-                else:
-                    print("Uploading K to Origin")
-                    upload2Origin('K', self.fitK.fitFunction, KProcess.data)
-                    return 1
+                print("Uploading K to Origin")
+                upload2Origin('K', self.fitK.fitFunction, KProcess.data)
+                return 1
             
     def plotCurrent(self):
         if self.currentFile is None:
@@ -283,8 +280,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
     def initializeGui(self):
 
-        self.fo = fitOptionsWidget()
         self.figs = ImageWindows()
+        self.fo = fitOptionsWidget(self.figs)
         self.roi = regionWidget()
         self.pf = pathWidget(self.fo, self.figs, self.roi)
         self.av = averageWidget()

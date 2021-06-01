@@ -9,8 +9,10 @@ FILESEP = '/'
 AUTOSCALE_MIN = 2 # percentile
 AUTOSCALE_HEADROOM = 1.1 # factor above max
 
-FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
+# FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
+FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac']
 KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian']
+NONTWISTED_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian']
 WORKSHEET_NAMES = [ 'GaussGrad', 'Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']
 
 DEFAULT_MODE = 'Axial iXon'
@@ -45,6 +47,36 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
+    }),
+    ('Axial iXon Molecules ToF', {
+        ### Mode 1.1 - Axial iXon
+        'Default Path': DEFAULT_PATH + 'KRbFK/',
+        'Default Suffix': 'krbfk_{}.csv',
+        'Pixel Size': 2.58,
+        'Species': ['|0,0>', '|1,0>'],
+        'Image Path': 'Axial',
+        'Default Region': [[135, 150, 100, 100], 
+                  [135, 150, 100, 100]],
+        'Extension Filter': '*.csv',
+        'Fit Functions': NONTWISTED_FIT_FUNCTIONS,
+        'Enforce same fit for both': True,
+        'Auto Detect Binning': True,
+        'Array Width': 512,
+        'Number of Frames': 4,
+        'Frame Order': {
+            '|0,0>': {
+                'Shadow': 0,
+                'Light': 2,
+                'Dark': 1,
+            },
+            '|1,0>': {
+                'Shadow': 0,
+                'Light': 2,
+                'Dark': 1
+            }
+        },
+        'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
+        'Allow fit both states': True
     }),
     ('Axial iXon Molecules In Situ', {
         ### Mode 3 - Axial iXon Molecules

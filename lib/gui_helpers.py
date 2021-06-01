@@ -428,6 +428,16 @@ class pathWidget(QtWidgets.QWidget):
             self.fitOptions.rbFitFunction.setEnabled(False)
         else:
             self.fitOptions.rbFitFunction.setEnabled(True)
+        if "Allow fit both states" in IMFIT_MODES[self.mode]:
+            self.fitOptions.fitBothCheckbox.setEnabled(True)
+            if not self.fitOptions.fitBothCheckbox.isChecked():
+                self.imageWindows.plotTools.rbSelect.setEnabled(False)
+                self.imageWindows.plotTools.kSelect.setChecked(True)
+            else:
+                self.imageWindows.plotTools.rbSelect.setEnabled(True)
+        else:
+            self.fitOptions.fitBothCheckbox.setEnabled(False)
+            self.imageWindows.plotTools.rbSelect.setEnabled(True)
         self.fitOptions.KLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Species"][0]))
         self.fitOptions.RbLabel.setText("Fit {} to".format(IMFIT_MODES[self.mode]["Species"][1]))
         self.imageWindows.plotTools.kSelect.setText(IMFIT_MODES[self.mode]["Species"][0])
@@ -442,13 +452,21 @@ class pathWidget(QtWidgets.QWidget):
             self.autoLoadFile.setText(str(n))
 
 class fitOptionsWidget(QtWidgets.QWidget):
-    def __init__(self,Parent=None):
+    def __init__(self,plots,Parent=None):
         super(fitOptionsWidget,self).__init__(Parent)
+        self.plots = plots
         self.setup()
 
     def updateRbFit(self):
         if not self.rbFitFunction.isEnabled():
             self.rbFitFunction.setCurrentIndex(self.kFitFunction.currentIndex())
+
+    def updateRbEnabled(self):
+        if self.fitBothCheckbox.isEnabled() and not self.fitBothCheckbox.isChecked():
+            self.plots.plotTools.rbSelect.setEnabled(False)
+            self.plots.plotTools.kSelect.setChecked(True)
+        else:
+            self.plots.plotTools.rbSelect.setEnabled(True)
 
     def setup(self):
         self.rbFitFunction = QtWidgets.QComboBox()
@@ -462,7 +480,9 @@ class fitOptionsWidget(QtWidgets.QWidget):
 
         self.autoFit = QtWidgets.QCheckBox('AutoFit')
         self.autoUpload = QtWidgets.QCheckBox('Auto Origin')
-        self.moleculeBook = QtWidgets.QCheckBox('Molecules?')
+        self.fitBothCheckbox = QtWidgets.QCheckBox('Fit both states?')
+        self.fitBothCheckbox.setEnabled('Allow fit both states' in IMFIT_MODES[DEFAULT_MODE])
+        self.fitBothCheckbox.stateChanged.connect(self.updateRbEnabled)
 
         self.fitButton = QtWidgets.QPushButton('Fit')
         self.uploadButton = QtWidgets.QPushButton('Upload to Origin')
@@ -501,7 +521,7 @@ class fitOptionsWidget(QtWidgets.QWidget):
         v1 = QtWidgets.QGridLayout()
         v1.addWidget(self.autoFit)
         v1.addWidget(self.autoUpload)
-        v1.addWidget(self.moleculeBook)
+        v1.addWidget(self.fitBothCheckbox)
 
         h = QtWidgets.QHBoxLayout()
         h.addLayout(v0)

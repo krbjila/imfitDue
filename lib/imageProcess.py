@@ -547,7 +547,7 @@ class fitOD():
             self.slices.fit1 =  self.fittedImage[:,I0]
 
         elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
-
+            # TODO: Make this depend properly on the species. Disabled for now.
             # Band mapping function in the vertical direction
 
             r = [None,None]
