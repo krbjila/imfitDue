@@ -22,13 +22,13 @@ IMFIT_MODES = OrderedDict([
     ('Axial iXon', {
         ### Mode 1 - Axial iXon
         'Default Path': DEFAULT_PATH + 'Andor/',
-        'Default Suffix': 'ixon_{}.csv',
+        'Default Suffix': 'ixon_{}.npz',
         'Pixel Size': 2.58,
         'Species': ['K', 'Rb'],
         'Image Path': 'Axial',
         'Default Region': [[150, 220, 250, 250], 
                   [150, 350, 300, 300]],
-        'Extension Filter': '*.csv',
+        'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,
         'Auto Detect Binning': True,
@@ -51,13 +51,13 @@ IMFIT_MODES = OrderedDict([
     ('Axial iXon Molecules ToF', {
         ### Mode 1.1 - Axial iXon
         'Default Path': DEFAULT_PATH + 'KRbFK/',
-        'Default Suffix': 'krbfk_{}.csv',
+        'Default Suffix': 'krbfk_{}.npz',
         'Pixel Size': 2.58,
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
         'Default Region': [[135, 150, 100, 100], 
                   [135, 150, 100, 100]],
-        'Extension Filter': '*.csv',
+        'Extension Filter': '*.npz',
         'Fit Functions': NONTWISTED_FIT_FUNCTIONS,
         'Enforce same fit for both': True,
         'Auto Detect Binning': True,
@@ -81,13 +81,13 @@ IMFIT_MODES = OrderedDict([
     ('Axial iXon Molecules In Situ', {
         ### Mode 3 - Axial iXon Molecules
         'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
-        'Default Suffix': 'ixon_{}.csv',
+        'Default Suffix': 'ixon_{}.npz',
         'Pixel Size': 2.58,
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
         'Default Region': [[268, 253, 50, 25], 
                   [268, 253, 50, 25]],
-        'Extension Filter': '*.csv',
+        'Extension Filter': '*.npz',
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True,
                 'Auto Detect Binning': True,
@@ -136,45 +136,16 @@ IMFIT_MODES = OrderedDict([
         },
         'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
-    ('Axial iXon .npz Test', {
-        ### Mode 1 - Axial iXon
-        'Default Path': DEFAULT_PATH + 'Andor/',
-        'Default Suffix': 'ixon_{}.npz',
-        'Pixel Size': 2.58,
-        'Species': ['K', 'Rb'],
-        'Image Path': 'Axial',
-        'Default Region': [[150, 220, 250, 250], 
-                  [150, 350, 300, 300]],
-        'Extension Filter': '*.npz',
-        'Fit Functions': FIT_FUNCTIONS,
-        'Enforce same fit for both': False,
-        'Auto Detect Binning': True,
-        'Array Width': 512,
-        'Number of Frames': 6,
-        'Frame Order': {
-            'K': {
-                'Shadow': 0,
-                'Light': 1,
-                'Dark': 2,
-            },
-            'Rb': {
-                'Shadow': 3,
-                'Light': 4,
-                'Dark': 5
-            }
-        },
-        'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
-    }),
     ('Vertical iXon', {
         ### Mode 2 - Vertical iXon
         'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
-        'Default Suffix': 'twospecies_{}.csv',
+        'Default Suffix': 'twospecies_{}.npz',
         'Pixel Size': 0.956,
         'Species': ['K', 'Rb'],
         'Image Path': 'Vertical',
         'Default Region': [[125, 280, 250, 250], 
                   [125, 280, 250, 250]],
-        'Extension Filter': '*.csv',
+        'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,
         'Auto Detect Binning': True,
@@ -194,17 +165,17 @@ IMFIT_MODES = OrderedDict([
         },
         'CSat': {'K': 1400 / 4.0, 'Rb': 1400 / 4.0}, # Unbinned effective C_sat
     }),
-    ('Ximea', {
-        ### Mode 0 - Ximea
-        'Default Path': DEFAULT_PATH + 'ximea/',
-        'Default Suffix': 'xi_{}.csv',
-        'Pixel Size': 3.46,
-        'Species': ['K', 'Rb'],
-        'Image Path': 'Side',
-        'Default Region': [[185, 260, 300, 300], 
-                  [185, 260, 300, 300]],
-        'Extension Filter': '*.dat',
-        'Fit Functions': FIT_FUNCTIONS,
-        'Enforce same fit for both': False
-    }),
+    # ('Ximea', {
+    #     ### Mode 0 - Ximea
+    #     'Default Path': DEFAULT_PATH + 'ximea/',
+    #     'Default Suffix': 'xi_{}.csv',
+    #     'Pixel Size': 3.46,
+    #     'Species': ['K', 'Rb'],
+    #     'Image Path': 'Side',
+    #     'Default Region': [[185, 260, 300, 300], 
+    #               [185, 260, 300, 300]],
+    #     'Extension Filter': '*.dat',
+    #     'Fit Functions': FIT_FUNCTIONS,
+    #     'Enforce same fit for both': False
+    # }),
 ])
