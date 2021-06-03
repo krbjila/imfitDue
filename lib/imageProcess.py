@@ -476,9 +476,12 @@ class fitOD():
                 pass
 
             ### Calculate radial average
+            x_coerced = min(max(self.fitData[7], 0), len(self.odImage.xRange0)-1)
+            y_coerced = min(max(self.fitData[8], 0), len(self.odImage.xRange1)-1)
 
-            I0 = self.odImage.xRange0.index(int(self.fitData[7]))
-            I1 = self.odImage.xRange1.index(int(self.fitData[8]))
+
+            I0 = self.odImage.xRange0.index(int(x_coerced))
+            I1 = self.odImage.xRange1.index(int(y_coerced))
 
             self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected,[I0, I1])
             self.slices.radSliceFit = azimuthalAverage(self.fittedImage, [I0, I1])
