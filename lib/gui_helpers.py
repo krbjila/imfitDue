@@ -99,12 +99,6 @@ class ImageWindows(QtWidgets.QWidget):
     def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None):
         colorMap = KRbCustomColors().whiteJet
         levelLow = float(self.plotTools.odMinEdit.text())
-
-        # self.xlims = x
-        # self.ylims = y
-        # self.od_image = image
-        # self.ch0 = ch0
-        # self.ch1 = ch1
     
         if image is not None:
             self.plotTools.setImage(image)
@@ -117,8 +111,10 @@ class ImageWindows(QtWidgets.QWidget):
             
             print(image.shape)
             self.mainImage = self.ax0.imshow(image,cmap=colorMap, extent=(min(x),max(x),max(y),min(y)))
-            self.ax0.set_xlim((min(x), max(x)))
-            self.ax0.set_ylim((max(y), min(y)))
+            if x is not None:
+                self.ax0.set_xlim((min(x), max(x)))
+            if y is not None:
+                self.ax0.set_ylim((max(y), min(y)))
             self.setCrossHair()            
             
             if ch0 is not None:
@@ -127,11 +123,11 @@ class ImageWindows(QtWidgets.QWidget):
                 self.ax0.plot(ch1,y,color=[0,0.5,0,0.75])
         
         try:
-            self.mainImage.set_clim(levelLow, self.plotTools.odSlider.value()/10.0)
+            self.mainImage.set_clim(levelLow, self.plotTools.sliderOd())
+            self.canvas.draw()
         except:
             print('Are you sure you loaded an image?')
 
-        self.canvas.draw()
 
     def plotSliceUpdate(self, x, Lx, y, Ly):
         if Lx[0] is not None:
@@ -199,29 +195,43 @@ class plotTools(QtWidgets.QWidget):
     def setup(self):
         ODMAXDEFAULT = '2'
         ODMINDEFAULT = '0'
+        max_slider = 20
+        min_slider = 0
 
+        self.odMaxValidator = QtGui.QDoubleValidator()
         self.odMaxEdit = QtWidgets.QLineEdit(ODMAXDEFAULT)
         self.odMaxEdit.setFixedWidth(60)
+        self.odMaxEdit.setValidator(self.odMaxValidator)
 
+
+        self.odMinValidator = QtGui.QDoubleValidator()
         self.odMinEdit = QtWidgets.QLineEdit(ODMINDEFAULT)
         self.odMinEdit.setFixedWidth(60)
+        self.odMinEdit.setValidator(self.odMinValidator)
+
+        self.odMaxValidator.setTop(100)
+        self.odMaxValidator.setBottom(float(ODMINDEFAULT))
+        self.odMinValidator.setTop(float(ODMAXDEFAULT))
+        self.odMinValidator.setBottom(-100)
 
         self.odMaxEdit.returnPressed.connect(self.updateSlider)
         self.odMinEdit.returnPressed.connect(self.updateSlider)
         
         self.odSlider = QtWidgets.QSlider(QtCore.Qt.Vertical)
         self.odSlider.setFixedHeight(400)
-        self.odSlider.setMaximum(float(ODMAXDEFAULT)*10.0)
-        self.odSlider.setMinimum(float(ODMINDEFAULT)*10.0+0.5)
+        self.odSlider.setMaximum(max_slider)
+        self.odSlider.setMinimum(min_slider)
         self.odSlider.setValue(10)
         self.odSlider.setTickPosition(2)
-        self.odSlider.setTickInterval(5)
+        self.odSlider.setTickInterval(1)
         self.odSlider.setPageStep(2)
 
         self.removeCHButton = QtWidgets.QPushButton('Remove\nCrosshair')
 
         self.setCHX = QtWidgets.QLineEdit('0')
+        self.setCHX.setReadOnly(True)
         self.setCHY = QtWidgets.QLineEdit('0')
+        self.setCHY.setReadOnly(True)
 
         self.atomSelectGroup = QtWidgets.QButtonGroup()
         self.rbSelect = QtWidgets.QRadioButton('Rb')
@@ -261,25 +271,28 @@ class plotTools(QtWidgets.QWidget):
 
         self.setLayout(vbox)
 
+    def sliderOd(self):
+        return float(self.odMinEdit.text()) + float(self.odMaxEdit.text()) * (self.odSlider.value() - self.odSlider.minimum())/(self.odSlider.maximum() - self.odSlider.minimum())
+
     def updateSlider(self):
         odmax = self.odMaxEdit.text()
         odmin = self.odMinEdit.text()
-        sv = self.odSlider.value()
+        sv = self.sliderOd()
 
         try:
-            odmax = float(odmax)*10
-            odmin = float(odmin)*10
+            odmax = float(odmax)
+            odmin = float(odmin)
         except:
-
             return -1
 
+        self.odMaxValidator.setBottom(odmin)
+        self.odMinValidator.setTop(odmax)
+
         if odmax < sv:
-            self.odSlider.setValue(odmax)
-        self.odSlider.setMaximum(odmax)
+            self.odSlider.setValue(self.odSlider.maximum())
 
         if odmin > sv:
-            self.odSlider.setValue(odmin)
-        self.odSlider.setMinimum(odmin+0.5)
+            self.odSlider.setValue(self.odSlider.minimum())
 
     def setImage(self, image):
         self.image = image
@@ -290,7 +303,7 @@ class plotTools(QtWidgets.QWidget):
             self.odMaxEdit.setText("{:0.1f}".format(high * AUTOSCALE_HEADROOM))
             self.odMinEdit.setText("{:0.1f}".format(low))
             self.updateSlider()
-            self.odSlider.setValue(high * 10.0)
+            self.odSlider.setValue(self.odSlider.maximum())
 
 class regionWidget(QtWidgets.QWidget):
     def __init__(self, Parent=None):
@@ -324,6 +337,7 @@ class regionWidget(QtWidgets.QWidget):
         for i in range(2):
             for j in range(4):
                 self.region[i][j] = QtWidgets.QLineEdit(str(IMFIT_MODES[DEFAULT_MODE]["Default Region"][i][j]))
+                self.region[i][j].setValidator(QtGui.QIntValidator())
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j],i+1,j+1,1,1)
 
@@ -360,6 +374,7 @@ class pathWidget(QtWidgets.QWidget):
         self.browseButton.clicked.connect(self.browseFile)
         self.loadButton = QtWidgets.QPushButton('Load')
         self.autoLoadFile = QtWidgets.QLineEdit('0')
+        self.autoLoadFile.setValidator(QtGui.QIntValidator())
         self.autoLoadFile.setFixedWidth(60)
         self.autoLoad = QtWidgets.QCheckBox('AutoLoad')
 
@@ -488,6 +503,9 @@ class fitOptionsWidget(QtWidgets.QWidget):
         self.uploadButton = QtWidgets.QPushButton('Upload to Origin')
 
         self.tof = QtWidgets.QLineEdit('6')
+        tof_validator = QtGui.QDoubleValidator()
+        tof_validator.setBottom(0)
+        self.tof.setValidator(tof_validator)
         self.tof.setFixedWidth(30)
 
         #### Layout Stuff

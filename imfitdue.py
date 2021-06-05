@@ -28,7 +28,6 @@ class imfitDue(QtWidgets.QMainWindow):
 
         self.autoloader = Autoloader(self.pf)
         self.autoloader.signalFileArrived.connect(self.loadFile)
-        # self.autoloader.connect(self.autoloader, QtCore.SIGNAL('fileArrived'), self.loadFile)
         self.autoloader.start()
 
         self.fitK = None
@@ -73,8 +72,6 @@ class imfitDue(QtWidgets.QMainWindow):
             print("Path recognized as file!")
 
             self.autoloader.is_active = False
-
-            # TODO: Implement readImage
             self.currentFile = readImage(self.mode, path)
             
             if self.pf.autoLoad.isChecked():
@@ -117,27 +114,30 @@ class imfitDue(QtWidgets.QMainWindow):
         self.autoloader.is_active = False
 
         self.pf.autoLoad.setChecked(False)
-        x = self.av.getFileNumbers()
+        try:
+            x = self.av.getFileNumbers()
 
-        path = IMFIT_MODES[self.mode]["Default Path"]
+            path = IMFIT_MODES[self.mode]["Default Path"]
 
-        firstFile = True
-        if x is not None:
-            for k in x:
-                print(path.format(k))
-                self.currentFile = readImage(self.mode, path.format(k))
-                if self.currentFile is None:
-                    return
-                if firstFile:
-                    imageMean = self.currentFile.img
-                    firstFile = False
-                else:
-                    imageMean += self.currentFile.img
-                
-                self.currentFile.img = imageMean/float(len(x))
+            firstFile = True
+            if x is not None:
+                for k in x:
+                    print(path.format(k))
+                    self.currentFile = readImage(self.mode, path.format(k))
+                    if self.currentFile is None:
+                        return
+                    if firstFile:
+                        imageMean = self.currentFile.img
+                        firstFile = False
+                    else:
+                        imageMean += self.currentFile.img
+                    
+                    self.currentFile.img = imageMean/float(len(x))
 
-            self.currentODCalc()
-        self.autoloader.is_active = True
+                self.currentODCalc()
+            self.autoloader.is_active = True
+        except Exception as e:
+            print("Could not average images: {}".format(e))
 
     def fitCurrent(self):
         # TODO: Understand what this does and adjust to be more readable
@@ -355,11 +355,11 @@ class imfitDue(QtWidgets.QMainWindow):
         self.setCentralWidget(self.mainWidget)
 
     def refreshGui(self):
+        # Does not work properly; disabled in menu
         self.initializeGui()
 
-        self.autoloader = autoloader(self.pf)
-        self.autoloader.connect(self.autoloader, QtCore.SIGNAL('fileArrived'), self.loadFile)
-
+        self.autoloader = Autoloader(self.pf)
+        self.autoloader.signalFileArrived.connect(self.loadFile)
         self.autoloader.is_active = True
         self.autoloader.start()
 
@@ -367,116 +367,121 @@ class imfitDue(QtWidgets.QMainWindow):
         x = QtWidgets.QFileDialog()
         xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
 
-        ok2write = False
-        if self.figs.plotTools.kSelect.isChecked():
-            if hasattr(self, 'odK'):
-                x = self.odK.xRange0
-                y = self.odK.xRange1
-                od = self.odK.ODCorrected
-                ok2write = True
-        elif self.figs.plotTools.rbSelect.isChecked():
-            if hasattr(self, 'odRb'):
-                x = self.odRb.xRange0
-                y = self.odRb.xRange1
-                od = self.odRb.ODCorrected
-                ok2write = True
-                
-        if ok2write:
-            f = open(xp, 'w')
-            for i in range(len(y)):
-                for j in range(len(x)):
-                    f.write("{0:.3f},".format(od[j,i]))
-                f.write("\n")
-            f.close()
-        else:
-            print("No file to save!")
+        try:
+            ok2write = False
+            if self.figs.plotTools.kSelect.isChecked():
+                if hasattr(self, 'odK'):
+                    x = self.odK.xRange0
+                    y = self.odK.xRange1
+                    od = self.odK.ODCorrected
+                    ok2write = True
+            elif self.figs.plotTools.rbSelect.isChecked():
+                if hasattr(self, 'odRb'):
+                    x = self.odRb.xRange0
+                    y = self.odRb.xRange1
+                    od = self.odRb.ODCorrected
+                    ok2write = True
+                    
+            if ok2write:
+                f = open(xp, 'w')
+                for i in range(len(y)):
+                    for j in range(len(x)):
+                        f.write("{0:.3f},".format(od[j,i]))
+                    f.write("\n")
+                f.close()
+            else:
+                print("No file to save!")
+        except Exception as e:
+            print("Could not save image: {}".format(e))
 
     def saveOSliceImage(self):
         x = QtWidgets.QFileDialog()
         xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
 
-        ok2write = False
-        if self.figs.plotTools.kSelect.isChecked():
-            if hasattr(self, 'odK') and hasattr(self.fitK.slices, 'points0'):
-                x = self.odK.xRange0
-                y = self.odK.xRange1
-                Sx = self.fitK.slices.points0
-                Fx = self.fitK.slices.fit0
-                Sy = self.fitK.slices.points1
-                Fy = self.fitK.slices.fit1
-                ok2write = True
-        elif self.figs.plotTools.rbSelect.isChecked():
-            if hasattr(self, 'odRb') and hasattr(self.fitRb.slices, 'points0'):
-                x = self.odRb.xRange0
-                y = self.odRb.xRange1
-                Sx = self.fitRb.slices.points0
-                Fx = self.fitRb.slices.fit0
-                Sy = self.fitRb.slices.points1
-                Fy = self.fitRb.slices.fit1
-                ok2write = True
+        try:
+            ok2write = False
+            if self.figs.plotTools.kSelect.isChecked():
+                if hasattr(self, 'odK') and hasattr(self.fitK.slices, 'points0'):
+                    x = self.odK.xRange0
+                    y = self.odK.xRange1
+                    Sx = self.fitK.slices.points0
+                    Fx = self.fitK.slices.fit0
+                    Sy = self.fitK.slices.points1
+                    Fy = self.fitK.slices.fit1
+                    ok2write = True
+            elif self.figs.plotTools.rbSelect.isChecked():
+                if hasattr(self, 'odRb') and hasattr(self.fitRb.slices, 'points0'):
+                    x = self.odRb.xRange0
+                    y = self.odRb.xRange1
+                    Sx = self.fitRb.slices.points0
+                    Fx = self.fitRb.slices.fit0
+                    Sy = self.fitRb.slices.points1
+                    Fy = self.fitRb.slices.fit1
+                    ok2write = True
 
-        if ok2write:
-            f = open(xp,'w')
+            if ok2write:
+                f = open(xp,'w')
 
-            xbigger = len(x) >= len(y)
-            n = max([len(x), len(y)])
-            m = min([len(x), len(y)])
+                xbigger = len(x) >= len(y)
+                n = max([len(x), len(y)])
+                m = min([len(x), len(y)])
 
-            for k in range(n):                
-                if k < m: 
-                    f.write("{0:d},{1:.3f},{2:.3f},{3:d},{4:.3f},{5:.3f}\n".format(x[k],Sx[k],Fx[k],y[k],Sy[k],Fy[k]))
-                elif k > m:
-                    if xbigger:
-                        f.write("{0:d},{1:.3f},{2:.3f},,,\n".format(x[k],Sx[k],Fx[k]))
-                    elif not xbigger:
-                        f.write(",,,{0:d},{1:.3f},{2:.3f}\n".format(y[k],Sy[k],Fy[k]))
-                
-            f.close() 
-        else:
-            print("No file to save!")
+                for k in range(n):                
+                    if k < m: 
+                        f.write("{0:d},{1:.3f},{2:.3f},{3:d},{4:.3f},{5:.3f}\n".format(x[k],Sx[k],Fx[k],y[k],Sy[k],Fy[k]))
+                    elif k > m:
+                        if xbigger:
+                            f.write("{0:d},{1:.3f},{2:.3f},,,\n".format(x[k],Sx[k],Fx[k]))
+                        elif not xbigger:
+                            f.write(",,,{0:d},{1:.3f},{2:.3f}\n".format(y[k],Sy[k],Fy[k]))
+                    
+                f.close() 
+            else:
+                print("No file to save!")
+        except Exception as e:
+            print("Could not save image: {}".format(e))
 
 
     def saveRSliceImage(self):
         x = QtWidgets.QFileDialog()
         xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
 
-        ok2write = False
-        if self.figs.plotTools.kSelect.isChecked():
-            if hasattr(self, 'odK') and hasattr(self.fitK.slices, 'radSlice'):
-                R = self.fitK.slices.radSlice
-                Rf = self.fitK.slices.radSliceFit
-                Rg = self.fitK.slices.radSliceFitGauss
-                ok2write = True
-        elif self.figs.plotTools.rbSelect.isChecked():
-            if hasattr(self, 'odRb') and hasattr(self.fitRb.slices, 'radSlice'):
-                R = self.fitRb.slices.radSlice
-                Rf = self.fitRb.slices.radSliceFit
-                Rg = self.fitRb.slices.radSliceFitGauss
-                ok2write = True
+        try:
+            ok2write = False
+            if self.figs.plotTools.kSelect.isChecked():
+                if hasattr(self, 'odK') and hasattr(self.fitK.slices, 'radSlice'):
+                    R = self.fitK.slices.radSlice
+                    Rf = self.fitK.slices.radSliceFit
+                    Rg = self.fitK.slices.radSliceFitGauss
+                    ok2write = True
+            elif self.figs.plotTools.rbSelect.isChecked():
+                if hasattr(self, 'odRb') and hasattr(self.fitRb.slices, 'radSlice'):
+                    R = self.fitRb.slices.radSlice
+                    Rf = self.fitRb.slices.radSliceFit
+                    Rg = self.fitRb.slices.radSliceFitGauss
+                    ok2write = True
 
-        if ok2write:
+            if ok2write:
 
-            f = open(xp,'w')
+                f = open(xp,'w')
 
-            for k in range(len(R)):                
-                f.write("{0:.3f},{1:.3f},{2:.3f},{3:.3f}\n".format(k,R[k],Rf[k],Rg[k]))
-                
-            f.close() 
-        else:
-            print("No file to save!")
+                for k in range(len(R)):                
+                    f.write("{0:.3f},{1:.3f},{2:.3f},{3:.3f}\n".format(k,R[k],Rf[k],Rg[k]))
+                    
+                f.close() 
+            else:
+                print("No file to save!")
+        except Exception as e:
+            print("Could not save image: {}".format(e))
 
     def loadFromMenu(self): 
 
         d = str(self.pf.filePath.text())
-        if self.pf.cameraGroup.checkedId():
-            ext = '*.csv'
-        else:
-            ext = '*.dat'
+        ext = IMFIT_MODES[self.mode]["Extension Filter"]
 
         x = QtWidgets.QFileDialog()
         xp = x.getOpenFileName(self,'Select a file to load', filter=ext, directory=d,options=QtWidgets.QFileDialog.DontUseNativeDialog)
-
-        self.pf.filePath.setText(xp)
+        self.pf.filePath.setText(xp[0])
         self.loadFile()
 
     def getStyleSheet(self,path):
@@ -497,9 +502,9 @@ class imfitDue(QtWidgets.QMainWindow):
         loadAction.setShortcut('Ctrl+O')
         loadAction.triggered.connect(self.loadFromMenu)
 
-        refreshAction = QtWidgets.QAction("Refresh all", self)
-        refreshAction.setShortcut('Ctrl+R')
-        refreshAction.triggered.connect(self.refreshGui)
+        # refreshAction = QtWidgets.QAction("Refresh all", self)
+        # refreshAction.setShortcut('Ctrl+R')
+        # refreshAction.triggered.connect(self.refreshGui)
 
         saveMain = QtWidgets.QAction("Save Main Image", self)
         saveMain.setShortcut('Ctrl+S')
@@ -514,7 +519,7 @@ class imfitDue(QtWidgets.QMainWindow):
         
         fileMenu = menubar.addMenu("File")
         fileMenu.addAction(loadAction)
-        fileMenu.addAction(refreshAction)
+        # fileMenu.addAction(refreshAction)
         fileMenu.addAction(exitAction)
 
         saveMenu = menubar.addMenu("Save")

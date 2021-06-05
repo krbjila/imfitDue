@@ -141,7 +141,11 @@ def getImagesFromRange(stringIn):
 
 # TODO: control based on Imfit mode
 def upload2Origin(species, fitFunction, data):
-    import win32com.client
+    try:
+        import win32com.client
+    except Exception as e:
+        print("Could not upload to Origin. Are you on Windows? Error: {}".format(e))
+        return -1
 
     progID = 'Origin.ApplicationSI'
     orgApp = win32com.client.Dispatch(progID)
