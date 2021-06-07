@@ -1,6 +1,6 @@
 import datetime
 
-from matplotlib.pyplot import autoscale
+# from matplotlib.pyplot import autoscale
 now = datetime.datetime.now()
 
 DEFAULT_PATH = now.strftime('K:/data/%Y/%m/%Y%m%d/') # The dataserver is mounted to K: on the Windows computers.
