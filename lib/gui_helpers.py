@@ -302,11 +302,15 @@ class plotTools(QtWidgets.QWidget):
 
     def autoscaleSlider(self):
         if len(self.image):
+            self.odMaxEdit.setValidator(None)
+            self.odMinEdit.setValidator(None)
             (low, high) = np.percentile(self.image, [AUTOSCALE_MIN, 100])
-            self.odMaxEdit.setText("{:0.1f}".format(high * AUTOSCALE_HEADROOM))
-            self.odMinEdit.setText("{:0.1f}".format(low))
-            self.updateSlider()
+            self.odMaxEdit.setText("{:0.2f}".format(high * AUTOSCALE_HEADROOM))
+            self.odMinEdit.setText("{:0.2f}".format(low))
             self.odSlider.setValue(self.odSlider.maximum())
+            self.odMaxEdit.setValidator(self.odMaxValidator)
+            self.odMinEdit.setValidator(self.odMinValidator)
+            self.updateSlider()
 
 class regionWidget(QtWidgets.QWidget):
     def __init__(self, Parent=None):
