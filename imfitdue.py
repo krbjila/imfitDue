@@ -149,13 +149,13 @@ class imfitDue(QtWidgets.QMainWindow):
         # TODO: Is it possible/ useful to generalize to an arbitrary number of fits with different names?
         if self.odK is not None:
             try:
-                self.fitK = fitOD(self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
+                self.fitK = fitOD(self.mode, self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
             except Exception as e:
                 self.fitK = None
                 print("Could not fit K frame: {}".format(e))
         if self.odRb is not None:
             try:
-                self.fitRb = fitOD(self.odRb, str(self.fo.rbFitFunction.currentText()), rbAtom, TOF + 6,pxl)
+                self.fitRb = fitOD(self.mode, self.odRb, str(self.fo.rbFitFunction.currentText()), rbAtom, TOF + 6,pxl)
             except Exception as e:
                 self.fitRb = None
                 print("Could not fit Rb frame: {}".format(e))
