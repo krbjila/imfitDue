@@ -476,10 +476,9 @@ class fitOD():
                 pass
 
             ### Calculate radial average
-            x_coerced = min(max(self.fitData[7], 0), len(self.odImage.xRange0)-1)
-            y_coerced = min(max(self.fitData[8], 0), len(self.odImage.xRange1)-1)
-
-
+            x_coerced = min(max(self.fitData[7], self.odImage.xRange0.start), self.odImage.xRange0.stop-1)
+            y_coerced = min(max(self.fitData[8], self.odImage.xRange1.start), self.odImage.xRange1.stop-1)
+            
             I0 = self.odImage.xRange0.index(int(x_coerced))
             I1 = self.odImage.xRange1.index(int(y_coerced))
 

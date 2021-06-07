@@ -110,7 +110,10 @@ class ImageWindows(QtWidgets.QWidget):
             self.crossHairH, = self.ax0.plot([],[],color=crossHairColor)
             
             print(image.shape)
-            self.mainImage = self.ax0.imshow(image,cmap=colorMap, extent=(min(x),max(x),max(y),min(y)))
+            try:
+                self.mainImage = self.ax0.imshow(image,cmap=colorMap, extent=(min(x),max(x),max(y),min(y)))
+            except Exception as e:
+                print("Could not display image: {}".format(e))
             if x is not None:
                 self.ax0.set_xlim((min(x), max(x)))
             if y is not None:
