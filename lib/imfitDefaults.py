@@ -46,6 +46,7 @@ IMFIT_MODES = OrderedDict([
                 'Dark': 5
             }
         },
+        'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
     ('Axial iXon Molecules ToF', {
@@ -75,6 +76,7 @@ IMFIT_MODES = OrderedDict([
                 'Dark': 1
             }
         },
+        'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
         'Allow fit both states': True
     }),
@@ -105,6 +107,7 @@ IMFIT_MODES = OrderedDict([
                 'Dark': 5
             }
         },
+        'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
     ('Pixelfly Test', {
@@ -134,6 +137,7 @@ IMFIT_MODES = OrderedDict([
                 'Dark': 5
             }
         },
+        'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
     ('Vertical iXon', {
@@ -163,7 +167,8 @@ IMFIT_MODES = OrderedDict([
                 'Dark': 5
             }
         },
-        'CSat': {'K': 1400 / 4.0, 'Rb': 1400 / 4.0}, # Unbinned effective C_sat
+        'Fit angle': 32.0, # Deg, Twisted Gaussian fit
+        'CSat': {'K': 1400, 'Rb': 1400}, # Unbinned effective C_sat
     }),
     # ('Ximea', {
     #     ### Mode 0 - Ximea

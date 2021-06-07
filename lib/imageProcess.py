@@ -1,3 +1,4 @@
+from lib.imfitDefaults import DEFAULT_MODE, IMFIT_MODES
 import numpy as np
 import copy
 from imfitHelpers import *
@@ -138,7 +139,7 @@ class calcOD():
         
 class fitOD():
 
-    def __init__(self, odImage, fitFunction, species, TOF, pxl):
+    def __init__(self, mode, odImage, fitFunction, species, TOF, pxl):
 
         self.species = species
         self.TOF = TOF
@@ -154,6 +155,8 @@ class fitOD():
 
         self.slices = self.fitSlices()
         
+        self.mode = mode
+
         self.setFitFunction(fitFunction)
         self.fitODImage()
 
@@ -268,11 +271,12 @@ class fitOD():
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
             p0 = checkGuess(p0,pUpper,pLower)
 
-            resLSQ = least_squares(gaussianNoRotTwist, p0, args=(r,self.odImage.ODCorrected,VERT_TRAP_ANGLE),bounds=(pLower,pUpper))
+            angle = IMFIT_MODES[self.mode]['Fit angle']
+            resLSQ = least_squares(gaussianNoRotTwist, p0, args=(r,self.odImage.ODCorrected,angle),bounds=(pLower,pUpper))
 
             self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
-            self.fittedImage = gaussianNoRotTwist(resLSQ.x, r, 0, VERT_TRAP_ANGLE).reshape(self.odImage.ODCorrected.shape)
+            self.fittedImage = gaussianNoRotTwist(resLSQ.x, r, 0, angle).reshape(self.odImage.ODCorrected.shape)
 
             
             ### Get radial average
@@ -291,8 +295,8 @@ class fitOD():
             f = interp2d(self.odImage.xRange0, self.odImage.xRange1, self.odImage.ODCorrected, kind='cubic')
 
 
-            m0 = np.tan(np.pi/2.0 - VERT_TRAP_ANGLE*np.pi/180.)
-            m1 = -np.tan(VERT_TRAP_ANGLE*np.pi/180.)
+            m0 = np.tan(np.pi/2.0 - angle*np.pi/180.)
+            m1 = -np.tan(angle*np.pi/180.)
 
             if abs(m0) > abs(m1):
                 # Ensure the that lower slope is always along x
@@ -307,12 +311,12 @@ class fitOD():
 
             for k in range(len(self.odImage.xRange0)):
                 self.slices.points0.append(f(self.odImage.xRange0[k],ch0[k])[0])
-                self.slices.fit0.append(gaussianNoRotTwist(resLSQ.x,[r[0][k], ch0[k]],0.0,VERT_TRAP_ANGLE)[0])
+                self.slices.fit0.append(gaussianNoRotTwist(resLSQ.x,[r[0][k], ch0[k]],0.0,angle)[0])
             self.slices.ch0 = ch0
  
             for k in range(len(self.odImage.xRange1)):
                 self.slices.points1.append(f(ch1[k],self.odImage.xRange1[k])[0])
-                self.slices.fit1.append(gaussianNoRotTwist(resLSQ.x,[ch1[k], r[1][k]],0,VERT_TRAP_ANGLE)[0])
+                self.slices.fit1.append(gaussianNoRotTwist(resLSQ.x,[ch1[k], r[1][k]],0,angle)[0])
             self.slices.ch1 = ch1
 
 
@@ -609,6 +613,7 @@ class processFitResult():
         # self.atom = self.fitObject.odImage.atom
         self.config = IMFIT_MODES[mode]
         self.pixelSize = self.config['Pixel Size']
+        self.angle = self.config['Fit angle']
 
         self.data = None
 
@@ -682,7 +687,7 @@ class processFitResult():
                     'y0' : self.fitObject.fitData[4],
                     'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
                     'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
-                    'angle' : VERT_TRAP_ANGLE
+                    'angle' : self.angle
                     }
 
             self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]            
