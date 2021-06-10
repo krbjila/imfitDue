@@ -177,7 +177,7 @@ class imfitDue(QtWidgets.QMainWindow):
             KProcess.data[0] = self.currentFile.fileName + "-" + imagePath
             RbProcess.data[0] = self.currentFile.fileName + "-" + imagePath
 
-            if 'Axial iXon Molecules' in self.mode: # Molecule In situ FK
+            if 'iXon Molecules' in self.mode: # Molecule In situ FK
                 if "ToF" in self.mode and not self.fo.fitBothCheckbox.isChecked() and self.fo.fitBothCheckbox.isEnabled():
                     print("Uploading |0,0> KRb to Origin")
                     upload2Origin('KRbFKGauss1', self.fitK.fitFunction, KProcess.data)

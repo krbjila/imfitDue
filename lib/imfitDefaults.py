@@ -49,6 +49,36 @@ IMFIT_MODES = OrderedDict([
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
     }),
+    ('Side iXon', {
+        ### Mode 1 - Axial iXon
+        'Default Path': DEFAULT_PATH + 'Andor/',
+        'Default Suffix': 'ixon_{}.npz',
+        'Pixel Size': 1.785,
+        'Species': ['K', 'Rb'],
+        'Image Path': 'Axial',
+        'Default Region': [[150, 220, 250, 250], 
+                  [150, 350, 300, 300]],
+        'Extension Filter': '*.npz',
+        'Fit Functions': FIT_FUNCTIONS,
+        'Enforce same fit for both': False,
+        'Auto Detect Binning': True,
+        'Array Width': 512,
+        'Number of Frames': 6,
+        'Frame Order': {
+            'K': {
+                'Shadow': 0,
+                'Light': 1,
+                'Dark': 2,
+            },
+            'Rb': {
+                'Shadow': 3,
+                'Light': 4,
+                'Dark': 5
+            }
+        },
+        'Fit angle': 0.0, # Deg, Twisted Gaussian fit
+        'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
+    }),
     ('Axial iXon Molecules ToF', {
         ### Mode 1.1 - Axial iXon
         'Default Path': DEFAULT_PATH + 'KRbFK/',
@@ -93,6 +123,36 @@ IMFIT_MODES = OrderedDict([
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True,
                 'Auto Detect Binning': True,
+        'Array Width': 512,
+        'Number of Frames': 6,
+        'Frame Order': {
+            '|0,0>': {
+                'Shadow': 0,
+                'Light': 1,
+                'Dark': 2,
+            },
+            '|1,0>': {
+                'Shadow': 3,
+                'Light': 4,
+                'Dark': 5
+            }
+        },
+        'Fit angle': 0.0, # Deg, Twisted Gaussian fit
+        'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
+    }),
+    ('Side iXon Molecules In Situ', {
+        ### Mode 4 - Side iXon Molecules
+        'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
+        'Default Suffix': 'ixon_{}.npz',
+        'Pixel Size': 1.785,
+        'Species': ['|0,0>', '|1,0>'],
+        'Image Path': 'Axial',
+        'Default Region': [[300, 455, 60, 40], 
+                  [300, 455, 60, 40]],
+        'Extension Filter': '*.npz',
+        'Fit Functions': KRB_FIT_FUNCTIONS,
+        'Enforce same fit for both': True,
+        'Auto Detect Binning': True,
         'Array Width': 512,
         'Number of Frames': 6,
         'Frame Order': {
