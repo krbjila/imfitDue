@@ -17,6 +17,12 @@ WORKSHEET_NAMES = [ 'GaussGrad', 'Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiD
 
 DEFAULT_MODE = 'Axial iXon'
 
+CSAT = {
+    "axial": {"K": 2684, "Rb": 2684},
+    "side": {"K": 1883, "Rb": 1883},
+    "vertical": {"K": 1400, "Rb": 1400}
+}
+
 from collections import OrderedDict
 IMFIT_MODES = OrderedDict([
     ('Axial iXon', {
@@ -26,8 +32,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': 2.58,
         'Species': ['K', 'Rb'],
         'Image Path': 'Axial',
-        'Default Region': [[150, 220, 250, 250], 
-                  [150, 350, 300, 300]],
+        'Default Region': [[115, 285, 250, 250], 
+                  [120, 455, 300, 300]],
         'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,
@@ -47,7 +53,7 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
+        'CSat': CSAT["axial"], # Unbinned effective C_sat
     }),
     ('Side iXon', {
         ### Mode 1 - Axial iXon
@@ -77,7 +83,7 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
+        'CSat': CSAT["axial"], # Unbinned effective C_sat
     }),
     ('Axial iXon Molecules ToF', {
         ### Mode 1.1 - Axial iXon
@@ -107,7 +113,7 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat
         'Allow fit both states': True
     }),
     ('Axial iXon Molecules In Situ', {
@@ -138,7 +144,7 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat
     }),
     ('Side iXon Molecules In Situ', {
         ### Mode 4 - Side iXon Molecules
@@ -168,38 +174,68 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'|0,0>': 19e3 / 4.0, '|1,0>': 19e3 / 4.0}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["side"]["K"], '|1,0>': CSAT["side"]["K"]}, # Unbinned effective C_sat
     }),
-    ('Pixelfly Test', {
-        ### PLACEHOLDER
-        ### TODO: put in finalized values
-        'Default Path': DEFAULT_PATH + 'Pixelfly/',
-        'Default Suffix': 'pixelfly_{}.npz',
-        'Pixel Size': 2.58,
-        'Species': ['K', 'Rb'],
+    ('Side iXon Molecules In Situ 4 frame', {
+        ### Mode 4 - Side iXon Molecules
+        'Default Path': DEFAULT_PATH + 'MoleculeFK4/',
+        'Default Suffix': 'ixon_{}.npz',
+        'Pixel Size': 1.785,
+        'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
-        'Default Region': [[150, 220, 250, 250], 
-                  [150, 350, 300, 300]],
+        'Default Region': [[300, 455, 60, 40], 
+                  [300, 455, 60, 40]],
         'Extension Filter': '*.npz',
-        'Fit Functions': FIT_FUNCTIONS,
-        'Enforce same fit for both': False,
-        'Auto Detect Binning': False,
-        'Number of Frames': 6,
+        'Fit Functions': KRB_FIT_FUNCTIONS,
+        'Enforce same fit for both': True,
+        'Auto Detect Binning': True,
+        'Array Width': 256,
+        'Number of Frames': 8,
         'Frame Order': {
-            'K': {
-                'Shadow': 0,
-                'Light': 2,
-                'Dark': 4,
+            '|0,0>': {
+                'Shadow': 2,
+                'Light': 6,
+                'Dark': 3,
             },
-            'Rb': {
-                'Shadow': 1,
-                'Light': 3,
+            '|1,0>': {
+                'Shadow': 4,
+                'Light': 6,
                 'Dark': 5
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["side"]["K"], '|1,0>': CSAT["side"]["K"]}, # Unbinned effective C_sat
     }),
+    # ('Pixelfly Test', {
+    #     ### PLACEHOLDER
+    #     ### TODO: put in finalized values
+    #     'Default Path': DEFAULT_PATH + 'Pixelfly/',
+    #     'Default Suffix': 'pixelfly_{}.npz',
+    #     'Pixel Size': 2.58,
+    #     'Species': ['K', 'Rb'],
+    #     'Image Path': 'Axial',
+    #     'Default Region': [[150, 220, 250, 250], 
+    #               [150, 350, 300, 300]],
+    #     'Extension Filter': '*.npz',
+    #     'Fit Functions': FIT_FUNCTIONS,
+    #     'Enforce same fit for both': False,
+    #     'Auto Detect Binning': False,
+    #     'Number of Frames': 6,
+    #     'Frame Order': {
+    #         'K': {
+    #             'Shadow': 0,
+    #             'Light': 2,
+    #             'Dark': 4,
+    #         },
+    #         'Rb': {
+    #             'Shadow': 1,
+    #             'Light': 3,
+    #             'Dark': 5
+    #         }
+    #     },
+    #     'Fit angle': 0.0, # Deg, Twisted Gaussian fit
+    #     'CSat': {'K': 19e3 / 4.0, 'Rb': 19e3 / 4.0}, # Unbinned effective C_sat
+    # }),
     ('Vertical iXon', {
         ### Mode 2 - Vertical iXon
         'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
@@ -228,7 +264,7 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 32.0, # Deg, Twisted Gaussian fit
-        'CSat': {'K': 1400, 'Rb': 1400}, # Unbinned effective C_sat
+        'CSat': CSAT["vertical"], # Unbinned effective C_sat
     }),
     # ('Ximea', {
     #     ### Mode 0 - Ximea
