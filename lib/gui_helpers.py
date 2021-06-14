@@ -429,7 +429,7 @@ class pathWidget(QtWidgets.QWidget):
         
         d = self.filePath.text()
         if not os.path.isdir(d):
-            d = IMFIT_MODES[DEFAULT_MODE]['Default Path']        
+            d = IMFIT_MODES[self.mode]['Default Path']        
         
         ext = IMFIT_MODES[self.mode]["Extension Filter"]
 
