@@ -61,7 +61,7 @@ IMFIT_MODES = OrderedDict([
         'Default Suffix': 'ixon_{}.npz',
         'Pixel Size': 1.785,
         'Species': ['K', 'Rb'],
-        'Image Path': 'Axial',
+        'Image Path': 'Side',
         'Default Region': [[150, 220, 250, 250], 
                   [150, 350, 300, 300]],
         'Extension Filter': '*.npz',
@@ -83,7 +83,7 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': CSAT["axial"], # Unbinned effective C_sat
+        'CSat': CSAT["side"], # Unbinned effective C_sat
     }),
     ('Axial iXon Molecules ToF', {
         ### Mode 1.1 - Axial iXon
