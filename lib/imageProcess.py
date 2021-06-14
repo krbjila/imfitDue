@@ -631,10 +631,12 @@ class processFitResult():
                     'y0' : self.fitObject.fitData[4],
                     'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
                     'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
-                    'angle' : self.fitObject.fitData[6]*180.0/np.pi
+                    'angle' : self.fitObject.fitData[6]*180.0/np.pi,
+                    'dODdx' : 0,
+                    'dODdy' : 0,
                     }
 
-            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
+            self.data =  ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']] 
 
             rErr = {
                     'offset' : self.fitObject.fitDataConf[0],
@@ -655,10 +657,12 @@ class processFitResult():
                     'y0' : self.fitObject.fitData[4],
                     'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
                     'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
-                    'angle' : 0
+                    'angle' : 0,
+                    'dODdx' : 0,
+                    'dODdy' : 0,
                     }
 
-            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
+            self.data =['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']] 
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian w/ Gradient'):
             
@@ -686,10 +690,12 @@ class processFitResult():
                     'y0' : self.fitObject.fitData[4],
                     'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
                     'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
-                    'angle' : self.angle
+                    'angle' : self.angle,
+                    'dODdx' : 0,
+                    'dODdy' : 0,
                     }
 
-            self.data = ['fileName', r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]            
+            self.data = ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]        
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
 

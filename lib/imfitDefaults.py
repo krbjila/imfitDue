@@ -13,13 +13,13 @@ AUTOSCALE_HEADROOM = 1.1 # factor above max
 FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac']
 KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian']
 NONTWISTED_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian']
-WORKSHEET_NAMES = [ 'GaussGrad', 'Gauss1', 'Gauss1', 'Gauss1', 'Gauss2', 'FermiDirac', 'BandMapV']
+WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'BandMapV']
 
 DEFAULT_MODE = 'Axial iXon'
 
 CSAT = {
-    "axial": {"K": 2684, "Rb": 2684},
-    "side": {"K": 1883, "Rb": 1883},
+    "axial": {"K": 2970, "Rb": 2970},
+    "side": {"K": 2188, "Rb": 2188},
     "vertical": {"K": 1400, "Rb": 1400}
 }
 
@@ -176,7 +176,7 @@ IMFIT_MODES = OrderedDict([
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': {'|0,0>': CSAT["side"]["K"], '|1,0>': CSAT["side"]["K"]}, # Unbinned effective C_sat
     }),
-    ('Side iXon Molecules In Situ 4 frame', {
+    ('Side iXon Molecules 4 Frame', {
         ### Mode 4 - Side iXon Molecules
         'Default Path': DEFAULT_PATH + 'MoleculeFK4/',
         'Default Suffix': 'ixon_{}.npz',
