@@ -17,10 +17,11 @@ WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2'
 
 DEFAULT_MODE = 'Axial iXon'
 
+# The Rb CSat values are computed from the K CSat values, assuming identical transmission through the optics and detection efficiencies. The vertical CSat has not been calibrated recently.
 CSAT = {
-    "axial": {"K": 2970, "Rb": 2970},
-    "side": {"K": 2188, "Rb": 2188},
-    "vertical": {"K": 1400, "Rb": 1400}
+    "axial": {"K": 2970, "Rb": 2882},
+    "side": {"K": 2188, "Rb": 2123},
+    "vertical": {"K": 1400, "Rb": 1359}
 }
 
 from collections import OrderedDict
@@ -32,8 +33,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': 2.58,
         'Species': ['K', 'Rb'],
         'Image Path': 'Axial',
-        'Default Region': [[115, 285, 250, 250], 
-                  [120, 455, 300, 300]],
+        'Default Region': [[140, 215, 250, 250], 
+                  [130, 355, 350, 350]],
         'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,
@@ -123,8 +124,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': 2.58,
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
-        'Default Region': [[268, 253, 50, 25], 
-                  [268, 253, 50, 25]],
+        'Default Region': [[272, 302, 60, 25], 
+                  [272, 302, 60, 25]],
         'Extension Filter': '*.npz',
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True,

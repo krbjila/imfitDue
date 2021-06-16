@@ -236,9 +236,7 @@ class plotTools(QtWidgets.QWidget):
         self.removeCHButton = QtWidgets.QPushButton('Remove\nCrosshair')
 
         self.setCHX = QtWidgets.QLineEdit('0')
-        self.setCHX.setReadOnly(True)
         self.setCHY = QtWidgets.QLineEdit('0')
-        self.setCHY.setReadOnly(True)
 
         self.atomSelectGroup = QtWidgets.QButtonGroup()
         self.rbSelect = QtWidgets.QRadioButton('Rb')
