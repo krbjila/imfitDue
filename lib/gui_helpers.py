@@ -71,6 +71,7 @@ class ImageWindows(QtWidgets.QWidget):
 
         self.plotTools.odSlider.valueChanged.connect(self.plotUpdate)
         self.plotTools.odMinEdit.returnPressed.connect(self.plotUpdate)
+        self.plotTools.signalSliderChanged.connect(self.plotUpdate)
 
         self.plotTools.frameSelect.currentIndexChanged.connect(self.frameChanged)
 
@@ -192,6 +193,8 @@ class ImageWindows(QtWidgets.QWidget):
 
 
 class plotTools(QtWidgets.QWidget):
+    signalSliderChanged = QtCore.pyqtSignal(int)
+
     def __init__(self,Parent=None):
         super(plotTools,self).__init__(Parent)
         self.setFixedHeight(650)
@@ -298,6 +301,8 @@ class plotTools(QtWidgets.QWidget):
 
         if odmin > sv:
             self.odSlider.setValue(self.odSlider.minimum())
+
+        self.signalSliderChanged.emit(self.odSlider.value())
 
     def setImage(self, image):
         self.image = image
