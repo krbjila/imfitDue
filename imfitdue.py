@@ -182,6 +182,11 @@ class imfitDue(QtWidgets.QMainWindow):
                     print("Uploading |0,0> KRb to Origin")
                     upload2Origin('KRbFKGauss1', self.fitK.fitFunction, KProcess.data)
                     return 1
+                elif "Integrate" in self.mode:
+                    print("Uploading KRb to Origin")
+                    upload2Origin('KRbSpinInt', self.fitK.fitFunction,
+                                            [KProcess.data, RbProcess.data])
+                    return 1
                 else:
                     print("Uploading KRb to Origin")
                     upload2Origin('KRbSpinGauss', self.fitK.fitFunction,
