@@ -242,6 +242,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
             if self.frame == 'OD':
                 image = self.odK.ODCorrected
+            elif self.frame == 'Column Density':
+                image = self.odK.n
             else:
                 print(x)
                 print(y)
@@ -279,6 +281,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
             if self.frame == 'OD':
                 image = self.odRb.ODCorrected
+            elif self.frame == 'Column Density':
+                image = self.odRb.n
             else:
                 image = frames[species[1]][self.frame][y[0]:y[-1], x[0]:x[-1]]
             self.figs.plotUpdate(x,y,image,ch0,ch1)

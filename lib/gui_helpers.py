@@ -141,14 +141,20 @@ class ImageWindows(QtWidgets.QWidget):
         if Lx[0] is not None:
             self.ax1.cla()
             self.ax2.cla()
-
+            
             for k in range(len(Lx)):
-                plotStyles = ['ok', 'r']
-                self.ax1.plot(x,Lx[k],plotStyles[k])
+                try:
+                    plotStyles = ['ok', 'r']
+                    self.ax1.plot(x,Lx[k],plotStyles[k])
+                except Exception as e:
+                    print("Could not plot x slice: {}".format(e))
             
             for k in range(len(Ly)):
-                plotStyles = ['ok', 'g', 'r']
-                self.ax2.plot(y,Ly[k],plotStyles[k])
+                try:
+                    plotStyles = ['ok', 'g', 'r']
+                    self.ax2.plot(y,Ly[k],plotStyles[k])
+                except Exception as e:
+                    print("Could not plot y slice: {}".format(e))
 
             self.canvas.draw()
 
@@ -253,6 +259,7 @@ class plotTools(QtWidgets.QWidget):
         self.frameSelect.addItem("Shadow")
         self.frameSelect.addItem("Light")
         self.frameSelect.addItem("Dark")
+        self.frameSelect.addItem("Column Density")
         self.frameSelect.setCurrentIndex(0)
 
         self.autoscaler = QtWidgets.QPushButton("Autoscale me!")

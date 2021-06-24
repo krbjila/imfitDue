@@ -10,10 +10,11 @@ AUTOSCALE_MIN = 2 # percentile
 AUTOSCALE_HEADROOM = 1.1 # factor above max
 
 # FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
-FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac']
-KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian']
+FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Integrate']
+KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Integrate']
 NONTWISTED_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian']
-WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'BandMapV']
+# WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'BandMapV']
+WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'Integrated']
 
 DEFAULT_MODE = 'Axial iXon'
 
@@ -22,6 +23,25 @@ CSAT = {
     "axial": {"K": 2970, "Rb": 2882},
     "side": {"K": 2188, "Rb": 2123},
     "vertical": {"K": 1400, "Rb": 1359}
+}
+
+# TODO: Check these!
+# Numerical aperture
+NA = {
+    "axial": 0.12,
+    "side": 0.20,
+    "vertical": 0.5
+}
+
+# TODO: Check these!
+# Resonant cross section at I/Isat = 0, in um^2
+SIGMA_0_K = 0.2807 # From Tiecke 40K data
+SIGMA_0_Rb = 0.1938 # From Steck 87Rb data, table 7, assuming pi polarization
+SIGMA_0 = {
+    'K': SIGMA_0_K,
+    'Rb': SIGMA_0_Rb,
+    '|0,0>': SIGMA_0_K,
+    '|1,0>': SIGMA_0_K,
 }
 
 from collections import OrderedDict
@@ -55,6 +75,7 @@ IMFIT_MODES = OrderedDict([
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': CSAT["axial"], # Unbinned effective C_sat
+        'NA': NA["axial"],
     }),
     ('Side iXon', {
         ### Mode 1 - Axial iXon
@@ -85,6 +106,7 @@ IMFIT_MODES = OrderedDict([
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
         'CSat': CSAT["side"], # Unbinned effective C_sat
+        'NA': NA["side"],
     }),
     ('Axial iXon Molecules ToF', {
         ### Mode 1.1 - Axial iXon
@@ -114,7 +136,8 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat,
+        'NA': NA["axial"],
         'Allow fit both states': True
     }),
     ('Axial iXon Molecules In Situ', {
@@ -145,7 +168,8 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat,
+        'NA': NA["axial"],
     }),
     ('Side iXon Molecules In Situ', {
         ### Mode 4 - Side iXon Molecules
@@ -154,8 +178,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': 1.785,
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
-        'Default Region': [[300, 455, 60, 40], 
-                  [300, 455, 60, 40]],
+        'Default Region': [[307, 307, 60, 40], 
+                  [307, 307, 60, 40]],
         'Extension Filter': '*.npz',
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True,
@@ -175,7 +199,8 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'|0,0>': CSAT["side"]["K"], '|1,0>': CSAT["side"]["K"]}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["side"]["K"], '|1,0>': CSAT["side"]["K"]}, # Unbinned effective C_sat,
+        'NA': NA["side"],
     }),
     ('Side iXon Molecules 4 Frame', {
         ### Mode 4 - Side iXon Molecules
@@ -205,7 +230,8 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 0.0, # Deg, Twisted Gaussian fit
-        'CSat': {'|0,0>': CSAT["side"]["K"], '|1,0>': CSAT["side"]["K"]}, # Unbinned effective C_sat
+        'CSat': {'|0,0>': CSAT["side"]["K"], '|1,0>': CSAT["side"]["K"]}, # Unbinned effective C_sat,
+        'NA': NA["side"],
     }),
     # ('Pixelfly Test', {
     #     ### PLACEHOLDER
@@ -265,7 +291,8 @@ IMFIT_MODES = OrderedDict([
             }
         },
         'Fit angle': 32.0, # Deg, Twisted Gaussian fit
-        'CSat': CSAT["vertical"], # Unbinned effective C_sat
+        'CSat': CSAT["vertical"], # Unbinned effective C_sat,
+        'NA': NA["vertical"],
     }),
     # ('Ximea', {
     #     ### Mode 0 - Ximea

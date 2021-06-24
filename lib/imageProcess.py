@@ -1,3 +1,6 @@
+from math import isnan
+
+from scipy.ndimage.measurements import maximum
 from lib.imfitDefaults import DEFAULT_MODE, IMFIT_MODES
 import numpy as np
 import copy
@@ -84,30 +87,21 @@ class calcOD():
             bins = self.data.bin
             Ceff *= float(bins**2)
 
-            print(Ceff)
             self.ODCorrected = self.OD + (s2 - s1)/Ceff
 
             #Set all nans and infs to zero
             self.ODCorrected[np.isnan(self.ODCorrected)] = 0
             self.ODCorrected[np.isinf(self.ODCorrected)] = 0
 
-            # self.ODCorrected[np.isnan(self.ODCorrected)] = odsat
-            # self.ODCorrected[np.isinf(self.ODCorrected)] = odsat
-
-            # if self.data.camera == CAMERA_NAME_IXON:            
-            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON[self.atom]
-            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON[self.atom]
-            # elif self.data.camera == CAMERA_NAME_IXON_GSM:            
-            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
-            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXON_GSM[self.atom]
-            # elif self.data.camera == CAMERA_NAME_IXONV:            
-            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
-            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_IXONV[self.atom] * 0
-            # elif self.data.camera == CAMERA_NAME_XIMEA:
-            #     self.ODCorrected[np.isnan(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
-            #     self.ODCorrected[np.isinf(self.ODCorrected)] = ODSAT_XIMEA[self.atom]
-
-            #     self.ODCorrected[self.ODCorrected > 10] = ODSAT_XIMEA[self.atom]
+            # Calculate the column density, assuming zero detuning; see Pappa et all, NJP (2011)
+            delta = 0 # Detuning; assumed to be zero
+            Omega = 4*np.pi*np.sin(np.arcsin(self.config["NA"])/2)**2 # Fraction of flourescence collected
+            sigma0 = SIGMA_0[self.species] # Resonant cross section at I/Isat = 0, in um^2
+            s0 = s2/self.config['CSat'][self.species]
+            Tabs = s1/s2
+            self.n = (1 + delta**2)/((1 - Omega) * sigma0) * (- np.log(Tabs) + s0/(1 + delta**2) * (1 - Tabs))
+            self.n[np.isnan(self.n)] = 0
+            self.n[np.isinf(self.n)] = 0
   
     def defineROI(self):
         if self.xCenter0 > self.data.hImgSize or self.xCenter0 < 0:
@@ -156,6 +150,7 @@ class fitOD():
         self.slices = self.fitSlices()
         
         self.mode = mode
+        self.config = IMFIT_MODES[mode]
 
         self.setFitFunction(fitFunction)
         self.fitODImage()
@@ -552,52 +547,126 @@ class fitOD():
             self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
             self.slices.fit1 =  self.fittedImage[:,I0]
 
-        elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
-            # TODO: Make this depend properly on the species. Disabled for now.
-            # Band mapping function in the vertical direction
+        # elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
+        #     # TODO: Make this depend properly on the species. Disabled for now.
+        #     # Band mapping function in the vertical direction
 
-            r = [None,None]
-            r[0] = self.odImage.xRange0
-            r[1] = self.odImage.xRange1
+        #     r = [None,None]
+        #     r[0] = self.odImage.xRange0
+        #     r[1] = self.odImage.xRange1
 
 
-            N0 = len(self.odImage.xRange0)
-            N1 = len(self.odImage.xRange1)
+        #     N0 = len(self.odImage.xRange0)
+        #     N1 = len(self.odImage.xRange1)
 
-            ### Parameters: [Offset, A0, A1, A2, wy, yc, wx, xc]
-            p0 = [0, M, M*0.05, 0, 10.0, self.odImage.xRange1[N1/2], 40, self.odImage.xRange0[N0/2]]
-            pUpper = [np.inf, 15.0, 15.0, 15.0, len(r[1]), np.max(r[1]), len(r[0]), np.max(r[0])]
-            pLower = [-np.inf, 0.0, 0.0, 0.0,  0.0, np.min(r[1]), 0.0, np.min(r[0])]
-            p0 = checkGuess(p0,pUpper,pLower)
+        #     ### Parameters: [Offset, A0, A1, A2, wy, yc, wx, xc]
+        #     p0 = [0, M, M*0.05, 0, 10.0, self.odImage.xRange1[N1/2], 40, self.odImage.xRange0[N0/2]]
+        #     pUpper = [np.inf, 15.0, 15.0, 15.0, len(r[1]), np.max(r[1]), len(r[0]), np.max(r[0])]
+        #     pLower = [-np.inf, 0.0, 0.0, 0.0,  0.0, np.min(r[1]), 0.0, np.min(r[0])]
+        #     p0 = checkGuess(p0,pUpper,pLower)
 
-            imageDetails = [self.species, self.TOF, self.pxl]
+        #     imageDetails = [self.species, self.TOF, self.pxl]
 
-            resLSQ = least_squares(bandmapV, p0, args=(r,self.odImage.ODCorrected, imageDetails),bounds=(pLower,pUpper))
+        #     resLSQ = least_squares(bandmapV, p0, args=(r,self.odImage.ODCorrected, imageDetails),bounds=(pLower,pUpper))
             
 
-            self.fitDataConf = confidenceIntervals(resLSQ)
-            self.fitData = resLSQ.x
-            self.fittedImage = bandmapV(resLSQ.x, r, 0,imageDetails).reshape(self.odImage.ODCorrected.shape)            
+        #     self.fitDataConf = confidenceIntervals(resLSQ)
+        #     self.fitData = resLSQ.x
+        #     self.fittedImage = bandmapV(resLSQ.x, r, 0,imageDetails).reshape(self.odImage.ODCorrected.shape)            
 
+        #     ### Get radial average
+            
+        #     I0 = self.odImage.xRange0.index(int(self.fitData[7]))
+        #     I1 = self.odImage.xRange1.index(int(self.fitData[5]))
+
+        #     center = [I0, I1]
+        #     self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+        #     self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+        #     self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+
+        #     ### Calculate slices through fit
+
+        #     self.slices.points0 = self.odImage.ODCorrected[I1,:]
+        #     self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
+        #     self.slices.fit0 = self.fittedImage[I1,:]
+
+        #     self.slices.points1 = self.odImage.ODCorrected[:,I0]
+        #     self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
+        #     self.slices.fit1 = self.fittedImage[:,I0]
+
+        elif self.fitFunction == FIT_FUNCTIONS.index('Integrate'):
+            # TODO: Write this!
+            # Integration of number from computed column density
+
+            # Calculate average number density in border and subtract from rest of image
+            border = max(1, int(min(min(self.odImage.n.shape)/10, 5)))
+            print("Border: {}".format(border))
+            interior = self.odImage.n[border:-border, border:-border]
+            offset = (self.odImage.n.sum() - interior.sum()) / (self.odImage.n.size - interior.size)
+            print("Offset: {}".format(offset))
+            interior -= offset
+
+            # Compute the number by summing the pixels and multiplying by the pixel area
+
+            raw_number = interior.sum()
+            number = raw_number * self.config['Pixel Size']**2
+            print("Number: {}".format(number))
+
+            # Compute the central position and size
+            xrange = np.arange(interior.shape[1])
+            yrange = np.arange(interior.shape[0])
+            xc = np.sum(interior.sum(axis=0) * xrange) / raw_number
+            yc = np.sum(interior.sum(axis=1) * yrange) / raw_number
+
+            # These calculations of moments aren't exact, since the contents of the square root can be negative since the column density can be negative in some pixels.
+            # Therefore, all pixels less than 10 percent of the peak are dropped.
+            sumx = interior.sum(axis=0)
+            sumy = interior.sum(axis=1)
+            minx = maximum(sumx)/10
+            miny = maximum(sumy)/10
+            sigx = np.sqrt(np.sum((sumx * (xrange - xc)**2)[sumx > minx]) / np.sum(sumx[sumx > minx]))
+            sigy = np.sqrt(np.sum((sumy * (yrange - yc)**2)[sumy > miny]) / np.sum(sumy[sumy > miny]))
+
+            xc += border + self.odImage.xRange0.start
+            yc += border + self.odImage.xRange1.start
+
+            print("xc: {} px".format(xc))
+            print("yc: {} px".format(yc))
+            print("sigx: {} px".format(sigx))
+            print("sigy: {} px".format(sigy))
+
+            if isnan(sigx):
+                print("Sigma x invalid: setting to zero.")
+                sigx = 0
+            
+            if isnan(sigy):
+                print("Sigma y invalid: setting to zero.")
+                sigy = 0
+
+            self.fitData = [offset, number, xc, yc, sigx, sigy]
+            self.fitDataConf = None
+            self.fittedImage = None
+
+            
             ### Get radial average
             
-            I0 = self.odImage.xRange0.index(int(self.fitData[7]))
-            I1 = self.odImage.xRange1.index(int(self.fitData[5]))
+            I0 = self.odImage.xRange0.index(round(xc))
+            I1 = self.odImage.xRange1.index(round(yc))
 
             center = [I0, I1]
-            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
-            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
-            self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+            self.slices.radSlice = azimuthalAverage(self.odImage.n, center)
+            self.slices.radSliceFit = None
+            self.slices.radSliceFitGauss = None
 
             ### Calculate slices through fit
 
-            self.slices.points0 = self.odImage.ODCorrected[I1,:]
+            self.slices.points0 = self.odImage.n[I1,:]
             self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
-            self.slices.fit0 = self.fittedImage[I1,:]
+            self.slices.fit0 = None
 
-            self.slices.points1 = self.odImage.ODCorrected[:,I0]
+            self.slices.points1 = self.odImage.n[:,I0]
             self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
-            self.slices.fit1 = self.fittedImage[:,I0]
+            self.slices.fit1 = None
         
         else:
             print('Fit function undefined! Something went wrong!')
@@ -746,6 +815,18 @@ class processFitResult():
                     }
 
             self.data = ['fileName', 'species', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TOF']]
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Integrate'):
+            r = {
+                    'offset' : self.fitObject.fitData[0],
+                    'number' : self.fitObject.fitData[1],
+                    'x0' : self.fitObject.fitData[2],
+                    'y0' : self.fitObject.fitData[3],
+                    'wx' : self.fitObject.fitData[4]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
+                }
+                
+            self.data = ['fileName', r['number'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']] 
 
         else:
             print('Fit function undefined! Something went wrong!')
