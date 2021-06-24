@@ -150,7 +150,10 @@ class ImageWindows(QtWidgets.QWidget):
                 plotStyles = ['ok', 'g', 'r']
                 self.ax2.plot(y,Ly[k],plotStyles[k])
 
-            self.canvas.draw()
+            try:
+                self.canvas.draw()
+            except Exception as e:
+                print("Could not draw plot: {}".format(e))
 
 
     def mainGraphClicked(self, event):
