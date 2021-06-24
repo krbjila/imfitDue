@@ -35,13 +35,24 @@ NA = {
 
 # TODO: Check these!
 # Resonant cross section at I/Isat = 0, in um^2
-SIGMA_0_K = 0.2807 # From Tiecke 40K data
-SIGMA_0_Rb = 0.1938 # From Steck 87Rb data, table 7, assuming pi polarization
+SIGMA_0_K = 0.5*0.2807 # From Tiecke 40K data
+SIGMA_0_Rb = 0.5*0.2907 # From Steck 87Rb data, table 7, assuming pi polarization
 SIGMA_0 = {
     'K': SIGMA_0_K,
     'Rb': SIGMA_0_Rb,
     '|0,0>': SIGMA_0_K,
     '|1,0>': SIGMA_0_K,
+}
+
+# Transfer efficiency
+EFF_K = 1
+EFF_Rb = 1
+EFF_GSM = 0.82*0.7
+EFF = {
+    'K': EFF_K,
+    'Rb': EFF_Rb,
+    '|0,0>': EFF_GSM,
+    '|1,0>': EFF_GSM,
 }
 
 from collections import OrderedDict

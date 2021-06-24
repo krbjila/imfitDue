@@ -93,13 +93,14 @@ class calcOD():
             self.ODCorrected[np.isnan(self.ODCorrected)] = 0
             self.ODCorrected[np.isinf(self.ODCorrected)] = 0
 
-            # Calculate the column density, assuming zero detuning; see Pappa et all, NJP (2011)
+            # Calculate the column density, assuming zero detuning; see Pappa et al, NJP (2011)
             delta = 0 # Detuning; assumed to be zero
             Omega = 4*np.pi*np.sin(np.arcsin(self.config["NA"])/2)**2 # Fraction of flourescence collected
             sigma0 = SIGMA_0[self.species] # Resonant cross section at I/Isat = 0, in um^2
-            s0 = s2/self.config['CSat'][self.species]
+            s0 = s2/(bins**2 * self.config['CSat'][self.species])
             Tabs = s1/s2
             self.n = (1 + delta**2)/((1 - Omega) * sigma0) * (- np.log(Tabs) + s0/(1 + delta**2) * (1 - Tabs))
+            self.n /= EFF[self.species]
             self.n[np.isnan(self.n)] = 0
             self.n[np.isinf(self.n)] = 0
   

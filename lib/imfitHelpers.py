@@ -194,7 +194,7 @@ def upload2Origin(species, fitFunction, data):
                     print("Failed to upload to Origin. Is Sheet1 in the proper workbook available?")
                     return -1
 
-        if species == 'KRbSpinInt':
+        elif species == 'KRbSpinInt':
             # data is an array with [FitResultK, FitResultRb]
             # trim off the file name for Rb
             # ['fileName', r['number'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']]
