@@ -800,21 +800,21 @@ class processFitResult():
 
             self.data = ['fileName', r['peakODClassical'], r['wxClassical'], r['wyClassical'], r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TTF']]
 
-        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
+        # elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
 
-            r = {
-                    'offset' : self.fitObject.fitData[0],
-                    'Band0' : self.fitObject.fitData[1],
-                    'Band1' : self.fitObject.fitData[2],
-                    'Band2' : self.fitObject.fitData[3],
-                    'wy' : self.fitObject.fitData[4]*self.bin*self.pixelSize,
-                    'wx' : self.fitObject.fitData[6]*self.bin*self.pixelSize,
-                    'x0': self.fitObject.fitData[7],
-                    'y0': self.fitObject.fitData[5],
-                    'TOF': self.fitObject.TOF,
-                    }
+        #     r = {
+        #             'offset' : self.fitObject.fitData[0],
+        #             'Band0' : self.fitObject.fitData[1],
+        #             'Band1' : self.fitObject.fitData[2],
+        #             'Band2' : self.fitObject.fitData[3],
+        #             'wy' : self.fitObject.fitData[4]*self.bin*self.pixelSize,
+        #             'wx' : self.fitObject.fitData[6]*self.bin*self.pixelSize,
+        #             'x0': self.fitObject.fitData[7],
+        #             'y0': self.fitObject.fitData[5],
+        #             'TOF': self.fitObject.TOF,
+        #             }
 
-            self.data = ['fileName', 'species', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TOF']]
+        #     self.data = ['fileName', 'species', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TOF']]
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Integrate'):
             r = {
