@@ -595,7 +595,6 @@ class fitOD():
         #     self.slices.fit1 = self.fittedImage[:,I0]
 
         elif self.fitFunction == FIT_FUNCTIONS.index('Integrate'):
-            # TODO: Write this!
             # Integration of number from computed column density
 
             # Calculate average number density in border and subtract from rest of image
@@ -609,7 +608,7 @@ class fitOD():
             # Compute the number by summing the pixels and multiplying by the pixel area
 
             raw_number = interior.sum()
-            number = raw_number * self.config['Pixel Size']**2
+            number = raw_number * (self.config['Pixel Size'] * self.odImage.data.bin)**2
             print("Number: {}".format(number))
 
             # Compute the central position and size
