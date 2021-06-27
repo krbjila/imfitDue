@@ -197,10 +197,12 @@ def upload2Origin(species, fitFunction, data):
         elif species == 'KRbSpinInt':
             # data is an array with [FitResultK, FitResultRb]
             # trim off the file name for Rb
-            # ['fileName', r['number'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']]
+            # ['fileName', r['number'], r['error'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']]
             n0 = data[0][1]
+            nerr0 = data[0][2]
             n1 = data[1][1]
-            data = [data[0][0]] + data[0][2:] + data[1][2:] + [n0, n0/(n0+n1), n1, n1/(n0+n1), n0+n1]
+            nerr1 = data[1][2]
+            data = [data[0][0]] + data[0][3:] + data[1][3:] + [n0, nerr0, n0/(n0+n1), n1, nerr1, n1/(n0+n1), n0+n1]
             
             for (i, d) in enumerate(data):
                 uploadSuccess = orgApp.PutWorksheet("[{}]Sheet1".format(worksheetName), d, -1, i)

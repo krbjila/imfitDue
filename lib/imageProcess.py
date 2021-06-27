@@ -103,6 +103,10 @@ class calcOD():
             self.n /= EFF[self.species]
             self.n[np.isnan(self.n)] = 0
             self.n[np.isinf(self.n)] = 0
+
+            self.nerr = np.sqrt((s2+s1)/(s2**3 * s1)) * (s2*(1 + delta**2) + s0*s1) / (sigma0 * (1 - Omega))
+            self.nerr[np.isnan(self.nerr)] = 0
+            self.nerr[np.isinf(self.nerr)] = 0
   
     def defineROI(self):
         if self.xCenter0 > self.data.hImgSize or self.xCenter0 < 0:
@@ -606,11 +610,17 @@ class fitOD():
             print("Offset: {}".format(offset))
             interior -= offset
 
+            interior_err = self.odImage.nerr[border:-border, border:-border]
+
             # Compute the number by summing the pixels and multiplying by the pixel area
 
             raw_number = interior.sum()
             number = raw_number * (self.config['Pixel Size'] * self.odImage.data.bin)**2
             print("Number: {}".format(number))
+
+            raw_error = np.sqrt((interior**2).sum())
+            error = raw_error * (self.config['Pixel Size'] * self.odImage.data.bin)**2
+            print("Error: {}".format(error))
 
             # Compute the central position and size
             xrange = np.arange(interior.shape[1])
@@ -643,7 +653,7 @@ class fitOD():
                 print("Sigma y invalid: setting to zero.")
                 sigy = 0
 
-            self.fitData = [offset, number, xc, yc, sigx, sigy]
+            self.fitData = [offset, number, error, xc, yc, sigx, sigy]
             self.fitDataConf = None
             self.fittedImage = None
 
@@ -820,13 +830,14 @@ class processFitResult():
             r = {
                     'offset' : self.fitObject.fitData[0],
                     'number' : self.fitObject.fitData[1],
-                    'x0' : self.fitObject.fitData[2],
-                    'y0' : self.fitObject.fitData[3],
-                    'wx' : self.fitObject.fitData[4]*self.bin*self.pixelSize,
-                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
+                    'error' : self.fitObject.fitData[2],
+                    'x0' : self.fitObject.fitData[3],
+                    'y0' : self.fitObject.fitData[4],
+                    'wx' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[6]*self.bin*self.pixelSize,
                 }
                 
-            self.data = ['fileName', r['number'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']] 
+            self.data = ['fileName', r['number'], r['error'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']] 
 
         else:
             print('Fit function undefined! Something went wrong!')
