@@ -618,7 +618,7 @@ class fitOD():
             number = raw_number * (self.config['Pixel Size'] * self.odImage.data.bin)**2
             print("Number: {}".format(number))
 
-            raw_error = np.sqrt((interior**2).sum())
+            raw_error = np.sqrt((interior_err**2).sum())
             error = raw_error * (self.config['Pixel Size'] * self.odImage.data.bin)**2
             print("Error: {}".format(error))
 
@@ -639,6 +639,9 @@ class fitOD():
 
             xc += border + self.odImage.xRange0.start
             yc += border + self.odImage.xRange1.start
+
+            xc = min(max(self.odImage.xRange0.start, xc),self.odImage.xRange0.stop-1)
+            yc = min(max(self.odImage.xRange1.start, yc),self.odImage.xRange1.stop-1)
 
             print("xc: {} px".format(xc))
             print("yc: {} px".format(yc))
