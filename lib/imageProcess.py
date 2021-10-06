@@ -1,9 +1,9 @@
 from lib.imfitDefaults import DEFAULT_MODE, IMFIT_MODES
 import numpy as np
 import copy
-from imfitHelpers import *
-from imfitDefaults import *
-from imfitFunctions import *
+from lib.imfitHelpers import *
+from lib.imfitDefaults import *
+from lib.imfitFunctions import *
 
 from scipy.optimize import least_squares 
 from scipy.interpolate import interp2d
@@ -84,7 +84,6 @@ class calcOD():
             bins = self.data.bin
             Ceff *= float(bins**2)
 
-            print(Ceff)
             self.ODCorrected = self.OD + (s2 - s1)/Ceff
 
             #Set all nans and infs to zero
@@ -407,19 +406,19 @@ class fitOD():
             best_guess = np.inf		
             for guess in guesses:
                 try:
-                    print("Trying guess: {}".format(guess))
+                    # print("Trying guess: {}".format(guess))
                     res = least_squares(gaussianNoRotGradient, guess, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
-                    print("Cost: {}".format(res.cost))
+                    # print("Cost: {}".format(res.cost))
                     if not res.success:
                         print("Warning: fit did not converge.")
                     elif res.cost < best_guess:
                         best_guess = res.cost
                         best_fit = res
                 except ValueError as e:
-                    print(e)
+                    print("Error fitting image: {}".format(e))
 
             resLSQ = best_fit
-            print("Best fit: {}".format(resLSQ))
+            # print("Best fit: {}".format(resLSQ))
             if resLSQ is not None:
                 self.fitDataConf = confidenceIntervals(resLSQ)
                 self.fitData = resLSQ.x
@@ -523,7 +522,6 @@ class fitOD():
             #Gaussian fit
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0] 
 
-            print(p0)
             pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), 0.00001]
             pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -0.00001]
 
@@ -615,6 +613,7 @@ class processFitResult():
         self.angle = self.config['Fit angle']
 
         self.data = None
+        self.data_dict = None
 
         self.getResults()
 
@@ -636,7 +635,8 @@ class processFitResult():
                     'dODdy' : 0,
                     }
 
-            self.data =  ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']] 
+            self.data =  ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
+            self.data_dict = r
 
             rErr = {
                     'offset' : self.fitObject.fitDataConf[0],
@@ -663,6 +663,7 @@ class processFitResult():
                     }
 
             self.data =['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']] 
+            self.data_dict = r
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian w/ Gradient'):
             
@@ -679,6 +680,7 @@ class processFitResult():
                     }
 
             self.data = ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
+            self.data_dict = r
 
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Twisted Gaussian'):
@@ -696,6 +698,7 @@ class processFitResult():
                     }
 
             self.data = ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]        
+            self.data_dict = r
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
 
@@ -712,6 +715,7 @@ class processFitResult():
                     }
 
             self.data = ['fileName', r['peakODBEC'], r['wxBEC'], r['wyBEC'], r['peakODThermal'], r['wxThermal'], r['wyThermal'], r['x0'], r['y0'], r['offset']]
+            self.data_dict = r
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
 
@@ -730,6 +734,7 @@ class processFitResult():
                     }
 
             self.data = ['fileName', r['peakODClassical'], r['wxClassical'], r['wyClassical'], r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TTF']]
+            self.data_dict = r
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
 
@@ -746,6 +751,7 @@ class processFitResult():
                     }
 
             self.data = ['fileName', 'species', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TOF']]
+            self.data_dict = r
 
         else:
             print('Fit function undefined! Something went wrong!')

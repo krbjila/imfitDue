@@ -1,3 +1,6 @@
+# TODO: use image metadata to automatically set binning and change region selection
+# TODO: add support for an arbitrary number of images, not just K and Rb frames
+
 import sys, os
 
 from PyQt5 import QtWidgets, QtCore
@@ -10,8 +13,10 @@ from lib.gui_helpers import *
 
 import numpy as np
 
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from bson.json_util import loads, dumps
+
+from datetime import datetime
 
 class imfitDue(QtWidgets.QMainWindow):
     def __init__(self,Parent=None):
@@ -25,6 +30,8 @@ class imfitDue(QtWidgets.QMainWindow):
         self.initializeGui()
         self.createToolbar()
         self.makeConnections()
+
+        self.setupDatabase()
 
         self.autoloader = Autoloader(self.pf)
         self.autoloader.signalFileArrived.connect(self.loadFile)
@@ -40,11 +47,26 @@ class imfitDue(QtWidgets.QMainWindow):
         self.odK = None
         self.odRb = None
 
-    def connectToDatabase(self):
+    def setupDatabase(self):
+        """
+        setupDatabase(self)
+
+        Connects to MongoDB database with configuration specified in ``lib/mongodb.json``.
+        """
+        
         with open("lib/mongodb.json", "r") as f:
             db_config = loads(f.read())
         mongo_url = "mongodb://{}:{}@{}:{}/?authSource=admin".format(db_config["user"], db_config["password"], db_config["address"], db_config["port"])
-        self.c = MongoClient(mongo_url)
+        self.c = MongoClient(mongo_url, connectTimeoutMS=2000)
+        try:
+            self.c.server_info()
+            self.db = self.c["data"]
+            self.col = self.db["shots"]
+        except Exception as e:
+            self.c = None
+            self.db = None
+            self.col = None
+            print("Could not connect to MongoDB: {}".format(e))
 
     def makeConnections(self):
         self.pf.signalCamChanged.connect(self.camChanged)
@@ -60,6 +82,7 @@ class imfitDue(QtWidgets.QMainWindow):
         
         self.av.averageButton.clicked.connect(self.averageImages)
         self.fo.uploadButton.clicked.connect(self.process2Origin)
+        self.fo.databaseButton.clicked.connect(self.process2Database)
 
     def camChanged(self, new_cam):
         self.mode = str(new_cam)
@@ -79,6 +102,15 @@ class imfitDue(QtWidgets.QMainWindow):
 
             self.autoloader.is_active = False
             self.currentFile = readImage(self.mode, path)
+
+            if "id" in self.currentFile.metadata:
+                self.fo.idEdit.setText(self.currentFile.metadata["id"])
+                self.fo.idEdit.setStyleSheet(
+                """QLineEdit { background-color: white; }""")
+            else:
+                self.fo.idEdit.setText("None")
+                self.fo.idEdit.setStyleSheet(
+                """QLineEdit { background-color: yellow; }""")
             
             if self.pf.autoLoad.isChecked():
                 t = self.pf.autoLoadFile.text()
@@ -169,7 +201,64 @@ class imfitDue(QtWidgets.QMainWindow):
 
         if self.fo.autoUpload.isChecked():
             self.process2Origin()
+        if self.fo.autoDatabase.isChecked():
+            self.process2Database()
         print("Done fitting and uploading current shot")
+
+    def process2Database(self):
+        id = str(self.fo.idLabel.text())
+        if id == "None":
+            return -1
+             
+        result = {"config": IMFIT_MODES[self.mode]}
+        if self.fitK is not None:
+            KProcess = processFitResult(self.fitK, self.mode)
+            species = KProcess.config['Species'][0]
+            func = FIT_FUNCTIONS[KProcess.fitObject.fitFunction]
+            result[species] = {}
+            result[species][func] = KProcess.data_dict
+            result[species][func]["region"] = self.regionK
+
+        if self.fitRb is not None:
+            RbProcess = processFitResult(self.fitRb, self.mode)
+            species = KProcess.config['Species'][1]
+            func = FIT_FUNCTIONS[KProcess.fitObject.fitFunction]
+            result[species] = {}
+            result[species][func] = RbProcess.data_dict
+            result[species][func]["region"] = self.regionRb
+
+        try:
+            camera_name = self.currentFile.metadata["name"]
+        except Exception as e:
+            print("Could not set camera name. Assuming name of mode `{}`".format(self.mode))
+            camera_name = self.mode
+
+        update = {
+            "$set": {
+                "images": {
+                    camera_name: {
+                        "fit": result
+                    }
+                }
+            },
+            "$setOnInsert": {
+                "time": datetime.now()
+            }
+        }
+        try:
+            self.col.update_one({"_id": id}, update, upsert=True)
+        except ConnectionFailure as e:
+            print("Could not connect to database: {}\nRetrying connection...".format(e))
+            try:
+                self.setupDatabase()
+                self.col.update_one({"_id": id}, update, upsert=True)
+            except Exception as e:
+                raise e
+        except Exception as e:
+            print("Could not upload to database: {}".format(e))
+            self.fo.idEdit.setStyleSheet(
+                """QLineEdit { background-color: red; }""")
+
 
     def process2Origin(self):
         imagePath = IMFIT_MODES[self.mode]["Image Path"]
@@ -249,8 +338,6 @@ class imfitDue(QtWidgets.QMainWindow):
             if self.frame == 'OD':
                 image = self.odK.ODCorrected
             else:
-                print(x)
-                print(y)
                 image = frames[species[0]][self.frame][y[0]:y[-1], x[0]:x[-1]]
             self.figs.plotUpdate(x,y,image,ch0,ch1)
     

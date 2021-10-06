@@ -1,5 +1,4 @@
 from numpy.ma.core import set_fill_value
-from lib.imfitDefaults import AUTOSCALE_HEADROOM, AUTOSCALE_MIN, DEFAULT_MODE, IMFIT_MODES
 import sys
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -11,9 +10,9 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
-from krb_custom_colors import KRbCustomColors
-from imfitDefaults import *
-from imfitHelpers import *
+from lib.krb_custom_colors import KRbCustomColors
+from lib.imfitDefaults import *
+from lib.imfitHelpers import *
 import os
 import datetime 
 
@@ -99,7 +98,10 @@ class ImageWindows(QtWidgets.QWidget):
            
     def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None):
         colorMap = KRbCustomColors().whiteJet
-        levelLow = float(self.plotTools.odMinEdit.text())
+        try:
+            levelLow = float(self.plotTools.odMinEdit.text())
+        except Exception as e:
+            levelLow = 0
     
         if image is not None:
             self.plotTools.setImage(image)
@@ -110,7 +112,6 @@ class ImageWindows(QtWidgets.QWidget):
             self.crossHairV, = self.ax0.plot([],[],color=crossHairColor)
             self.crossHairH, = self.ax0.plot([],[],color=crossHairColor)
             
-            print(image.shape)
             try:
                 self.mainImage = self.ax0.imshow(image,cmap=colorMap, extent=(min(x),max(x),max(y),min(y)))
             except Exception as e:
@@ -519,6 +520,11 @@ class fitOptionsWidget(QtWidgets.QWidget):
         self.fitButton = QtWidgets.QPushButton('Fit')
         self.uploadButton = QtWidgets.QPushButton('Upload to Origin')
 
+        self.autoDatabase = QtWidgets.QCheckBox('Auto Database')
+        self.idEdit = QtWidgets.QLineEdit('None')
+        self.idEdit.setDisabled(True)
+        self.databaseButton = QtWidgets.QPushButton('Upload to Database')
+
         self.tof = QtWidgets.QLineEdit('6')
         tof_validator = QtGui.QDoubleValidator()
         tof_validator.setBottom(0)
@@ -527,10 +533,7 @@ class fitOptionsWidget(QtWidgets.QWidget):
 
         #### Layout Stuff
 
-        # TODO: Remove imaging path widget since information is encapsulated in mode
         h0 = QtWidgets.QHBoxLayout()
-        # h0.addWidget(QtWidgets.QLabel("Imaging Path: "))
-        # h0.addWidget(self.imagePath)
         h0.addStretch(1)
         self.RbLabel = QtWidgets.QLabel('Fit Rb to:')
         h0.addWidget(self.RbLabel)
@@ -544,18 +547,27 @@ class fitOptionsWidget(QtWidgets.QWidget):
         h1.addWidget(self.KLabel)
         h1.addWidget(self.kFitFunction)
 
+        h1b = QtWidgets.QHBoxLayout()
+        h1b.addStretch(1)
+        self.idLabel = QtWidgets.QLabel('ID:')
+        h1b.addWidget(self.idLabel)
+        h1b.addWidget(self.idEdit)
+
         h2 = QtWidgets.QHBoxLayout()
         h2.addWidget(self.fitButton)
         h2.addWidget(self.uploadButton)
+        h2.addWidget(self.databaseButton)
 
         v0 = QtWidgets.QVBoxLayout()
         v0.addLayout(h0)
         v0.addLayout(h1)
+        v0.addLayout(h1b)
         v0.addLayout(h2)
 
         v1 = QtWidgets.QGridLayout()
         v1.addWidget(self.autoFit)
         v1.addWidget(self.autoUpload)
+        v1.addWidget(self.autoDatabase)
         v1.addWidget(self.fitBothCheckbox)
 
         h = QtWidgets.QHBoxLayout()
