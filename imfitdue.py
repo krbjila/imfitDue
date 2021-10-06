@@ -1,14 +1,13 @@
 from lib.imfitDefaults import IMFIT_MODES
 import sys, os
-sys.path.append('./lib')
 
 from PyQt5 import QtWidgets, QtCore
 import ctypes
 
-from imageRead import *
-from imageProcess import *
-from imfitDefaults import *
-from gui_helpers import *
+from lib.imageRead import *
+from lib.imageProcess import *
+from lib.imfitDefaults import *
+from lib.gui_helpers import *
 
 import numpy as np
 
