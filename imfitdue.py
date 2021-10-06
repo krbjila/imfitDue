@@ -1,4 +1,3 @@
-from lib.imfitDefaults import IMFIT_MODES
 import sys, os
 
 from PyQt5 import QtWidgets, QtCore
@@ -11,6 +10,9 @@ from lib.gui_helpers import *
 
 import numpy as np
 
+from pymongo import MongoClient
+from bson.json_util import loads, dumps
+
 class imfitDue(QtWidgets.QMainWindow):
     def __init__(self,Parent=None):
         super(imfitDue, self).__init__(Parent)
@@ -19,7 +21,6 @@ class imfitDue(QtWidgets.QMainWindow):
 
         self.regionRb = [0]*4
         self.regionK = [0]*4
-
 
         self.initializeGui()
         self.createToolbar()
@@ -38,6 +39,12 @@ class imfitDue(QtWidgets.QMainWindow):
         self.currentFile = None
         self.odK = None
         self.odRb = None
+
+    def connectToDatabase(self):
+        with open("lib/mongodb.json", "r") as f:
+            db_config = loads(f.read())
+        mongo_url = "mongodb://{}:{}@{}:{}/?authSource=admin".format(db_config["user"], db_config["password"], db_config["address"], db_config["port"])
+        self.c = MongoClient(mongo_url)
 
     def makeConnections(self):
         self.pf.signalCamChanged.connect(self.camChanged)
