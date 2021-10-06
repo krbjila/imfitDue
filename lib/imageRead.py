@@ -1,7 +1,7 @@
 import warnings
-from imfitDefaults import *
-from imfitHelpers import *
-from spe import SpeFile
+from lib.imfitDefaults import *
+from lib.imfitHelpers import *
+from lib.spe import SpeFile
 import numpy as np
 import os 
 

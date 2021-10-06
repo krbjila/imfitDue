@@ -1,5 +1,5 @@
 import numpy as np
-from polylog import dilog
+from lib.polylog import dilog
 
 def gaussian(p, r, y):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta]

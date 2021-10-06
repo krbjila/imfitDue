@@ -68,8 +68,7 @@ class SpeFile(object):
 			img = np.fromfile(f, np.uint32, frames*stride)
 			return img.reshape((frames, ydim, xdim))
 		except Exception as e:
-			print(e)
-			print("Error reading data from file.")
+			print("Error reading data from file: {}".format(e))
 
 		# try:
 		# 	for i in range(0, frames):

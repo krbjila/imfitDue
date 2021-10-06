@@ -1,6 +1,5 @@
-from lib.imfitDefaults import IMFIT_MODES, WORKSHEET_NAMES
-from imfitDefaults import *
-import polylog
+from lib.imfitDefaults import *
+import lib.polylog
 import numpy as np
 
 def checkAtom(atom):
