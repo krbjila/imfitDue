@@ -206,7 +206,7 @@ class imfitDue(QtWidgets.QMainWindow):
         print("Done fitting and uploading current shot")
 
     def process2Database(self):
-        id = str(self.fo.idLabel.text())
+        id = str(self.fo.idEdit.text())
         if id == "None":
             return -1
              
@@ -233,7 +233,7 @@ class imfitDue(QtWidgets.QMainWindow):
             print("Could not set camera name. Assuming name of mode `{}`".format(self.mode))
             camera_name = self.mode
 
-        update = {
+        update = [{
             "$set": {
                 "images": {
                     camera_name: {
@@ -241,13 +241,10 @@ class imfitDue(QtWidgets.QMainWindow):
                     }
                 }
             },
-            "$setOnInsert": {
-                "time": datetime.now()
-            }
-        }
+        }]
         try:
             self.col.update_one({"_id": id}, update, upsert=True)
-        except ConnectionFailure as e:
+        except errors.ConnectionFailure as e:
             print("Could not connect to database: {}\nRetrying connection...".format(e))
             try:
                 self.setupDatabase()
