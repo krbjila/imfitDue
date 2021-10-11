@@ -160,6 +160,10 @@ def upload2Origin(species, fitFunction, data):
             template = 'KRbSpinGauss'
             worksheetName = 'KRbSpinGauss1'
             longname = 'KRb Spin Resolved Gaussian'
+        elif species == 'KRbSpinInt' and 'Integrate' in FIT_FUNCTIONS[fitFunction]:
+            template = 'KRbSpinInt'
+            worksheetName = 'KRbFKInt1'
+            longname = 'KRb FK Integrated'
         elif species == 'KRbFKGauss1' and 'Gaussian' in FIT_FUNCTIONS[fitFunction]:
             template = 'KRbFKGauss'
             worksheetName = 'KRbFKGauss1'
@@ -189,7 +193,23 @@ def upload2Origin(species, fitFunction, data):
                     print("Failed to upload to Origin. Is Sheet1 in the proper workbook available?")
                     return -1
 
-        # TODO: Gray out the checkbox in other modes
+        elif species == 'KRbSpinInt':
+            # data is an array with [FitResultK, FitResultRb]
+            # trim off the file name for Rb
+            # ['fileName', r['number'], r['error'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']]
+            n0 = data[0][1]
+            nerr0 = data[0][2]
+            n1 = data[1][1]
+            nerr1 = data[1][2]
+            data = [data[0][0]] + data[0][3:] + data[1][3:] + [n0, nerr0, n0/(n0+n1), n1, nerr1, n1/(n0+n1), n0+n1]
+            
+            for (i, d) in enumerate(data):
+                uploadSuccess = orgApp.PutWorksheet("[{}]Sheet1".format(worksheetName), d, -1, i)
+            
+                if not uploadSuccess:
+                    print("Failed to upload to Origin. Is Sheet1 in the proper workbook available?")
+                    return -1
+
         elif species == 'KRbFKGauss1':
             if FIT_FUNCTIONS[fitFunction] != 'Gaussian w/ Gradient':
                 # data is an array with [FitResultK, FitResultRb]

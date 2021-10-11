@@ -277,6 +277,11 @@ class imfitDue(QtWidgets.QMainWindow):
                     print("Uploading |0,0> KRb to Origin")
                     upload2Origin('KRbFKGauss1', self.fitK.fitFunction, KProcess.data)
                     return 1
+                elif self.fitK.fitFunction == FIT_FUNCTIONS.index("Integrate"):
+                    print("Uploading integrated KRb to Origin")
+                    upload2Origin('KRbSpinInt', self.fitK.fitFunction,
+                                            [KProcess.data, RbProcess.data])
+                    return 1
                 else:
                     print("Uploading KRb to Origin")
                     upload2Origin('KRbSpinGauss', self.fitK.fitFunction,
@@ -337,6 +342,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
             if self.frame == 'OD':
                 image = self.odK.ODCorrected
+            elif self.frame == 'Column Density':
+                image = self.odK.n
             else:
                 image = frames[species[0]][self.frame][y[0]:y[-1], x[0]:x[-1]]
             self.figs.plotUpdate(x,y,image,ch0,ch1)
@@ -372,6 +379,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
             if self.frame == 'OD':
                 image = self.odRb.ODCorrected
+            elif self.frame == 'Column Density':
+                image = self.odRb.n
             else:
                 image = frames[species[1]][self.frame][y[0]:y[-1], x[0]:x[-1]]
             self.figs.plotUpdate(x,y,image,ch0,ch1)
