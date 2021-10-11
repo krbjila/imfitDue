@@ -1,6 +1,6 @@
 from math import isnan
 
-from scipy.ndimage.measurements import maximum
+from scipy.ndimage.measurements import histogram, maximum
 from lib.imfitDefaults import DEFAULT_MODE, IMFIT_MODES
 import numpy as np
 import copy

@@ -33,6 +33,13 @@ NA = {
     "vertical": 0.5
 }
 
+# Pixel size (um)
+PX_SIZE = {
+    "axial": 2.58,
+    "side": 1.785,
+    "vertical": 0.956
+}
+
 # TODO: Check these!
 # Resonant cross section at I/Isat = 0, in um^2
 SIGMA_0_K = 0.5*0.2807 # From Tiecke 40K data
@@ -61,7 +68,7 @@ IMFIT_MODES = OrderedDict([
         ### Mode 1 - Axial iXon
         'Default Path': DEFAULT_PATH + 'Andor/',
         'Default Suffix': 'ixon_{}.npz',
-        'Pixel Size': 2.58,
+        'Pixel Size': PX_SIZE["axial"],
         'Species': ['K', 'Rb'],
         'Image Path': 'Axial',
         'Default Region': [[140, 215, 250, 250], 
@@ -92,11 +99,11 @@ IMFIT_MODES = OrderedDict([
         ### Mode 1 - Axial iXon
         'Default Path': DEFAULT_PATH + 'Andor/',
         'Default Suffix': 'ixon_{}.npz',
-        'Pixel Size': 1.785,
+        'Pixel Size': PX_SIZE["side"],
         'Species': ['K', 'Rb'],
         'Image Path': 'Side',
         'Default Region': [[150, 220, 250, 250], 
-                  [150, 350, 300, 300]],
+                  [150, 350, 200, 180]],
         'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,
@@ -123,7 +130,7 @@ IMFIT_MODES = OrderedDict([
         ### Mode 1.1 - Axial iXon
         'Default Path': DEFAULT_PATH + 'KRbFK/',
         'Default Suffix': 'krbfk_{}.npz',
-        'Pixel Size': 2.58,
+        'Pixel Size': PX_SIZE["axial"],
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
         'Default Region': [[135, 150, 100, 100], 
@@ -155,7 +162,7 @@ IMFIT_MODES = OrderedDict([
         ### Mode 3 - Axial iXon Molecules
         'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
         'Default Suffix': 'ixon_{}.npz',
-        'Pixel Size': 2.58,
+        'Pixel Size': PX_SIZE["axial"],
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
         'Default Region': [[272, 302, 60, 25], 
@@ -182,15 +189,46 @@ IMFIT_MODES = OrderedDict([
         'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat,
         'NA': NA["axial"],
     }),
+    ('Axial iXon Molecules In Situ (CSV)', {
+        ### Mode 3 - Axial iXon Molecules
+        'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
+        'Default Suffix': 'ixon_{}.csv',
+        'Pixel Size': PX_SIZE["axial"],
+        'Species': ['|0,0>', '|1,0>'],
+        'Image Path': 'Axial',
+        'Default Region': [[272, 302, 60, 25], 
+                  [272, 302, 60, 25]],
+        'Extension Filter': '*.csv',
+        'Fit Functions': KRB_FIT_FUNCTIONS,
+        'Enforce same fit for both': True,
+                'Auto Detect Binning': True,
+        'Array Width': 512,
+        'Number of Frames': 6,
+        'Frame Order': {
+            '|0,0>': {
+                'Shadow': 0,
+                'Light': 1,
+                'Dark': 2,
+            },
+            '|1,0>': {
+                'Shadow': 3,
+                'Light': 4,
+                'Dark': 5
+            }
+        },
+        'Fit angle': 0.0, # Deg, Twisted Gaussian fit
+        'CSat': {'|0,0>': CSAT["axial"]["K"], '|1,0>': CSAT["axial"]["K"]}, # Unbinned effective C_sat,
+        'NA': NA["axial"],
+    }),
     ('Side iXon Molecules In Situ', {
         ### Mode 4 - Side iXon Molecules
         'Default Path': DEFAULT_PATH + 'MoleculeInSituFK/',
         'Default Suffix': 'ixon_{}.npz',
-        'Pixel Size': 1.785,
+        'Pixel Size': PX_SIZE["side"],
         'Species': ['|0,0>', '|1,0>'],
-        'Image Path': 'Axial',
-        'Default Region': [[307, 307, 60, 40], 
-                  [307, 307, 60, 40]],
+        'Image Path': 'Side',
+        'Default Region': [[220, 276, 85, 35], 
+                  [220, 276, 85, 35]],
         'Extension Filter': '*.npz',
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True,
@@ -217,7 +255,7 @@ IMFIT_MODES = OrderedDict([
         ### Mode 4 - Side iXon Molecules
         'Default Path': DEFAULT_PATH + 'MoleculeFK4/',
         'Default Suffix': 'ixon_{}.npz',
-        'Pixel Size': 1.785,
+        'Pixel Size': PX_SIZE["side"],
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Axial',
         'Default Region': [[300, 455, 60, 40], 
@@ -278,11 +316,11 @@ IMFIT_MODES = OrderedDict([
         ### Mode 2 - Vertical iXon
         'Default Path': DEFAULT_PATH + 'Andor_Vertical/',
         'Default Suffix': 'twospecies_{}.npz',
-        'Pixel Size': 0.956,
+        'Pixel Size': PX_SIZE["vertical"],
         'Species': ['K', 'Rb'],
         'Image Path': 'Vertical',
-        'Default Region': [[125, 280, 250, 250], 
-                  [125, 280, 250, 250]],
+        'Default Region': [[105, 315, 100, 100], 
+                  [105, 315, 100, 100]],
         'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,

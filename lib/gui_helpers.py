@@ -615,7 +615,7 @@ class Autoloader(QtCore.QThread):
         self.is_active = True
 
     def wait_a_while(self):
-        self.msleep(500)
+        self.msleep(1000)
 
     def modeChanged(self, mode):
         self.mode = mode
@@ -623,8 +623,8 @@ class Autoloader(QtCore.QThread):
     def run(self):
         from os import path
         
-        inner_wait = 500
-        outer_wait = 500
+        inner_wait = 1000
+        outer_wait = 1000
         
         while True:
             if self.mainPF.autoLoad.isChecked() and self.is_active:
