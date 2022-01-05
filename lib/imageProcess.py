@@ -447,6 +447,93 @@ class fitOD():
             self.slices.fit1 = self.fittedImage[:,I0]
 
             print("Done with fit function!")
+        
+        elif self.fitFunction == FIT_FUNCTIONS.index('Gaussian Fixed'):
+
+            def subtract_gradient(od):
+                (dy, dx) = np.shape(od)
+                X2D,Y2D = np.meshgrid(np.arange(dx),np.arange(dy))
+                A = np.matrix(np.column_stack((X2D.ravel(),Y2D.ravel(),np.ones(dx*dy))))
+                B = od.flatten()
+                C = np.dot((A.T * A).I * A.T, B).flatten()
+                bg=np.reshape(C*A.T, (dy,dx))
+                return np.asarray(od - bg)
+
+            # Gaussian fit without rotation
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+
+            r = [None,None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+            xmin = np.min(r[0])
+            ymin = np.min(r[1])
+
+            data = self.odImage.ODCorrected
+            od_no_bg = subtract_gradient(data)
+            blur = ndimage.gaussian_filter(od_no_bg,5,mode='constant')
+    
+            
+            p0 = [0, M, self.odImage.xRange0[I1], 15, self.odImage.xRange1[I0], 3, 0, 0]
+            pUpper = [np.inf, 15.0, self.odImage.xRange0[I1] + 1, 30, self.odImage.xRange1[I0] + 1, 6, 40, 40]
+            pLower = [-np.inf, 0.0, self.odImage.xRange0[I1] - 1, 10, self.odImage.xRange1[I0] - 1, 1, -40, -40]
+            p0 = checkGuess(p0,pUpper,pLower)
+
+            pks=peak_local_max(blur, min_distance=20,exclude_border=2, num_peaks=3)
+            guesses = [p0]
+            for pk in pks:
+                yc = pk[0]
+                xc = pk[1]
+                peak = data[yc, xc]
+                offset = np.mean(data)
+                if peak > 0:
+                    (sigx, sigy) = 15, 15
+                    guess = [offset, peak, xmin+xc, sigx, ymin+yc, sigy, 0.0, 0.0]
+                    guesses.append(checkGuess(guess,pUpper,pLower))
+
+            best_fit = None
+            best_guess = np.inf		
+            for guess in guesses:
+                try:
+                    # print("Trying guess: {}".format(guess))
+                    res = least_squares(gaussianNoRotGradient, guess, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+                    # print("Cost: {}".format(res.cost))
+                    if not res.success:
+                        print("Warning: fit did not converge.")
+                    elif res.cost < best_guess:
+                        best_guess = res.cost
+                        best_fit = res
+                except ValueError as e:
+                    print("Error fitting image: {}".format(e))
+
+            resLSQ = best_fit
+            # print("Best fit: {}".format(resLSQ))
+            if resLSQ is not None:
+                self.fitDataConf = confidenceIntervals(resLSQ)
+                self.fitData = resLSQ.x
+                self.fittedImage = gaussianNoRotGradient(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
+
+            
+            ### Get radial average
+            
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+
+            ### Calculate slices through fit
+
+            self.slices.points0 = self.odImage.ODCorrected[I1,:]
+            self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1,:]
+
+            self.slices.points1 = self.odImage.ODCorrected[:,I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
+            self.slices.fit1 = self.fittedImage[:,I0]
+
+            print("Done with fit function!")
 
 
         elif self.fitFunction == FIT_FUNCTIONS.index('Bigaussian'):
@@ -748,7 +835,7 @@ class processFitResult():
             self.data =['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']] 
             self.data_dict = r
 
-        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian w/ Gradient'):
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian w/ Gradient') or self.fitObject.fitFunction == FIT_FUNCTIONS.index('Gaussian Fixed'):
             
             r = {
                     'offset' : self.fitObject.fitData[0],
