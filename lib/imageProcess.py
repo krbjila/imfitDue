@@ -467,34 +467,28 @@ class fitOD():
             r[1] = self.odImage.xRange1
             xmin = np.min(r[0])
             ymin = np.min(r[1])
+            xmax = np.max(r[0])
+            ymax = np.max(r[1])
+            xc = 0.5*(xmin + xmax)
+            yc = 0.5*(ymin + ymax)
 
             data = self.odImage.ODCorrected
             od_no_bg = subtract_gradient(data)
             blur = ndimage.gaussian_filter(od_no_bg,5,mode='constant')
     
             
-            p0 = [0, M, self.odImage.xRange0[I1], 15, self.odImage.xRange1[I0], 3, 0, 0]
-            pUpper = [np.inf, 15.0, self.odImage.xRange0[I1] + 1, 30, self.odImage.xRange1[I0] + 1, 6, 40, 40]
-            pLower = [-np.inf, 0.0, self.odImage.xRange0[I1] - 1, 10, self.odImage.xRange1[I0] - 1, 1, -40, -40]
+            p0 = [0, M, xc, 15, yc, 3, 0, 0]
+            pUpper = [np.inf, 15.0, xc + 2, 40, yc + 2, 6, 40, 40]
+            pLower = [-np.inf, 0.0, xc - 2, 8, yc - 2, 1, -40, -40]
             p0 = checkGuess(p0,pUpper,pLower)
 
-            pks=peak_local_max(blur, min_distance=20,exclude_border=2, num_peaks=3)
             guesses = [p0]
-            for pk in pks:
-                yc = pk[0]
-                xc = pk[1]
-                peak = data[yc, xc]
-                offset = np.mean(data)
-                if peak > 0:
-                    (sigx, sigy) = 15, 15
-                    guess = [offset, peak, xmin+xc, sigx, ymin+yc, sigy, 0.0, 0.0]
-                    guesses.append(checkGuess(guess,pUpper,pLower))
 
             best_fit = None
             best_guess = np.inf		
             for guess in guesses:
                 try:
-                    # print("Trying guess: {}".format(guess))
+                    print("Trying guess: {}".format(guess))
                     res = least_squares(gaussianNoRotGradient, guess, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
                     # print("Cost: {}".format(res.cost))
                     if not res.success:
@@ -849,6 +843,7 @@ class processFitResult():
                     'angle' : 0
                     }
 
+            print(r)
             self.data = ['fileName', r['peakOD'], r['dODdx'], r['dODdy'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['angle']]
             self.data_dict = r
 

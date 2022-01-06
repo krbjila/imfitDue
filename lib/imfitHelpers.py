@@ -178,7 +178,7 @@ def upload2Origin(species, fitFunction, data):
         # orgApp.Execute("{}!page.active$ = {}".format(worksheetName, "Sheet1")) 
 
         if species == 'KRbSpinGauss':
-            if FIT_FUNCTIONS[fitFunction] != 'Gaussian w/ Gradient':
+            if FIT_FUNCTIONS[fitFunction] != 'Gaussian w/ Gradient' and FIT_FUNCTIONS[fitFunction] != 'Gaussian Fixed':
                 # data is an array with [FitResultK, FitResultRb]
                 # trim off the file name for Rb
                 # if not Gaussian w/ Gradient, add extra columns for gradient columns in origin book
@@ -211,7 +211,7 @@ def upload2Origin(species, fitFunction, data):
                     return -1
 
         elif species == 'KRbFKGauss1':
-            if FIT_FUNCTIONS[fitFunction] != 'Gaussian w/ Gradient':
+            if FIT_FUNCTIONS[fitFunction] != 'Gaussian w/ Gradient' and FIT_FUNCTIONS[fitFunction] != 'Gaussian Fixed':
                 # data is an array with [FitResultK, FitResultRb]
                 # trim off the file name for Rb
                 # if not Gaussian w/ Gradient, add extra columns for gradient columns in origin book
