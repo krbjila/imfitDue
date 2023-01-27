@@ -14,7 +14,7 @@ FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twiste
 KRB_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Gaussian Fixed', 'Integrate']
 NONTWISTED_FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian']
 # WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'BandMapV']
-WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'Integrated']
+WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'Integrated']
 
 DEFAULT_MODE = 'Side iXon'
 
@@ -36,7 +36,7 @@ NA = {
 # Pixel size (um)
 PX_SIZE = {
     "axial": 2.58,
-    "side": 1.785,
+    "side": 1.718,
     "vertical": 0.956
 }
 
@@ -133,8 +133,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': PX_SIZE["side"],
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Side',
-        'Default Region': [[220, 278, 85, 35], 
-                  [220, 278, 85, 35]],
+        'Default Region': [[247, 310, 85, 35], 
+                  [247, 310, 85, 35]],
         'Extension Filter': '*.npz',
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True,
@@ -321,8 +321,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': PX_SIZE["vertical"],
         'Species': ['K', 'Rb'],
         'Image Path': 'Vertical',
-        'Default Region': [[105, 315, 100, 100], 
-                  [105, 315, 100, 100]],
+        'Default Region': [[106, 345, 100, 100], 
+                  [106, 345, 100, 100]],
         'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,
