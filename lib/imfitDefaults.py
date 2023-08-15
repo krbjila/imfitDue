@@ -21,7 +21,7 @@ DEFAULT_MODE = 'Side iXon'
 # The Rb CSat values are computed from the K CSat values, assuming identical transmission through the optics and detection efficiencies. The vertical CSat has not been calibrated recently.
 CSAT = {
     "axial": {"K": 2970, "Rb": 2882},
-    "side": {"K": 2188, "Rb": 2123},
+    "side": {"K": 4048, "Rb": 2123},
     "vertical": {"K": 1400, "Rb": 1359}
 }
 
@@ -133,8 +133,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': PX_SIZE["side"],
         'Species': ['|0,0>', '|1,0>'],
         'Image Path': 'Side',
-        'Default Region': [[247, 310, 85, 35], 
-                  [247, 310, 85, 35]],
+        'Default Region': [[241, 338, 85, 35], 
+                  [241, 338, 85, 35]],
         'Extension Filter': '*.npz',
         'Fit Functions': KRB_FIT_FUNCTIONS,
         'Enforce same fit for both': True,
@@ -321,8 +321,8 @@ IMFIT_MODES = OrderedDict([
         'Pixel Size': PX_SIZE["vertical"],
         'Species': ['K', 'Rb'],
         'Image Path': 'Vertical',
-        'Default Region': [[106, 345, 100, 100], 
-                  [106, 345, 100, 100]],
+        'Default Region': [[99, 335, 70, 70], 
+                  [99, 335, 70, 70]],
         'Extension Filter': '*.npz',
         'Fit Functions': FIT_FUNCTIONS,
         'Enforce same fit for both': False,
