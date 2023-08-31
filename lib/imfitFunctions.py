@@ -1,6 +1,7 @@
 import numpy as np
 from lib.polylog import dilog
 
+
 def gaussian(p, r, y):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta]
     xaxis = r[0]
@@ -76,8 +77,8 @@ def doubleGaussian(p,r,y):
     return np.ravel(p[0] + p[1]*np.exp(-(X-p[7])**2.0/(2*p[2]**2.0) -(Y-p[8])**2.0/(2*p[3]**2.0))\
             + p[4]*np.exp(-(X-p[7])**2.0/(2*p[5]**2.0) -(Y-p[8])**2.0/(2*p[6]**2.0)) - y)
 
-def fermiDirac(p, r, y):
-    ### Parameters: [offset, amplitude, x0, wx, y0, wy, q]
+def fermiDirac(p,r,y):
+    ## Parameters: [offset, amplitude, x0, wx, y0, wy, q]
     
     xaxis = r[0]
     yaxis = r[1]
@@ -89,7 +90,25 @@ def fermiDirac(p, r, y):
         y = np.zeros(X.shape)
 
     return p[0] - p[1]*dilog(-np.exp(p[6]-(X.ravel()-p[2])**2.0/(2*p[3]**2.0)-(Y.ravel()-p[4])**2/(2*p[5]**2)))-y.ravel()
+
+def fermiDirac2D(p,r,y):
+    ## hh: 2D fermi-dirac fit
+    ## Parameters: [offset, amplitude, x0, wx, y0, wy, q]
     
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis,yaxis)
+
+    
+    if isinstance(y,int):
+         y = np.zeros(X.shape)
+
+    # return p[0] - p[1]*xxx(-np.exp(p[6]-(X.ravel()-p[2])**2.0/(2*p[3]**2.0)-(Y.ravel()-p[4])**2/(2*p[5]**2)))-y.ravel()
+    print -np.exp(p[6]-(X.ravel()-p[2])**2.0/(2*p[3]**2.0)-(Y.ravel()-p[4])**2/(2*p[5]**2))
+    return 0
+
+
 
 def bandmapV(p, r, y, imageDetails):
     from scipy.special import erf as erf

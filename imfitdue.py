@@ -347,7 +347,9 @@ class imfitDue(QtWidgets.QMainWindow):
     
             if self.frame == 'OD':
                 if self.fitK is not None:
-                    if self.fitK.fitFunction==FIT_FUNCTIONS.index('Fermi-Dirac'):
+                    if False: 
+                    ## hh: this did azymuthal averaging 
+                    # if self.fitK.fitFunction==FIT_FUNCTIONS.index('Fermi-Dirac'):
                         self.figs.plotSliceUpdate(x,[Sx,Fx],np.arange(len(R)),[R,RG,RF])
                     else:
                         self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])

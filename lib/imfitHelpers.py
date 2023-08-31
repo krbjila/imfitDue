@@ -1,5 +1,6 @@
 from lib.imfitDefaults import *
-import lib.polylog
+# import lib.polylog
+from lib.polylog import fermi_poly3, fermi_poly2
 import numpy as np
 
 def checkAtom(atom):
@@ -80,12 +81,26 @@ def confidenceIntervals(res_lsq):
 
 
 def getTTF(fitObject):
+    """ 3D """
     if fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
-        TTF = (6.0 * polylog.fermi_poly3(fitObject.fitData[6]))**(-1.0/3.0)
-        TTFErr = 0.5*( (6.0 * polylog.fermi_poly3(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/3.0) - (6.0 * polylog.fermi_poly3(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/3.0))
+        TTF = (6.0 * fermi_poly3(fitObject.fitData[6]))**(-1.0/3.0)
+        TTFErr = 0.5*( (6.0 * fermi_poly3(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/3.0) - (6.0 * fermi_poly3(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/3.0))
         return TTF,TTFErr
     else:
         print('T/TF only available for Fermi-Dirac fit.')
+        return -1, -1
+    
+def getTTF2D(fitObject):
+    """ 2D """
+    if fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac-2D'):
+        TTF2D = (2.0 * fermi_poly2(fitObject.fitData[6]))**(-1.0/2.0)
+        TTFErr2D = 0.5*( (2.0 * fermi_poly2(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/2.0) - (2.0 * fermi_poly2*(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/2.0))
+
+        # TTF = (6.0 * fermi_poly3(fitObject.fitData[6]))**(-1.0/3.0)
+        # TTFErr = 0.5*( (6.0 * fermi_poly3(fitObject.fitData[6]-fitObject.fitDataConf[6]))**(-1.0/3.0) - (6.0 * fermi_poly3(fitObject.fitData[6]+fitObject.fitDataConf[6]))**(-1.0/3.0))
+        return TTF2D,TTFErr2D
+    else:
+        print('T/TF 2D only available for Fermi-Dirac-2D fit.')
         return -1, -1
 
 def azimuthalAverage(data, center):

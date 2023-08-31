@@ -581,14 +581,63 @@ class fitOD():
             self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:,I0]
 
+        # elif self.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
+        #     ### us ebigaussian to chekck origin upload
+        #     ### Parameters: [offset, Amp1, wx1, wy1, Amp2, wx2, wy2, x0, y0]
+
+        #     r = [None,None]
+        #     r[0] = self.odImage.xRange0
+        #     r[1] = self.odImage.xRange1
+    
+        #     ### Parameters: [offset, Amp1, wx1, wy1, Amp2, wx2, wy2, x0, y0]
+        #     p0 = [0, M/2.0, 20.0, 20.0, M/2.0, 8.0, 8.0, self.odImage.xRange0[I1], self.odImage.xRange1[I0]]
+        #     pUpper = [np.inf, 8.0, len(r[0]), len(r[1]), 8.0, len(r[0]), len(r[1]), np.max(r[0]), np.max(r[1])]
+        #     pLower = [-np.inf, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        #     p0 = checkGuess(p0,pUpper,pLower)
+
+        #     resLSQ = least_squares(doubleGaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+        #     #self.fitDataConf = confidenceIntervals(resLSQ)
+        #     self.fitData = resLSQ.x
+        #     self.fittedImage = doubleGaussian(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
+                
+            
+        #     ### Make sure the BEC comes first in the list
+
+        #     if self.fitData[2] + self.fitData[3] > self.fitData[5] + self.fitData[6]:
+        #         t = copy.deepcopy(self.fitData[4:7])
+
+        #         self.fitData[4:7] = self.fitData[1:4]
+        #         self.fitData[1:4] = t
+        #     else:
+        #         pass
+
+        #     ### Calculate radial average
+        #     x_coerced = min(max(self.fitData[7], self.odImage.xRange0.start), self.odImage.xRange0.stop-1)
+        #     y_coerced = min(max(self.fitData[8], self.odImage.xRange1.start), self.odImage.xRange1.stop-1)
+            
+        #     I0 = self.odImage.xRange0.index(int(x_coerced))
+        #     I1 = self.odImage.xRange1.index(int(y_coerced))
+
+        #     self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected,[I0, I1])
+        #     self.slices.radSliceFit = azimuthalAverage(self.fittedImage, [I0, I1])
+        #     self.slices.radSliceFitGauss = [0]*len(self.slices.radSlice)
+
+        #     ### Calculate slices through fit
+
+        #     self.slices.points0 = self.odImage.ODCorrected[I1,:]
+        #     self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
+        #     self.slices.fit0 = self.fittedImage[I1,:]
+
+        #     self.slices.points1 = self.odImage.ODCorrected[:,I0]
+        #     self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
+        #     self.slices.fit1 = self.fittedImage[:,I0]
 
         elif self.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
             
             r = [None,None]
             r[0] = self.odImage.xRange0
             r[1] = self.odImage.xRange1
-            
-            
+                    
             #Fermi--Dirac fit
             ### Parameters: [offset, amplitude, x0, wx, y0, wy, q]            
             p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0] #An initial q of 0 corresponds to T/TF=0.56
@@ -632,6 +681,59 @@ class fitOD():
             self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
             self.slices.fit1 =  self.fittedImage[:,I0]
 
+
+        ## hh: to be implemented
+        elif self.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac-2D'):
+            
+            r = [None,None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+                    
+            #Fermi--Dirac fit
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, q]            
+            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0] #An initial q of 0 corresponds to T/TF=0.56
+            pUpper = [np.inf, 900.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), np.inf]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -np.inf]
+            p0 = checkGuess(p0,pUpper,pLower)
+
+            resLSQ = least_squares(fermiDirac, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fittedImage = fermiDirac(resLSQ.x, r, 0).reshape(self.odImage.ODCorrected.shape)
+
+            #Gaussian fit
+            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0] 
+
+            pUpper = [np.inf, 15.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1]), 0.00001]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -0.00001]
+
+            resLSQ = least_squares(gaussian, p0, args=(r,self.odImage.ODCorrected),bounds=(pLower,pUpper))
+            self.fitDataConfGauss = confidenceIntervals(resLSQ)
+            self.fitDataGauss = resLSQ.x
+            self.fittedImageGauss = gaussian(self.fitDataGauss, r, 0).reshape(self.odImage.ODCorrected.shape)
+
+            #######################################################################################################################
+
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            # azAverage -- I'm not sure what the correct index should be for azAverage... 
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = azimuthalAverage(self.fittedImageGauss, center)
+
+            ### Calculate slices through fit (No rotation)
+            self.slices.points0 = self.odImage.ODCorrected[I1,:]
+            self.slices.ch0 = [self.odImage.xRange1[I1]]*len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1,:] 
+
+            self.slices.points1 = self.odImage.ODCorrected[:,I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
+            self.slices.fit1 =  self.fittedImage[:,I0]
+
+        #end comment
+         
         # elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
         #     # TODO: Make this depend properly on the species. Disabled for now.
         #     # Band mapping function in the vertical direction
@@ -881,6 +983,26 @@ class processFitResult():
 
             self.data = ['fileName', r['peakODBEC'], r['wxBEC'], r['wyBEC'], r['peakODThermal'], r['wxThermal'], r['wyThermal'], r['x0'], r['y0'], r['offset']]
             self.data_dict = r
+        
+        # elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
+            
+        #     print(self.fitObject.fitData)
+        #     r = {
+        #             'offset' : self.fitObject.fitData[0],
+        #             'peakODBEC' : self.fitObject.fitData[1],
+        #             'wxBEC' : self.fitObject.fitData[2]*self.bin*self.pixelSize,
+        #             'wyBEC' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
+        #             'peakODThermal' : self.fitObject.fitData[4],
+        #             'wxThermal' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
+        #             'wyThermal' : self.fitObject.fitData[6]*self.bin*self.pixelSize,
+        #             'x0': self.fitObject.fitData[7],
+        #             'y0': self.fitObject.fitData[8],
+        #             }
+
+        #     self.data = ['fileName', r['peakODBEC'], r['wxBEC'], r['wyBEC'], r['peakODThermal'], r['wxThermal'], r['wyThermal'], r['x0'], r['y0'], r['offset']]
+        #     self.data_dict = r
+        
+
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac'):
 
@@ -900,6 +1022,27 @@ class processFitResult():
 
             self.data = ['fileName', r['peakODClassical'], r['wxClassical'], r['wyClassical'], r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TTF']]
             self.data_dict = r
+
+        ## hh: to be implemented
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Fermi-Dirac-2D'):
+
+            r = {
+                    'offset' : self.fitObject.fitData[0],
+                    'peakOD' : self.fitObject.fitData[1],
+                    'x0' : self.fitObject.fitData[2],
+                    'y0' : self.fitObject.fitData[4],
+                    'wx' : self.fitObject.fitData[3]*self.bin*self.pixelSize,
+                    'wy' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
+                    'q' : self.fitObject.fitData[6],
+                    'TTF': getTTF(self.fitObject)[0][0],
+                    'wxClassical' : self.fitObject.fitDataGauss[3]*self.bin*self.pixelSize,
+                    'wyClassical' : self.fitObject.fitDataGauss[5]*self.bin*self.pixelSize,
+                    'peakODClassical' : self.fitObject.fitDataGauss[1]
+                    }
+
+            self.data = ['fileName', r['peakODClassical'], r['wxClassical'], r['wyClassical'], r['peakOD'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TTF']]
+            self.data_dict = r
+
 
         # elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
 
