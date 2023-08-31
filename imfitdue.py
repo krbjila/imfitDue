@@ -323,7 +323,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 R = self.fitK.slices.radSlice
                 RG = self.fitK.slices.radSliceFitGauss
                 RF = self.fitK.slices.radSliceFit
-            except:
+            except Exception as e:
                 ch0 = None
                 ch1 = None
                 Sx = None 
@@ -336,6 +336,8 @@ class imfitDue(QtWidgets.QMainWindow):
                 RF = None
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
+
+                print(e)
 
             if self.frame == 'OD':
                 image = self.odK.ODCorrected
@@ -364,7 +366,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sy = self.fitRb.slices.points1
                 Fx = self.fitRb.slices.fit0
                 Fy = self.fitRb.slices.fit1
-            except:
+            except Exception as e:
                 ch0 = None
                 ch1 = None
                 Sx = None 
@@ -373,6 +375,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 Fy = None
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
+                print(e)
 
             if self.frame == 'OD':
                 image = self.odRb.ODCorrected

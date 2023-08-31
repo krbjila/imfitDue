@@ -4,6 +4,7 @@ from lib.imfitHelpers import *
 from lib.spe import SpeFile
 import numpy as np
 import os 
+import traceback
 
 ### Define separate classes for reading in images from either the Princeton Instruments
 ### camera or the Andor iXon 888. Regardless of the camera, the classes have the same
@@ -23,6 +24,7 @@ def readImage(mode, path):
         reader.setPath(path)
     except Exception as e:
         print("Could not load {}: {}".format(path, e))
+        raise(e)
         return None
     return reader
 

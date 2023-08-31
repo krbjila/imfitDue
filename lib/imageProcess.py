@@ -479,7 +479,7 @@ class fitOD():
             
             p0 = [0, M, xc, 15, yc, 3, 0, 0]
             pUpper = [np.inf, 15.0, xc + 2, 40, yc + 2, 6, 40, 40]
-            pLower = [-np.inf, 0.0, xc - 2, 8, yc - 2, 1, -40, -40]
+            pLower = [-np.inf, 0.0, xc - 2, 4, yc - 2, 0.01, -40, -40]
             p0 = checkGuess(p0,pUpper,pLower)
 
             guesses = [p0]

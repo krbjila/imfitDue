@@ -102,6 +102,7 @@ class ImageWindows(QtWidgets.QWidget):
             levelLow = float(self.plotTools.odMinEdit.text())
         except Exception as e:
             levelLow = 0
+            print(e)
     
         if image is not None:
             self.plotTools.setImage(image)
@@ -134,8 +135,9 @@ class ImageWindows(QtWidgets.QWidget):
         try:
             self.mainImage.set_clim(levelLow, self.plotTools.sliderOd())
             self.canvas.draw()
-        except:
+        except Exception as e:
             print('Are you sure you loaded an image?')
+            print(e)
 
 
     def plotSliceUpdate(self, x, Lx, y, Ly):
