@@ -18,14 +18,15 @@ from bson.json_util import loads, dumps
 
 from datetime import datetime
 
+
 class imfitDue(QtWidgets.QMainWindow):
-    def __init__(self,Parent=None):
+    def __init__(self, Parent=None):
         super(imfitDue, self).__init__(Parent)
 
-        self.setWindowTitle('ImfitDue: KRb Image Fitting')
+        self.setWindowTitle("ImfitDue: KRb Image Fitting")
 
-        self.regionRb = [0]*4
-        self.regionK = [0]*4
+        self.regionRb = [0] * 4
+        self.regionK = [0] * 4
 
         self.initializeGui()
         self.createToolbar()
@@ -41,7 +42,7 @@ class imfitDue(QtWidgets.QMainWindow):
         self.fitRb = None
 
         self.mode = DEFAULT_MODE
-        self.frame = 'OD'
+        self.frame = "OD"
 
         self.currentFile = None
         self.odK = None
@@ -53,10 +54,15 @@ class imfitDue(QtWidgets.QMainWindow):
 
         Connects to MongoDB database with configuration specified in ``lib/mongodb.json``.
         """
-        
+
         with open("lib/mongodb.json", "r") as f:
             db_config = loads(f.read())
-        mongo_url = "mongodb://{}:{}@{}:{}/?authSource=admin".format(db_config["user"], db_config["password"], db_config["address"], db_config["port"])
+        mongo_url = "mongodb://{}:{}@{}:{}/?authSource=admin".format(
+            db_config["user"],
+            db_config["password"],
+            db_config["address"],
+            db_config["port"],
+        )
         self.c = MongoClient(mongo_url, connectTimeoutMS=2000)
         try:
             self.c.server_info()
@@ -79,7 +85,7 @@ class imfitDue(QtWidgets.QMainWindow):
         for i in range(2):
             for j in range(4):
                 self.roi.region[i][j].returnPressed.connect(self.currentODCalc)
-        
+
         self.av.averageButton.clicked.connect(self.averageImages)
         self.fo.uploadButton.clicked.connect(self.process2Origin)
         self.fo.databaseButton.clicked.connect(self.process2Database)
@@ -106,12 +112,14 @@ class imfitDue(QtWidgets.QMainWindow):
             if "id" in self.currentFile.metadata:
                 self.fo.idEdit.setText(self.currentFile.metadata["id"])
                 self.fo.idEdit.setStyleSheet(
-                """QLineEdit { background-color: white; }""")
+                    """QLineEdit { background-color: white; }"""
+                )
             else:
                 self.fo.idEdit.setText("None")
                 self.fo.idEdit.setStyleSheet(
-                """QLineEdit { background-color: yellow; }""")
-            
+                    """QLineEdit { background-color: yellow; }"""
+                )
+
             if self.pf.autoLoad.isChecked():
                 t = self.pf.autoLoadFile.text()
                 self.pf.autoLoadFile.setText(str(int(t) + 1))
@@ -119,9 +127,7 @@ class imfitDue(QtWidgets.QMainWindow):
             self.autoloader.is_active = True
             self.currentODCalc()
         else:
-            print('File not found!')
-
-        
+            print("File not found!")
 
     def currentODCalc(self):
         self.autoloader.is_active = False
@@ -130,14 +136,14 @@ class imfitDue(QtWidgets.QMainWindow):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
-        species = IMFIT_MODES[self.mode]['Species']
+        species = IMFIT_MODES[self.mode]["Species"]
         try:
             self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
             self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
         except Exception as e:
             print("Could not calculate OD: {}".format(e))
-        
-        if self.fo.autoFit.isChecked() and self.frame == 'OD':
+
+        if self.fo.autoFit.isChecked() and self.frame == "OD":
             self.fitCurrent()
             print("Done fitting current image")
         else:
@@ -169,8 +175,8 @@ class imfitDue(QtWidgets.QMainWindow):
                         firstFile = False
                     else:
                         imageMean += self.currentFile.img
-                    
-                    self.currentFile.img = imageMean/float(len(x))
+
+                    self.currentFile.img = imageMean / float(len(x))
 
                 self.currentODCalc()
             self.autoloader.is_active = True
@@ -184,19 +190,44 @@ class imfitDue(QtWidgets.QMainWindow):
         TOF = float(self.fo.tof.text())
         pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
+        fitRbcheckbox = (
+            not self.fo.fitBothCheckbox.isChecked()
+            and self.fo.fitBothCheckbox.isEnabled()
+        )
+
         # TODO: Is it possible/ useful to generalize to an arbitrary number of fits with different names?
         if self.odK is not None:
             try:
-                self.fitK = fitOD(self.mode, self.odK, str(self.fo.kFitFunction.currentText()),kAtom,TOF,pxl)
+                self.fitK = fitOD(
+                    self.mode,
+                    self.odK,
+                    str(self.fo.kFitFunction.currentText()),
+                    kAtom,
+                    TOF,
+                    pxl,
+                )
+                print("Fitting K frame: {}".format(self.fitK.fitFunction))
+                print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
                 self.fitK = None
                 print("Could not fit K frame: {}".format(e))
-        if self.odRb is not None:
+        if self.odRb is not None and fitRbcheckbox:
             try:
-                self.fitRb = fitOD(self.mode, self.odRb, str(self.fo.rbFitFunction.currentText()), rbAtom, TOF + 6,pxl)
+                self.fitRb = fitOD(
+                    self.mode,
+                    self.odRb,
+                    str(self.fo.rbFitFunction.currentText()),
+                    rbAtom,
+                    TOF + 6,
+                    pxl,
+                )
+                print("Fitting Rb frame: {}".format(self.fitRb.fitFunction))
+                print(processFitResult(self.fitRb, self.mode).data_dict)
             except Exception as e:
                 self.fitRb = None
                 print("Could not fit Rb frame: {}".format(e))
+        else:
+            self.fitRb = None
         self.plotCurrent()
 
         if self.fo.autoUpload.isChecked():
@@ -209,11 +240,11 @@ class imfitDue(QtWidgets.QMainWindow):
         id = str(self.fo.idEdit.text())
         if id == "None":
             return -1
-             
+
         result = {"config": IMFIT_MODES[self.mode]}
         if self.fitK is not None:
             KProcess = processFitResult(self.fitK, self.mode)
-            species = KProcess.config['Species'][0]
+            species = KProcess.config["Species"][0]
             func = FIT_FUNCTIONS[KProcess.fitObject.fitFunction]
             result[species] = {}
             result[species][func] = KProcess.data_dict
@@ -221,7 +252,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
         if self.fitRb is not None:
             RbProcess = processFitResult(self.fitRb, self.mode)
-            species = KProcess.config['Species'][1]
+            species = KProcess.config["Species"][1]
             func = FIT_FUNCTIONS[KProcess.fitObject.fitFunction]
             result[species] = {}
             result[species][func] = RbProcess.data_dict
@@ -230,18 +261,18 @@ class imfitDue(QtWidgets.QMainWindow):
         try:
             camera_name = self.currentFile.metadata["name"]
         except Exception as e:
-            print("Could not set camera name. Assuming name of mode `{}`".format(self.mode))
+            print(
+                "Could not set camera name. Assuming name of mode `{}`".format(
+                    self.mode
+                )
+            )
             camera_name = self.mode
 
-        update = [{
-            "$set": {
-                "images": {
-                    camera_name: {
-                        "fit": result
-                    }
-                }
-            },
-        }]
+        update = [
+            {
+                "$set": {"images": {camera_name: {"fit": result}}},
+            }
+        ]
         try:
             self.col.update_one({"_id": id}, update, upsert=True)
         except errors.ConnectionFailure as e:
@@ -253,9 +284,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 raise e
         except Exception as e:
             print("Could not upload to database: {}".format(e))
-            self.fo.idEdit.setStyleSheet(
-                """QLineEdit { background-color: red; }""")
-
+            self.fo.idEdit.setStyleSheet("""QLineEdit { background-color: red; }""")
 
     def process2Origin(self):
         imagePath = IMFIT_MODES[self.mode]["Image Path"]
@@ -268,25 +297,43 @@ class imfitDue(QtWidgets.QMainWindow):
 
             KProcess.data[0] = self.currentFile.fileName + "-" + imagePath
             RbProcess.data[0] = self.currentFile.fileName + "-" + imagePath
-
-            if 'iXon Molecules' in self.mode: # Molecule In situ FK
-                if "ToF" in self.mode and not self.fo.fitBothCheckbox.isChecked() and self.fo.fitBothCheckbox.isEnabled():
+            if "iXon Molecules" in self.mode:  # Molecule In situ FK
+                if (
+                    "ToF" in self.mode
+                    and not self.fo.fitBothCheckbox.isChecked()
+                    and self.fo.fitBothCheckbox.isEnabled()
+                ):
                     print("Uploading |0,0> KRb to Origin")
-                    upload2Origin('KRbFKGauss1', self.fitK.fitFunction, KProcess.data)
+                    if "Fermi" in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
+                        print("Uploading Fermi-Dirac KRb to Origin")
+                        upload2Origin("KRb", self.fitK.fitFunction, KProcess.data)
+                        print("Done uploading Fermi-Dirac KRb to Origin")
+                    else:
+                        print("Uploading KRb to Origin")
+                        upload2Origin(
+                            "KRbFKGauss1", self.fitK.fitFunction, KProcess.data
+                        )
+                        print("Done uploading KRb to Origin")
                     return 1
                 elif self.fitK.fitFunction == FIT_FUNCTIONS.index("Integrate"):
                     print("Uploading integrated KRb to Origin")
-                    upload2Origin('KRbSpinInt', self.fitK.fitFunction,
-                                            [KProcess.data, RbProcess.data])
+                    upload2Origin(
+                        "KRbSpinInt",
+                        self.fitK.fitFunction,
+                        [KProcess.data, RbProcess.data],
+                    )
                     return 1
                 else:
                     print("Uploading KRb to Origin")
-                    upload2Origin('KRbSpinGauss', self.fitK.fitFunction,
-                                            [KProcess.data, RbProcess.data])
+                    upload2Origin(
+                        "KRbSpinGauss",
+                        self.fitK.fitFunction,
+                        [KProcess.data, RbProcess.data],
+                    )
                     return 1
             else:
                 print("Uploading Rb to Origin")
-                upload2Origin('Rb', self.fitRb.fitFunction, RbProcess.data)
+                upload2Origin("Rb", self.fitRb.fitFunction, RbProcess.data)
 
                 # TODO: Fix how Vertical BandMap handles mass.
                 # if self.fitK.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
@@ -299,14 +346,14 @@ class imfitDue(QtWidgets.QMainWindow):
                 #     return 1
 
                 print("Uploading K to Origin")
-                upload2Origin('K', self.fitK.fitFunction, KProcess.data)
+                upload2Origin("K", self.fitK.fitFunction, KProcess.data)
                 return 1
-            
+
     def plotCurrent(self):
         if self.currentFile is None:
             return
         frames = self.currentFile.frames
-        species = IMFIT_MODES[self.mode]['Species']
+        species = IMFIT_MODES[self.mode]["Species"]
         if self.figs.plotTools.kSelect.isChecked():
 
             x = self.odK.xRange0
@@ -326,7 +373,7 @@ class imfitDue(QtWidgets.QMainWindow):
             except Exception as e:
                 ch0 = None
                 ch1 = None
-                Sx = None 
+                Sx = None
                 Sy = None
                 Fx = None
                 Fy = None
@@ -339,20 +386,22 @@ class imfitDue(QtWidgets.QMainWindow):
 
                 print(e)
 
-            if self.frame == 'OD':
+            if self.frame == "OD":
                 image = self.odK.ODCorrected
-            elif self.frame == 'Column Density':
+            elif self.frame == "Column Density":
                 image = self.odK.n
             else:
-                image = frames[species[0]][self.frame][y[0]:y[-1], x[0]:x[-1]]
-            self.figs.plotUpdate(x,y,image,ch0,ch1)
-    
-            if self.frame == 'OD':
+                image = frames[species[0]][self.frame][y[0] : y[-1], x[0] : x[-1]]
+            self.figs.plotUpdate(x, y, image, ch0, ch1)
+
+            if self.frame == "OD":
                 if self.fitK is not None:
-                    if self.fitK.fitFunction==FIT_FUNCTIONS.index('Fermi-Dirac'):
-                        self.figs.plotSliceUpdate(x,[Sx,Fx],np.arange(len(R)),[R,RG,RF])
+                    if self.fitK.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac"):
+                        self.figs.plotSliceUpdate(
+                            x, [Sx, Fx], np.arange(len(R)), [R, RG, RF]
+                        )
                     else:
-                        self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
+                        self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
 
         if self.figs.plotTools.rbSelect.isChecked():
 
@@ -369,7 +418,7 @@ class imfitDue(QtWidgets.QMainWindow):
             except Exception as e:
                 ch0 = None
                 ch1 = None
-                Sx = None 
+                Sx = None
                 Sy = None
                 Fx = None
                 Fy = None
@@ -377,16 +426,16 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.figs.ax2.cla()
                 print(e)
 
-            if self.frame == 'OD':
+            if self.frame == "OD":
                 image = self.odRb.ODCorrected
-            elif self.frame == 'Column Density':
+            elif self.frame == "Column Density":
                 image = self.odRb.n
             else:
-                image = frames[species[1]][self.frame][y[0]:y[-1], x[0]:x[-1]]
-            self.figs.plotUpdate(x,y,image,ch0,ch1)
+                image = frames[species[1]][self.frame][y[0] : y[-1], x[0] : x[-1]]
+            self.figs.plotUpdate(x, y, image, ch0, ch1)
 
-            if self.frame == 'OD':
-                self.figs.plotSliceUpdate(x,[Sx,Fx],y,[Sy,Fy])
+            if self.frame == "OD":
+                self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)
@@ -400,9 +449,9 @@ class imfitDue(QtWidgets.QMainWindow):
         self.av = averageWidget()
 
         # self.pf.cameraGroup.buttonClicked.connect(self.passCamToROI)
-        
-        gb1 = QtWidgets.QGroupBox('File Path')
-        gb1.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
+
+        gb1 = QtWidgets.QGroupBox("File Path")
+        gb1.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         gb1l = QtWidgets.QVBoxLayout()
         gb1l.addWidget(self.pf)
         gb1.setLayout(gb1l)
@@ -412,8 +461,8 @@ class imfitDue(QtWidgets.QMainWindow):
         v0.addWidget(gb1)
         v0.addStretch(1)
 
-        gb2 = QtWidgets.QGroupBox('Region Selection')
-        gb2.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
+        gb2 = QtWidgets.QGroupBox("Region Selection")
+        gb2.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         gb2l = QtWidgets.QVBoxLayout()
         h0 = QtWidgets.QHBoxLayout()
         h0.addStretch(1)
@@ -424,9 +473,9 @@ class imfitDue(QtWidgets.QMainWindow):
 
         v0.addWidget(gb2)
         v0.addStretch(1)
-        
-        gb4 = QtWidgets.QGroupBox('Averaging')
-        gb4.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
+
+        gb4 = QtWidgets.QGroupBox("Averaging")
+        gb4.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         gb4l = QtWidgets.QVBoxLayout()
         gb4l.addWidget(self.av)
         gb4.setLayout(gb4l)
@@ -434,9 +483,8 @@ class imfitDue(QtWidgets.QMainWindow):
         v0.addWidget(gb4)
         v0.addStretch(1)
 
-
-        gb3 = QtWidgets.QGroupBox('Fitting Options')
-        gb3.setStyleSheet(self.getStyleSheet('./lib/styles.qss'))
+        gb3 = QtWidgets.QGroupBox("Fitting Options")
+        gb3.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         gb3l = QtWidgets.QVBoxLayout()
         gb3l.addWidget(self.fo)
         gb3.setLayout(gb3l)
@@ -467,28 +515,34 @@ class imfitDue(QtWidgets.QMainWindow):
 
     def saveMainImage(self):
         x = QtWidgets.QFileDialog()
-        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+        xp = x.getSaveFileName(
+            self,
+            "Save image as",
+            "untitled.dat",
+            "Data file (*.dat)",
+            options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
 
         try:
             ok2write = False
             if self.figs.plotTools.kSelect.isChecked():
-                if hasattr(self, 'odK'):
+                if hasattr(self, "odK"):
                     x = self.odK.xRange0
                     y = self.odK.xRange1
                     od = self.odK.ODCorrected
                     ok2write = True
             elif self.figs.plotTools.rbSelect.isChecked():
-                if hasattr(self, 'odRb'):
+                if hasattr(self, "odRb"):
                     x = self.odRb.xRange0
                     y = self.odRb.xRange1
                     od = self.odRb.ODCorrected
                     ok2write = True
-                    
+
             if ok2write:
-                f = open(xp, 'w')
+                f = open(xp, "w")
                 for i in range(len(y)):
                     for j in range(len(x)):
-                        f.write("{0:.3f},".format(od[j,i]))
+                        f.write("{0:.3f},".format(od[j, i]))
                     f.write("\n")
                 f.close()
             else:
@@ -498,12 +552,18 @@ class imfitDue(QtWidgets.QMainWindow):
 
     def saveOSliceImage(self):
         x = QtWidgets.QFileDialog()
-        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+        xp = x.getSaveFileName(
+            self,
+            "Save image as",
+            "untitled.dat",
+            "Data file (*.dat)",
+            options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
 
         try:
             ok2write = False
             if self.figs.plotTools.kSelect.isChecked():
-                if hasattr(self, 'odK') and hasattr(self.fitK.slices, 'points0'):
+                if hasattr(self, "odK") and hasattr(self.fitK.slices, "points0"):
                     x = self.odK.xRange0
                     y = self.odK.xRange1
                     Sx = self.fitK.slices.points0
@@ -512,7 +572,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     Fy = self.fitK.slices.fit1
                     ok2write = True
             elif self.figs.plotTools.rbSelect.isChecked():
-                if hasattr(self, 'odRb') and hasattr(self.fitRb.slices, 'points0'):
+                if hasattr(self, "odRb") and hasattr(self.fitRb.slices, "points0"):
                     x = self.odRb.xRange0
                     y = self.odRb.xRange1
                     Sx = self.fitRb.slices.points0
@@ -522,42 +582,55 @@ class imfitDue(QtWidgets.QMainWindow):
                     ok2write = True
 
             if ok2write:
-                f = open(xp,'w')
+                f = open(xp, "w")
 
                 xbigger = len(x) >= len(y)
                 n = max([len(x), len(y)])
                 m = min([len(x), len(y)])
 
-                for k in range(n):                
-                    if k < m: 
-                        f.write("{0:d},{1:.3f},{2:.3f},{3:d},{4:.3f},{5:.3f}\n".format(x[k],Sx[k],Fx[k],y[k],Sy[k],Fy[k]))
+                for k in range(n):
+                    if k < m:
+                        f.write(
+                            "{0:d},{1:.3f},{2:.3f},{3:d},{4:.3f},{5:.3f}\n".format(
+                                x[k], Sx[k], Fx[k], y[k], Sy[k], Fy[k]
+                            )
+                        )
                     elif k > m:
                         if xbigger:
-                            f.write("{0:d},{1:.3f},{2:.3f},,,\n".format(x[k],Sx[k],Fx[k]))
+                            f.write(
+                                "{0:d},{1:.3f},{2:.3f},,,\n".format(x[k], Sx[k], Fx[k])
+                            )
                         elif not xbigger:
-                            f.write(",,,{0:d},{1:.3f},{2:.3f}\n".format(y[k],Sy[k],Fy[k]))
-                    
-                f.close() 
+                            f.write(
+                                ",,,{0:d},{1:.3f},{2:.3f}\n".format(y[k], Sy[k], Fy[k])
+                            )
+
+                f.close()
             else:
                 print("No file to save!")
         except Exception as e:
             print("Could not save image: {}".format(e))
 
-
     def saveRSliceImage(self):
         x = QtWidgets.QFileDialog()
-        xp = x.getSaveFileName(self, "Save image as", "untitled.dat", "Data file (*.dat)",options=QtWidgets.QFileDialog.DontUseNativeDialog)
+        xp = x.getSaveFileName(
+            self,
+            "Save image as",
+            "untitled.dat",
+            "Data file (*.dat)",
+            options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
 
         try:
             ok2write = False
             if self.figs.plotTools.kSelect.isChecked():
-                if hasattr(self, 'odK') and hasattr(self.fitK.slices, 'radSlice'):
+                if hasattr(self, "odK") and hasattr(self.fitK.slices, "radSlice"):
                     R = self.fitK.slices.radSlice
                     Rf = self.fitK.slices.radSliceFit
                     Rg = self.fitK.slices.radSliceFitGauss
                     ok2write = True
             elif self.figs.plotTools.rbSelect.isChecked():
-                if hasattr(self, 'odRb') and hasattr(self.fitRb.slices, 'radSlice'):
+                if hasattr(self, "odRb") and hasattr(self.fitRb.slices, "radSlice"):
                     R = self.fitRb.slices.radSlice
                     Rf = self.fitRb.slices.radSliceFit
                     Rg = self.fitRb.slices.radSliceFitGauss
@@ -565,28 +638,38 @@ class imfitDue(QtWidgets.QMainWindow):
 
             if ok2write:
 
-                f = open(xp,'w')
+                f = open(xp, "w")
 
-                for k in range(len(R)):                
-                    f.write("{0:.3f},{1:.3f},{2:.3f},{3:.3f}\n".format(k,R[k],Rf[k],Rg[k]))
-                    
-                f.close() 
+                for k in range(len(R)):
+                    f.write(
+                        "{0:.3f},{1:.3f},{2:.3f},{3:.3f}\n".format(
+                            k, R[k], Rf[k], Rg[k]
+                        )
+                    )
+
+                f.close()
             else:
                 print("No file to save!")
         except Exception as e:
             print("Could not save image: {}".format(e))
 
-    def loadFromMenu(self): 
+    def loadFromMenu(self):
 
         d = str(self.pf.filePath.text())
         ext = IMFIT_MODES[self.mode]["Extension Filter"]
 
         x = QtWidgets.QFileDialog()
-        xp = x.getOpenFileName(self,'Select a file to load', filter=ext, directory=d,options=QtWidgets.QFileDialog.DontUseNativeDialog)
+        xp = x.getOpenFileName(
+            self,
+            "Select a file to load",
+            filter=ext,
+            directory=d,
+            options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
         self.pf.filePath.setText(xp[0])
         self.loadFile()
 
-    def getStyleSheet(self,path):
+    def getStyleSheet(self, path):
         f = QtCore.QFile(path)
         f.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text)
         stylesheet = QtCore.QTextStream(f).readAll()
@@ -596,12 +679,12 @@ class imfitDue(QtWidgets.QMainWindow):
 
     def createToolbar(self):
 
-        exitAction = QtWidgets.QAction("Exit",self)
-        exitAction.setShortcut('Ctrl+Q')
+        exitAction = QtWidgets.QAction("Exit", self)
+        exitAction.setShortcut("Ctrl+Q")
         exitAction.triggered.connect(QtWidgets.qApp.quit)
 
-        loadAction = QtWidgets.QAction("Load Image",self)
-        loadAction.setShortcut('Ctrl+O')
+        loadAction = QtWidgets.QAction("Load Image", self)
+        loadAction.setShortcut("Ctrl+O")
         loadAction.triggered.connect(self.loadFromMenu)
 
         # refreshAction = QtWidgets.QAction("Refresh all", self)
@@ -609,16 +692,15 @@ class imfitDue(QtWidgets.QMainWindow):
         # refreshAction.triggered.connect(self.refreshGui)
 
         saveMain = QtWidgets.QAction("Save Main Image", self)
-        saveMain.setShortcut('Ctrl+S')
+        saveMain.setShortcut("Ctrl+S")
         saveMain.triggered.connect(self.saveMainImage)
         saveOSlice = QtWidgets.QAction("Save Ortho Slice", self)
         saveOSlice.triggered.connect(self.saveOSliceImage)
         saveRSlice = QtWidgets.QAction("Save Radial Slice", self)
         saveRSlice.triggered.connect(self.saveRSliceImage)
 
-
         menubar = self.menuBar()
-        
+
         fileMenu = menubar.addMenu("File")
         fileMenu.addAction(loadAction)
         # fileMenu.addAction(refreshAction)
@@ -628,22 +710,22 @@ class imfitDue(QtWidgets.QMainWindow):
         saveMenu.addAction(saveMain)
         saveMenu.addAction(saveOSlice)
         saveMenu.addAction(saveRSlice)
-        
 
     def closeEvent(self, event):
         self.autoloader.terminate()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     # The following two lines tell windows that python is only hosting this application
-    myappid = 'krb.imfitdue' # arbitrary string
-    if os.name == 'nt':
+    myappid = "krb.imfitdue"  # arbitrary string
+    if os.name == "nt":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    
+
     app = QtWidgets.QApplication(sys.argv)
     w = imfitDue()
-    w.setGeometry(100,100, 1200, 800)
+    w.setGeometry(100, 100, 1200, 800)
 
-    appico = QtGui.QIcon('main.ico')
+    appico = QtGui.QIcon("main.ico")
     w.setWindowIcon(appico)
 
     w.show()

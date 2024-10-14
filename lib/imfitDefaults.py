@@ -28,6 +28,7 @@ KRB_FIT_FUNCTIONS = [
     "Rotated Gaussian",
     "Twisted Gaussian",
     "Gaussian Fixed",
+    "Fermi-Dirac",
     "Integrate",
 ]
 NONTWISTED_FIT_FUNCTIONS = ["Gaussian w/ Gradient", "Gaussian"]
@@ -173,6 +174,39 @@ IMFIT_MODES = OrderedDict(
                     "|1,0>": CSAT["side"]["K"],
                 },  # Unbinned effective C_sat,
                 "NA": NA["side"],
+            },
+        ),
+        (
+            "Side iXon Molecules ToF",
+            {
+                ### Mode 4 - Side iXon Molecules
+                "Default Path": DEFAULT_PATH + "MoleculeInSituFK/",
+                "Default Suffix": "ixon_{}.npz",
+                "Pixel Size": PX_SIZE["side"],
+                "Species": ["|0,0>", "|1,0>"],
+                "Image Path": "Side",
+                "Default Region": [[229, 400, 200, 400], [229, 400, 50, 50]],
+                "Extension Filter": "*.npz",
+                "Fit Functions": KRB_FIT_FUNCTIONS,
+                "Enforce same fit for both": True,
+                "Auto Detect Binning": True,
+                "Array Width": 512,
+                "Number of Frames": 6,
+                "Frame Order": {
+                    "|0,0>": {
+                        "Shadow": 3,
+                        "Light": 4,
+                        "Dark": 5,
+                    },
+                    "|1,0>": {"Shadow": 0, "Light": 1, "Dark": 2},
+                },
+                "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
+                "CSat": {
+                    "|0,0>": CSAT["axial"]["K"],
+                    "|1,0>": CSAT["axial"]["K"],
+                },  # Unbinned effective C_sat,
+                "NA": NA["side"],
+                "Allow fit both states": False,
             },
         ),
         (
