@@ -174,6 +174,7 @@ IMFIT_MODES = OrderedDict(
                     "|1,0>": CSAT["side"]["K"],
                 },  # Unbinned effective C_sat,
                 "NA": NA["side"],
+                "Allow fit both states": True,
             },
         ),
         (

@@ -168,6 +168,11 @@ def getImagesFromRange(stringIn):
 
 # TODO: control based on Imfit mode
 def upload2Origin(species, fitFunction, data):
+    print(
+        "Uploading to Origin... Species: {}, Fit Function: {}".format(
+            species, fitFunction
+        )
+    )
     try:
         import win32com.client
     except Exception as e:

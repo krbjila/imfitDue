@@ -781,10 +781,7 @@ class processFitResult():
 
         self.getResults()
 
-    def getResults(self):
-
-        print("Processing fit result!")
-        
+    def getResults(self):        
         if self.fitObject.fitFunction == FIT_FUNCTIONS.index('Rotated Gaussian'):
             
             r = {
@@ -934,6 +931,3 @@ class processFitResult():
         else:
             print('Fit function undefined! Something went wrong!')
             return -1
-
-        print("Done processing fit result!")
-        

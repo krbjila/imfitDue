@@ -193,7 +193,7 @@ class imfitDue(QtWidgets.QMainWindow):
         fitRbcheckbox = (
             not self.fo.fitBothCheckbox.isChecked()
             and self.fo.fitBothCheckbox.isEnabled()
-        )
+        ) or "Molecules" not in self.mode
 
         # TODO: Is it possible/ useful to generalize to an arbitrary number of fits with different names?
         if self.odK is not None:
