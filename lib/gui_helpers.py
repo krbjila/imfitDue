@@ -661,7 +661,7 @@ class Autoloader(QtCore.QThread):
         while True:
             if self.mainPF.autoLoad.isChecked() and self.is_active:
                 if self.startDate != datetime.datetime.now().strftime("%d"):
-                    import imfitDefaults  # Force reload date in path
+                    import lib.imfitDefaults as imfitDefaults  # Force reload date in path
 
                     self.config = imfitDefaults.IMFIT_MODES
                     self.startDate = datetime.datetime.now().strftime("%d")
