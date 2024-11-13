@@ -20,7 +20,7 @@ FIT_FUNCTIONS = [
     "Gaussian Fixed",
     "Bigaussian",
     "Fermi-Dirac",
-    "Integrate",
+    "Fermi-Dirac 2D",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -29,7 +29,6 @@ KRB_FIT_FUNCTIONS = [
     "Twisted Gaussian",
     "Gaussian Fixed",
     "Fermi-Dirac",
-    "Integrate",
 ]
 NONTWISTED_FIT_FUNCTIONS = ["Gaussian w/ Gradient", "Gaussian"]
 # WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'BandMapV']
@@ -41,7 +40,7 @@ WORKSHEET_NAMES = [
     "GaussGrad",
     "Gauss2",
     "FermiDirac",
-    "Integrated",
+    "FermiDirac",
 ]
 
 DEFAULT_MODE = "Side iXon"
@@ -378,7 +377,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["vertical"],
                 "Species": ["K", "Rb"],
                 "Image Path": "Vertical",
-                "Default Region": [[85, 312, 70, 70], [85, 312, 70, 70]],
+                "Default Region": [[102, 290, 70, 70], [102, 290, 70, 70]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": FIT_FUNCTIONS,
                 "Enforce same fit for both": False,

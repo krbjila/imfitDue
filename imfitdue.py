@@ -211,6 +211,7 @@ class imfitDue(QtWidgets.QMainWindow):
             except Exception as e:
                 self.fitK = None
                 print("Could not fit K frame: {}".format(e))
+                raise e
         if self.odRb is not None and fitRbcheckbox:
             try:
                 self.fitRb = fitOD(
