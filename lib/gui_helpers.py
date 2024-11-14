@@ -147,7 +147,7 @@ class ImageWindows(QtWidgets.QWidget):
 
             for k in range(len(Lx)):
                 try:
-                    plotStyles = ["ok", "r"]
+                    plotStyles = ["ok", "r", "b"]
                     self.ax1.plot(x, Lx[k], plotStyles[k])
                 except Exception as e:
                     print("Could not plot x slice: {}".format(e))

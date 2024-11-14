@@ -191,13 +191,16 @@ class imfitDue(QtWidgets.QMainWindow):
         pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
         fitRbcheckbox = (
-            not self.fo.fitBothCheckbox.isChecked()
-            and self.fo.fitBothCheckbox.isEnabled()
-        ) or "Molecules" not in self.mode
+            self.fo.fitBothCheckbox.isChecked() and self.fo.fitBothCheckbox.isEnabled()
+        )  # or "Molecules" not in self.mode
 
-        # TODO: Is it possible/ useful to generalize to an arbitrary number of fits with different names?
         if self.odK is not None:
             try:
+                print(
+                    "Fitting K frame: {}".format(
+                        str(self.fo.kFitFunction.currentText())
+                    )
+                )
                 self.fitK = fitOD(
                     self.mode,
                     self.odK,
@@ -206,14 +209,18 @@ class imfitDue(QtWidgets.QMainWindow):
                     TOF,
                     pxl,
                 )
-                print("Fitting K frame: {}".format(self.fitK.fitFunction))
                 print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
                 self.fitK = None
                 print("Could not fit K frame: {}".format(e))
                 raise e
-        if self.odRb is not None and fitRbcheckbox:
+        if (self.odRb is not None) and fitRbcheckbox:
             try:
+                print(
+                    "Fitting Rb frame: {}".format(
+                        str(self.fo.rbFitFunction.currentText())
+                    )
+                )
                 self.fitRb = fitOD(
                     self.mode,
                     self.odRb,
@@ -222,7 +229,6 @@ class imfitDue(QtWidgets.QMainWindow):
                     TOF + 6,
                     pxl,
                 )
-                print("Fitting Rb frame: {}".format(self.fitRb.fitFunction))
                 print(processFitResult(self.fitRb, self.mode).data_dict)
             except Exception as e:
                 self.fitRb = None
@@ -290,66 +296,45 @@ class imfitDue(QtWidgets.QMainWindow):
     def process2Origin(self):
         imagePath = IMFIT_MODES[self.mode]["Image Path"]
 
-        if self.fitK is not None and self.fitRb is not None:
+        if self.fitK is not None:
             print("Processing K fit result")
             KProcess = processFitResult(self.fitK, self.mode)
+            KProcess.data[0] = self.currentFile.fileName + "-" + imagePath
+        if self.fitRb is not None:
             print("Processing Rb fit result")
             RbProcess = processFitResult(self.fitRb, self.mode)
-
-            KProcess.data[0] = self.currentFile.fileName + "-" + imagePath
             RbProcess.data[0] = self.currentFile.fileName + "-" + imagePath
-            if "iXon Molecules" in self.mode:  # Molecule In situ FK
-                if (
-                    "ToF" in self.mode
-                    or "Vertical" in self.mode
-                    and not self.fo.fitBothCheckbox.isChecked()
-                    and self.fo.fitBothCheckbox.isEnabled()
-                ):
-                    print("Uploading |0,0> KRb to Origin")
-                    if "Fermi" in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
-                        print("Uploading Fermi-Dirac KRb to Origin")
-                        upload2Origin("KRb", self.fitK.fitFunction, KProcess.data)
-                        print("Done uploading Fermi-Dirac KRb to Origin")
-                    else:
-                        print("Uploading KRb to Origin")
-                        upload2Origin(
-                            "KRbFKGauss1", self.fitK.fitFunction, KProcess.data
-                        )
-                        print("Done uploading KRb to Origin")
-                    return 1
-                # elif self.fitK.fitFunction == FIT_FUNCTIONS.index("Integrate"):
-                #     print("Uploading integrated KRb to Origin")
-                #     upload2Origin(
-                #         "KRbSpinInt",
-                #         self.fitK.fitFunction,
-                #         [KProcess.data, RbProcess.data],
-                #     )
-                #     return 1
-                else:
-                    print("Uploading KRb to Origin")
-                    upload2Origin(
-                        "KRbSpinGauss",
-                        self.fitK.fitFunction,
-                        [KProcess.data, RbProcess.data],
-                    )
-                    return 1
+        if "iXon Molecules" in self.mode:  # Molecule In situ FK
+            if (
+                self.fo.fitBothCheckbox.isChecked()
+                and self.fo.fitBothCheckbox.isEnabled()
+            ):
+                print("Uploading KRb to Origin")
+                upload2Origin(
+                    "KRbSpinGauss",
+                    self.fitK.fitFunction,
+                    [KProcess.data, RbProcess.data],
+                )
+                print("Done uploading KRb to Origin")
+                return 1
             else:
+                if "Fermi" in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
+                    print("Uploading Fermi-Dirac KRb to Origin")
+                    upload2Origin("KRb", self.fitK.fitFunction, KProcess.data)
+                    print("Done uploading Fermi-Dirac KRb to Origin")
+                else:
+                    print("Uploading |0,0> KRb to Origin")
+                    upload2Origin("KRbFKGauss1", self.fitK.fitFunction, KProcess.data)
+                    print("Done uploading |0,0> KRb to Origin")
+                return 1
+        else:
+            if self.fitRb is not None:
                 print("Uploading Rb to Origin")
                 upload2Origin("Rb", self.fitRb.fitFunction, RbProcess.data)
 
-                # TODO: Fix how Vertical BandMap handles mass.
-                # if self.fitK.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
-                #     if self.fo.fitBothCheckbox.isChecked():
-                #         KProcess.data[1] = 'KRb'
-                #     else:
-                #         KProcess.data[1] = 'K'
-
-                #     upload2Origin('K', self.fitK.fitFunction, KProcess.data)
-                #     return 1
-
-                print("Uploading K to Origin")
-                upload2Origin("K", self.fitK.fitFunction, KProcess.data)
-                return 1
+            print("Uploading K to Origin")
+            upload2Origin("K", self.fitK.fitFunction, KProcess.data)
+            return 1
 
     def plotCurrent(self):
         if self.currentFile is None:
@@ -404,6 +389,10 @@ class imfitDue(QtWidgets.QMainWindow):
                         self.figs.plotSliceUpdate(
                             x, [Sx, Fx], np.arange(len(R)), [R, RG, RF]
                         )
+                    elif self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Fermi-Dirac 2D Int"
+                    ):
+                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fy], y, [Sy])
                     else:
                         self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
 

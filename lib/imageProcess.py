@@ -895,6 +895,94 @@ class fitOD:
                 )
             self.slices.ch1 = ch1
 
+        elif self.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac 2D Int"):
+
+            r = [None, None]
+            r[0] = self.odImage.xRange0  # x
+            r[1] = self.odImage.xRange1  # y
+
+            # Fit integrated OD
+            od_int = np.sum(self.odImage.ODCorrected, axis=0)
+            od_int *= self.config["Pixel Size"] * self.odImage.data.bin
+
+            # subtract gradient using linear fit
+            A = np.vstack([np.arange(len(od_int)), np.ones(len(od_int))]).T
+            m, c = np.linalg.lstsq(A, od_int, rcond=None)[0]
+            od_int_no_bg = od_int - (m * np.arange(len(od_int)) + c)
+
+            # 1D Gaussian fit to integrated OD
+            # Parameters: [offset, amplitude, x0, wx]
+            est_bg = np.quantile(od_int, 0.1)
+            p0 = [
+                est_bg,
+                np.max(od_int_no_bg),
+                np.argmax(od_int_no_bg) + r[0][0],
+                np.std(od_int_no_bg),
+                m,
+            ]
+            pUpper = [
+                np.inf,
+                np.max(od_int) - np.min(od_int),
+                r[0][-1],
+                len(r[0]),
+                np.inf,
+            ]
+            pLower = [-np.inf, 0.0, r[0][0], 0.0, -np.inf]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ = least_squares(
+                gaussian1D,
+                p0,
+                args=(np.array(r[0]), od_int),
+                bounds=(pLower, pUpper),
+            )
+
+            self.fitDataConfGauss = confidenceIntervals(resLSQ)
+            self.fitDataGauss = resLSQ.x
+            self.fittedImageGauss = gaussian1D(resLSQ.x, np.array(r[0]), 0)
+
+            self.slices.points0 = od_int
+            self.slices.points1 = self.odImage.ODCorrected[
+                :, round(resLSQ.x[2] - r[1][0])
+            ]
+            self.slices.ch0 = None
+            self.slices.ch1 = np.ones(len(r[1])) * resLSQ.x[2]
+            self.slices.fit0 = self.fittedImageGauss
+
+            # Fermi--Dirac fit
+            # Parameters: [offset, amplitude, x0, sigma, q, gradient]
+            p0 = [
+                resLSQ.x[0],
+                resLSQ.x[1],
+                resLSQ.x[2],
+                resLSQ.x[3],
+                0,
+                resLSQ.x[4],
+            ]
+            pUpper = [
+                np.inf,
+                np.inf,
+                r[0][-1],
+                len(r[0]),
+                np.inf,
+                np.inf,
+            ]
+            pLower = [-np.inf, 0.0, r[0][0], 0.0, -np.inf, -np.inf]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ = least_squares(
+                fermiDirac2Dint,
+                p0,
+                args=(np.array(r[0]), od_int),
+                bounds=(pLower, pUpper),
+            )
+
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fittedImage = fermiDirac2Dint(resLSQ.x, np.array(r[0]), 0)
+
+            self.slices.fit1 = self.fittedImage
+
         # elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
         #     # TODO: Make this depend properly on the species. Disabled for now.
         #     # Band mapping function in the vertical direction
@@ -1275,6 +1363,42 @@ class processFitResult:
             ]
             self.data_dict = r
 
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac 2D Int"):
+            r = {
+                "offset": self.fitObject.fitDataGauss[1],  # self.fitObject.fitData[0],
+                "peakOD": self.fitObject.fitData[1],
+                "x0": self.fitObject.fitData[2],
+                "y0": 0,  # self.fitObject.fitData[4],
+                "wx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
+                "wy": 0,  # self.fitObject.fitData[5] * self.bin * self.pixelSize,
+                "q": self.fitObject.fitData[4],
+                "TTF": np.sqrt(
+                    -1 / (2 * mp.fp.polylog(2, -np.exp(self.fitObject.fitData[4])))
+                ),
+                "wxClassical": self.fitObject.fitDataGauss[3]
+                * self.bin
+                * self.pixelSize,
+                "wyClassical": 0  # self.fitObject.fitDataGauss[5]
+                * self.bin
+                * self.pixelSize,
+                "peakODClassical": self.fitObject.fitDataGauss[1],
+                "gradient": self.fitObject.fitDataGauss[4],
+            }
+
+            self.data = [
+                "fileName",
+                r["peakODClassical"],
+                r["wxClassical"],
+                r["wyClassical"],
+                r["peakOD"],
+                r["wx"],
+                r["wy"],
+                r["x0"],
+                r["y0"],
+                r["offset"],
+                r["TTF"],
+            ]
+            self.data_dict = r
         # elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
 
         #     r = {

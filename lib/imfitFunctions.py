@@ -1,5 +1,7 @@
 import numpy as np
 from lib.polylog import dilog
+import mpmath as mp
+from scipy.special import gamma
 
 
 def gaussian(p, r, y):
@@ -46,8 +48,8 @@ def gaussianGradient(p, r, y):
             -((XR - x0R) ** 2.0) / (2.0 * p[3] ** 2.0)
             - (YR - y0R) ** 2.0 / (2.0 * p[5] ** 2.0)
         )
-        + p[7] * (XR - X0R)
-        + p[8] * (YR - Y0R)
+        + p[7] * (XR - x0R)
+        + p[8] * (YR - y0R)
         - y
     )
 
@@ -191,6 +193,30 @@ def fermiDirac2D(p, r, y, angle):
             )
         )
         - y.ravel()
+    )
+
+
+def gaussian1D(p, r, y):
+    ### Parameters: [offset, amplitude, x0, sigma, gradient]
+    return p[0] + p[1] * np.exp(-((r - p[2]) ** 2.0) / (2 * p[3] ** 2.0)) + p[4] * r - y
+
+
+polylog = mp.fp.polylog
+polylog_np = np.vectorize(lambda n, x: np.real(mp.fp.polylog(n, x)))
+
+
+def limexp(n, x):
+    return np.where(x < 30, np.real(polylog_np(n, -np.exp(x))), -(x**n) / gamma(n + 1))
+
+
+def fermiDirac2Dint(p, r, y):
+    ### Parameters: [offset, amplitude, x0, sigma, q, gradient]
+
+    return (
+        p[0]
+        - p[1] * limexp(3 / 2, p[4] - (r - p[2]) ** 2 / (2 * p[3] ** 2))
+        + p[5] * r
+        - y
     )
 
 

@@ -21,6 +21,7 @@ FIT_FUNCTIONS = [
     "Bigaussian",
     "Fermi-Dirac",
     "Fermi-Dirac 2D",
+    "Fermi-Dirac 2D Int",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -29,8 +30,22 @@ KRB_FIT_FUNCTIONS = [
     "Twisted Gaussian",
     "Gaussian Fixed",
     "Fermi-Dirac",
+    "Fermi-Dirac 2D",
+    "Fermi-Dirac 2D Int",
 ]
-NONTWISTED_FIT_FUNCTIONS = ["Gaussian w/ Gradient", "Gaussian"]
+NONTWISTED_FIT_FUNCTIONS = [
+    "Gaussian w/ Gradient",
+    "Gaussian",
+    "Bigaussian",
+    "Fermi-Dirac",
+    "Fermi-Dirac 2D Int",
+]
+NONTWISTED_KRB_FIT_FUNCTIONS = [
+    "Gaussian w/ Gradient",
+    "Gaussian",
+    "Fermi-Dirac",
+    "Fermi-Dirac 2D Int",
+]
 # WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'BandMapV']
 WORKSHEET_NAMES = [
     "GaussGrad",
@@ -40,6 +55,7 @@ WORKSHEET_NAMES = [
     "GaussGrad",
     "Gauss2",
     "FermiDirac",
+    "FD2D",
     "FD2D",
 ]
 
@@ -96,7 +112,7 @@ IMFIT_MODES = OrderedDict(
                 "Image Path": "Side",
                 "Default Region": [[140, 215, 250, 250], [120, 200, 240, 450]],
                 "Extension Filter": "*.npz",
-                "Fit Functions": FIT_FUNCTIONS,
+                "Fit Functions": NONTWISTED_FIT_FUNCTIONS,
                 "Enforce same fit for both": False,
                 "Auto Detect Binning": True,
                 "Array Width": 512,
@@ -152,9 +168,9 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["side"],
                 "Species": ["|0,0>", "|1,0>"],
                 "Image Path": "Side",
-                "Default Region": [[229, 316, 85, 35], [229, 400, 200, 400]],
+                "Default Region": [[229, 316, 85, 35], [229, 316, 85, 35]],
                 "Extension Filter": "*.npz",
-                "Fit Functions": KRB_FIT_FUNCTIONS,
+                "Fit Functions": NONTWISTED_KRB_FIT_FUNCTIONS,
                 "Enforce same fit for both": True,
                 "Auto Detect Binning": True,
                 "Array Width": 512,
@@ -187,7 +203,7 @@ IMFIT_MODES = OrderedDict(
                 "Image Path": "Side",
                 "Default Region": [[229, 400, 200, 400], [229, 400, 50, 50]],
                 "Extension Filter": "*.npz",
-                "Fit Functions": KRB_FIT_FUNCTIONS,
+                "Fit Functions": NONTWISTED_KRB_FIT_FUNCTIONS,
                 "Enforce same fit for both": True,
                 "Auto Detect Binning": True,
                 "Array Width": 512,
@@ -408,7 +424,7 @@ IMFIT_MODES = OrderedDict(
                 "Image Path": "Vertical",
                 "Default Region": [[203, 587, 200, 200], [203, 587, 200, 200]],
                 "Extension Filter": "*.npz",
-                "Fit Functions": FIT_FUNCTIONS,
+                "Fit Functions": KRB_FIT_FUNCTIONS,
                 "Enforce same fit for both": True,
                 "Auto Detect Binning": True,
                 "Array Width": 512,
