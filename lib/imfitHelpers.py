@@ -203,7 +203,11 @@ def upload2Origin(species, fitFunction, data):
             longname = "KRb FK Gaussian"
         else:
             template = WORKSHEET_NAMES[fitFunction]
-        print(fitFunction, species, template, worksheetName, longname)
+        print(
+            "Fit function: {}, species: {}, template: {}, worksheetName: {}, longname: {}".format(
+                fitFunction, species, template, worksheetName, longname
+            )
+        )
 
         if orgApp.FindWorksheet(worksheetName) is None:
             orgApp.CreatePage(2, worksheetName, template)
@@ -292,6 +296,7 @@ def upload2Origin(species, fitFunction, data):
         else:
             n = 0
             for k in data:
+                # print("Uploading data to [{}]Sheet1: {}".format(worksheetName, k))
                 uploadSuccess = orgApp.PutWorksheet(
                     "[{}]Sheet1".format(worksheetName), k, -1, n
                 )

@@ -845,12 +845,11 @@ class fitOD:
 
             print("Fermi-Dirac fit parameters: {}".format(self.fitData))
 
-            #######################################################################################################################
+            ### Get radial average
 
             I0 = self.odImage.xRange0.index(int(self.fitData[2]))
             I1 = self.odImage.xRange1.index(int(self.fitData[4]))
 
-            # azAverage -- I'm not sure what the correct index should be for azAverage...
             center = [I0, I1]
             self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
             self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
@@ -858,14 +857,43 @@ class fitOD:
                 self.fittedImageGauss, center
             )
 
-            ### Calculate slices through fit (No rotation)
-            self.slices.points0 = self.odImage.ODCorrected[I1, :]
-            self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
-            self.slices.fit0 = self.fittedImage[I1, :]
+            ####### Calculate slices through fit #####
 
-            self.slices.points1 = self.odImage.ODCorrected[:, I0]
-            self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
-            self.slices.fit1 = self.fittedImage[:, I0]
+            f = interp2d(
+                self.odImage.xRange0,
+                self.odImage.xRange1,
+                self.odImage.ODCorrected,
+                kind="cubic",
+            )
+
+            m0 = np.tan(np.pi / 2.0 - angle * np.pi / 180.0)
+            m1 = -np.tan(angle * np.pi / 180.0)
+
+            if abs(m0) > abs(m1):
+                # Ensure the that lower slope is always along x
+                m0, m1 = m1, m0
+
+            b0 = -m0 * resLSQ.x[2] + resLSQ.x[4]
+            ch0 = np.asarray(self.odImage.xRange0) * m0 + b0
+            b1 = -m1 * resLSQ.x[2] + resLSQ.x[4]
+            ch1 = (np.asarray(self.odImage.xRange1) - b1) / m1
+
+            ### Calculate slices through fit
+            for k in range(len(self.odImage.xRange0)):
+                self.slices.points0.append(f(self.odImage.xRange0[k], ch0[k])[0])
+                self.slices.fit0.append(
+                    # gaussianNoRotTwist(resLSQ.x, [r[0][k], ch0[k]], 0.0, angle)[0]
+                    fermiDirac2D(resLSQ.x, np.array([[r[0][k]], [ch0[k]]]), 0, angle)[0]
+                )
+            self.slices.ch0 = ch0
+
+            for k in range(len(self.odImage.xRange1)):
+                self.slices.points1.append(f(ch1[k], self.odImage.xRange1[k])[0])
+                self.slices.fit1.append(
+                    # gaussianNoRotTwist(resLSQ.x, [ch1[k], r[1][k]], 0, angle)[0]
+                    fermiDirac2D(resLSQ.x, np.array([[ch1[k]], [r[1][k]]]), 0, angle)[0]
+                )
+            self.slices.ch1 = ch1
 
         # elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
         #     # TODO: Make this depend properly on the species. Disabled for now.

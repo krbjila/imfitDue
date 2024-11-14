@@ -301,6 +301,7 @@ class imfitDue(QtWidgets.QMainWindow):
             if "iXon Molecules" in self.mode:  # Molecule In situ FK
                 if (
                     "ToF" in self.mode
+                    or "Vertical" in self.mode
                     and not self.fo.fitBothCheckbox.isChecked()
                     and self.fo.fitBothCheckbox.isEnabled()
                 ):
@@ -316,14 +317,14 @@ class imfitDue(QtWidgets.QMainWindow):
                         )
                         print("Done uploading KRb to Origin")
                     return 1
-                elif self.fitK.fitFunction == FIT_FUNCTIONS.index("Integrate"):
-                    print("Uploading integrated KRb to Origin")
-                    upload2Origin(
-                        "KRbSpinInt",
-                        self.fitK.fitFunction,
-                        [KProcess.data, RbProcess.data],
-                    )
-                    return 1
+                # elif self.fitK.fitFunction == FIT_FUNCTIONS.index("Integrate"):
+                #     print("Uploading integrated KRb to Origin")
+                #     upload2Origin(
+                #         "KRbSpinInt",
+                #         self.fitK.fitFunction,
+                #         [KProcess.data, RbProcess.data],
+                #     )
+                #     return 1
                 else:
                     print("Uploading KRb to Origin")
                     upload2Origin(
@@ -397,7 +398,9 @@ class imfitDue(QtWidgets.QMainWindow):
 
             if self.frame == "OD":
                 if self.fitK is not None:
-                    if self.fitK.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac"):
+                    if self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Fermi-Dirac"
+                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac 2D"):
                         self.figs.plotSliceUpdate(
                             x, [Sx, Fx], np.arange(len(R)), [R, RG, RF]
                         )

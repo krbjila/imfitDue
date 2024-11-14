@@ -176,7 +176,7 @@ def fermiDirac2D(p, r, y, angle):
     x0R = p[2] * np.cos(theta) - p[4] * np.sin(theta)
     y0R = p[2] * np.sin(theta) + p[4] * np.cos(theta)
 
-    if isinstance(y, int):
+    if isinstance(y, int) or isinstance(y, float):
         y = np.zeros(X.shape)
 
     return (
