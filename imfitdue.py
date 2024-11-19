@@ -54,17 +54,16 @@ class imfitDue(QtWidgets.QMainWindow):
 
         Connects to MongoDB database with configuration specified in ``lib/mongodb.json``.
         """
-
-        with open("lib/mongodb.json", "r") as f:
-            db_config = loads(f.read())
-        mongo_url = "mongodb://{}:{}@{}:{}/?authSource=admin".format(
-            db_config["user"],
-            db_config["password"],
-            db_config["address"],
-            db_config["port"],
-        )
-        self.c = MongoClient(mongo_url, connectTimeoutMS=2000)
         try:
+            with open("lib/mongodb.json", "r") as f:
+                db_config = loads(f.read())
+                mongo_url = "mongodb://{}:{}@{}:{}/?authSource=admin".format(
+                    db_config["user"],
+                    db_config["password"],
+                    db_config["address"],
+                    db_config["port"],
+                )
+            self.c = MongoClient(mongo_url, connectTimeoutMS=2000)
             self.c.server_info()
             self.db = self.c["data"]
             self.col = self.db["shots"]
@@ -192,7 +191,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
         fitRbcheckbox = (
             self.fo.fitBothCheckbox.isChecked() and self.fo.fitBothCheckbox.isEnabled()
-        )  # or "Molecules" not in self.mode
+        )  or "Molecules" not in self.mode
 
         if self.odK is not None:
             try:
