@@ -139,6 +139,33 @@ def doubleGaussian(p, r, y):
     )
 
 
+def thomasFermi(p, r, y):
+    ### Parameters: [offset, ampTF, x0, rx, y0, ry, ampGauss, wx, wy]
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis, yaxis)
+
+    if isinstance(y, int):
+        y = np.zeros(X.shape)
+
+    return np.ravel(
+        p[0]
+        + p[1]
+        * np.maximum(
+            (1 - (X - p[2]) ** 2.0 / p[3] ** 2.0 - (Y - p[4]) ** 2.0 / p[5] ** 2.0), 0
+        )
+        + p[6]
+        * np.exp(
+            -(
+                (X - p[2]) ** 2.0 / (2 * p[7] ** 2.0)
+                + (Y - p[4]) ** 2.0 / (2 * p[8] ** 2.0)
+            )
+        )
+        - y
+    )
+
+
 def fermiDirac(p, r, y):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, q]
 

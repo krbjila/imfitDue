@@ -22,6 +22,7 @@ FIT_FUNCTIONS = [
     "Fermi-Dirac",
     "Fermi-Dirac 2D",
     "Fermi-Dirac 2D Int",
+    "Thomas-Fermi",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -39,6 +40,7 @@ NONTWISTED_FIT_FUNCTIONS = [
     "Bigaussian",
     "Fermi-Dirac",
     "Fermi-Dirac 2D Int",
+    "Thomas-Fermi",
 ]
 NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -57,6 +59,7 @@ WORKSHEET_NAMES = [
     "FermiDirac",
     "FD2D",
     "FD2D",
+    "ThomasFermi",
 ]
 
 DEFAULT_MODE = "Side iXon"

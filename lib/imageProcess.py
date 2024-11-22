@@ -684,6 +684,68 @@ class fitOD:
             self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:, I0]
 
+        elif self.fitFunction == FIT_FUNCTIONS.index("Thomas-Fermi"):
+            # Thomas-Fermi fit
+            ### Parameters: [offset, ampTF, x0, rx, y0, ry, ampGauss, wx, wy]
+            r = [None, None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+
+            p0 = [
+                0,
+                M,
+                self.odImage.xRange0[I1],
+                10,
+                self.odImage.xRange1[I0],
+                10,
+                0.1,
+                20,
+                20,
+            ]
+            pUpper = [
+                np.inf,
+                15.0,
+                np.max(r[0]),
+                len(r[0]),
+                np.max(r[1]),
+                len(r[1]),
+                15.0,
+                len(r[0]),
+                len(r[1]),
+            ]
+            pLower = [-np.inf, 0, np.min(r[0]), 0, np.min(r[1]), 0, 0, 0, 0]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ = least_squares(
+                thomasFermi,
+                p0,
+                args=(r, self.odImage.ODCorrected),
+                bounds=(pLower, pUpper),
+            )
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fittedImage = thomasFermi(resLSQ.x, r, 0).reshape(
+                self.odImage.ODCorrected.shape
+            )
+
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = [0] * len(self.slices.radSlice)
+
+            ### Calculate slices through fit
+
+            self.slices.points0 = self.odImage.ODCorrected[I1, :]
+            self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1, :]
+
+            self.slices.points1 = self.odImage.ODCorrected[:, I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
+            self.slices.fit1 = self.fittedImage[:, I0]
+
         elif self.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac"):
 
             r = [None, None]
@@ -1399,6 +1461,34 @@ class processFitResult:
                 r["TTF"],
             ]
             self.data_dict = r
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Thomas-Fermi"):
+            r = {
+                "offset": self.fitObject.fitData[0],
+                "peakODTF": self.fitObject.fitData[1],
+                "x0": self.fitObject.fitData[2],
+                "y0": self.fitObject.fitData[4],
+                "rx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
+                "ry": self.fitObject.fitData[5] * self.bin * self.pixelSize,
+                "peakODGauss": self.fitObject.fitData[6],
+                "sigxGauss": self.fitObject.fitData[7] * self.bin * self.pixelSize,
+                "sigyGauss": self.fitObject.fitData[8] * self.bin * self.pixelSize,
+            }
+
+            self.data = [
+                "fileName",
+                r["peakODTF"],
+                r["rx"],
+                r["ry"],
+                r["peakODGauss"],
+                r["sigxGauss"],
+                r["sigyGauss"],
+                r["x0"],
+                r["y0"],
+                r["offset"],
+            ]
+            self.data_dict = r
+
         # elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
 
         #     r = {

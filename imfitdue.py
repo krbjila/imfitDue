@@ -191,7 +191,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
         fitRbcheckbox = (
             self.fo.fitBothCheckbox.isChecked() and self.fo.fitBothCheckbox.isEnabled()
-        )  or "Molecules" not in self.mode
+        ) or "Molecules" not in self.mode
 
         if self.odK is not None:
             try:
@@ -232,6 +232,7 @@ class imfitDue(QtWidgets.QMainWindow):
             except Exception as e:
                 self.fitRb = None
                 print("Could not fit Rb frame: {}".format(e))
+                raise e
         else:
             self.fitRb = None
         self.plotCurrent()
