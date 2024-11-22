@@ -442,6 +442,7 @@ class pathWidget(QtWidgets.QWidget):
         v.addLayout(h2)
 
         self.setLayout(v)
+        self.camChanged()
 
     def browseFile(self):
 
