@@ -153,7 +153,8 @@ def thomasFermi(p, r, y):
         p[0]
         + p[1]
         * np.maximum(
-            (1 - (X - p[2]) ** 2.0 / p[3] ** 2.0 - (Y - p[4]) ** 2.0 / p[5] ** 2.0), 0
+            # 3/2 power for integrated profile
+            (1 - (X - p[2]) ** 2.0 / p[3] ** 2.0 - (Y - p[4]) ** 2.0 / p[5] ** 2.0)**(1.5), 0
         )
         + p[6]
         * np.exp(
