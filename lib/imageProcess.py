@@ -10,7 +10,7 @@ from lib.imfitFunctions import *
 from lib.polylog import fermi_poly2
 
 from scipy.optimize import least_squares
-from scipy.interpolate import interp2d
+from scipy.interpolate import RectBivariateSpline
 
 from skimage.feature import peak_local_max
 from scipy import ndimage as ndimage
@@ -254,11 +254,10 @@ class fitOD:
 
             ####### Calculate slices through fit #####
 
-            f = interp2d(
-                self.odImage.xRange0,
+            f = RectBivariateSpline(
                 self.odImage.xRange1,
+                self.odImage.xRange0,
                 self.odImage.ODCorrected,
-                kind="cubic",
             )
 
             m0 = np.tan(np.pi / 2.0 - resLSQ.x[6])
@@ -274,12 +273,12 @@ class fitOD:
             ch1 = (np.asarray(self.odImage.xRange1) - b1) / m1
 
             for k in range(len(self.odImage.xRange0)):
-                self.slices.points0.append(f(self.odImage.xRange0[k], ch0[k])[0])
+                self.slices.points0.append(f(ch0[k], self.odImage.xRange0[k])[0])
                 self.slices.fit0.append(gaussian(resLSQ.x, [r[0][k], ch0[k]], 0.0)[0])
             self.slices.ch0 = ch0
 
             for k in range(len(self.odImage.xRange1)):
-                self.slices.points1.append(f(ch1[k], self.odImage.xRange1[k])[0])
+                self.slices.points1.append(f(self.odImage.xRange1[k], ch1[k])[0])
                 self.slices.fit1.append(gaussian(resLSQ.x, [ch1[k], r[1][k]], 0)[0])
             self.slices.ch1 = ch1
 
@@ -322,11 +321,10 @@ class fitOD:
 
             ####### Calculate slices through fit #####
 
-            f = interp2d(
-                self.odImage.xRange0,
+            f = RectBivariateSpline(
                 self.odImage.xRange1,
+                self.odImage.xRange0,
                 self.odImage.ODCorrected,
-                kind="cubic",
             )
 
             m0 = np.tan(np.pi / 2.0 - angle * np.pi / 180.0)
@@ -342,14 +340,14 @@ class fitOD:
             ch1 = (np.asarray(self.odImage.xRange1) - b1) / m1
 
             for k in range(len(self.odImage.xRange0)):
-                self.slices.points0.append(f(self.odImage.xRange0[k], ch0[k])[0])
+                self.slices.points0.append(f(ch0[k], self.odImage.xRange0[k])[0])
                 self.slices.fit0.append(
                     gaussianNoRotTwist(resLSQ.x, [r[0][k], ch0[k]], 0.0, angle)[0]
                 )
             self.slices.ch0 = ch0
 
             for k in range(len(self.odImage.xRange1)):
-                self.slices.points1.append(f(ch1[k], self.odImage.xRange1[k])[0])
+                self.slices.points1.append(f(self.odImage.xRange1[k], ch1[k])[0])
                 self.slices.fit1.append(
                     gaussianNoRotTwist(resLSQ.x, [ch1[k], r[1][k]], 0, angle)[0]
                 )
@@ -925,11 +923,10 @@ class fitOD:
 
             ####### Calculate slices through fit #####
 
-            f = interp2d(
-                self.odImage.xRange0,
+            f = RectBivariateSpline(
                 self.odImage.xRange1,
+                self.odImage.xRange0,
                 self.odImage.ODCorrected,
-                kind="cubic",
             )
 
             m0 = np.tan(np.pi / 2.0 - angle * np.pi / 180.0)
@@ -946,18 +943,18 @@ class fitOD:
 
             ### Calculate slices through fit
             for k in range(len(self.odImage.xRange0)):
-                self.slices.points0.append(f(self.odImage.xRange0[k], ch0[k])[0])
+                self.slices.points0.append(f(ch0[k], self.odImage.xRange0[k])[0])
                 self.slices.fit0.append(
                     # gaussianNoRotTwist(resLSQ.x, [r[0][k], ch0[k]], 0.0, angle)[0]
-                    fermiDirac2D(resLSQ.x, np.array([[r[0][k]], [ch0[k]]]), 0, angle)[0]
+                    fermiDirac2D(resLSQ.x, np.array([r[0][k], ch0[k]]), 0, angle)[0]
                 )
             self.slices.ch0 = ch0
 
             for k in range(len(self.odImage.xRange1)):
-                self.slices.points1.append(f(ch1[k], self.odImage.xRange1[k])[0])
+                self.slices.points1.append(f(self.odImage.xRange1[k], ch1[k])[0])
                 self.slices.fit1.append(
                     # gaussianNoRotTwist(resLSQ.x, [ch1[k], r[1][k]], 0, angle)[0]
-                    fermiDirac2D(resLSQ.x, np.array([[ch1[k]], [r[1][k]]]), 0, angle)[0]
+                    fermiDirac2D(resLSQ.x, np.array([ch1[k], r[1][k]]), 0, angle)[0]
                 )
             self.slices.ch1 = ch1
 
