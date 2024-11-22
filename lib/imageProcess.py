@@ -691,37 +691,41 @@ class fitOD:
             r[0] = self.odImage.xRange0
             r[1] = self.odImage.xRange1
 
-            p0 = [
-                0,
-                M,
-                self.odImage.xRange0[I1],
-                10,
-                self.odImage.xRange1[I0],
-                10,
-                0.1,
-                20,
-                20,
-            ]
-            pUpper = [
-                np.inf,
-                15.0,
-                np.max(r[0]),
-                len(r[0]),
-                np.max(r[1]),
-                len(r[1]),
-                15.0,
-                len(r[0]),
-                len(r[1]),
-            ]
-            pLower = [-np.inf, 0, np.min(r[0]), 0, np.min(r[1]), 0, 0, 0, 0]
-            p0 = checkGuess(p0, pUpper, pLower)
-
-            resLSQ = least_squares(
-                thomasFermi,
-                p0,
-                args=(r, self.odImage.ODCorrected),
-                bounds=(pLower, pUpper),
-            )
+            thermal_sizes = [5, 10, 20, 40, 80]
+            resLSQ = None
+            for ts in thermal_sizes:
+                p0 = [
+                    0,
+                    M,
+                    self.odImage.xRange0[I1],
+                    10,
+                    self.odImage.xRange1[I0],
+                    10,
+                    0.1,
+                    ts,
+                    ts,
+                ]
+                pUpper = [
+                    np.inf,
+                    15.0,
+                    np.max(r[0]),
+                    len(r[0]),
+                    np.max(r[1]),
+                    len(r[1]),
+                    15.0,
+                    len(r[0]),
+                    len(r[1]),
+                ]
+                pLower = [-np.inf, 0, np.min(r[0]), 0, np.min(r[1]), 0, 0, 0, 0]
+                p0 = checkGuess(p0, pUpper, pLower)
+                res = least_squares(
+                    thomasFermi,
+                    p0,
+                    args=(r, self.odImage.ODCorrected),
+                    bounds=(pLower, pUpper),
+                )
+                if resLSQ is None or res.cost < resLSQ.cost:
+                    resLSQ = res
             self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
             self.fittedImage = thomasFermi(resLSQ.x, r, 0).reshape(
