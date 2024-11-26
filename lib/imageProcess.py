@@ -729,6 +729,20 @@ class fitOD:
             self.fittedImage = thomasFermi(resLSQ.x, r, 0).reshape(
                 self.odImage.ODCorrected.shape
             )
+            # T-F: [offset, ampTF, x0, rx, y0, ry, ampGauss, wx, wy]
+            # Gaussian: [offset, amplitude, x0, wx, y0, w]
+            self.fittedImageGauss = gaussianNoRot(
+                [
+                    resLSQ.x[0],
+                    resLSQ.x[6],
+                    resLSQ.x[2],
+                    resLSQ.x[7],
+                    resLSQ.x[4],
+                    resLSQ.x[8],
+                ],
+                r,
+                0,
+            ).reshape(self.odImage.ODCorrected.shape)
 
             I0 = self.odImage.xRange0.index(int(self.fitData[2]))
             I1 = self.odImage.xRange1.index(int(self.fitData[4]))
@@ -743,10 +757,12 @@ class fitOD:
             self.slices.points0 = self.odImage.ODCorrected[I1, :]
             self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
             self.slices.fit0 = self.fittedImage[I1, :]
+            self.slices.fit0Gauss = self.fittedImageGauss[I1, :]
 
             self.slices.points1 = self.odImage.ODCorrected[:, I0]
             self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:, I0]
+            self.slices.fit1Gauss = self.fittedImageGauss[:, I0]
 
         elif self.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac"):
 

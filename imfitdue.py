@@ -408,6 +408,16 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sy = self.fitRb.slices.points1
                 Fx = self.fitRb.slices.fit0
                 Fy = self.fitRb.slices.fit1
+
+                if hasattr(self.fitRb.slices, "fit0Gauss"):
+                    FxGauss = self.fitRb.slices.fit0Gauss
+                else:
+                    FxGauss = None
+
+                if hasattr(self.fitRb.slices, "fit1Gauss"):
+                    FyGauss = self.fitRb.slices.fit1Gauss
+                else:
+                    FyGauss = None
             except Exception as e:
                 ch0 = None
                 ch1 = None
@@ -415,6 +425,8 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sy = None
                 Fx = None
                 Fy = None
+                FxGauss = None
+                FyGauss = None
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
                 print(e)
@@ -428,7 +440,12 @@ class imfitDue(QtWidgets.QMainWindow):
             self.figs.plotUpdate(x, y, image, ch0, ch1)
 
             if self.frame == "OD":
-                self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
+                if FxGauss is not None and FyGauss is not None:
+                    self.figs.plotSliceUpdate(
+                        x, [Sx, Fx, FxGauss], y, [Sy, Fy, FyGauss]
+                    )
+                else:
+                    self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)
