@@ -76,7 +76,7 @@ CSAT = {
 NA = {"axial": 0.12, "side": 0.20, "vertical": 0.5}
 
 # Pixel size (um)
-PX_SIZE = {"axial": 2.58, "side": 1.718, "vertical": 0.956}
+PX_SIZE = {"axial": 2.58, "side": 1.718, "vertical": 0.92} #vertical pixel size calibrated on Dec.01.2024
 
 # TODO: Check these!
 # Resonant cross section at I/Isat = 0, in um^2
