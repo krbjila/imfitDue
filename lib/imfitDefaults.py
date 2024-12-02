@@ -68,7 +68,7 @@ DEFAULT_MODE = "Side iXon"
 CSAT = {
     "axial": {"K": 2970, "Rb": 2882},
     "side": {"K": 4048, "Rb": 2123},
-    "vertical": {"K": 1400, "Rb": 1359},
+    "vertical": {"K": 691, "Rb": 396},
 }
 
 # TODO: Check these!
@@ -396,7 +396,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["vertical"],
                 "Species": ["K", "Rb"],
                 "Image Path": "Vertical",
-                "Default Region": [[102, 290, 70, 70], [102, 290, 70, 70]],
+                "Default Region": [[128, 295, 150, 150], [128, 295, 150, 150]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": FIT_FUNCTIONS,
                 "Enforce same fit for both": False,
