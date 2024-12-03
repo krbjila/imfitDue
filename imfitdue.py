@@ -142,7 +142,7 @@ class imfitDue(QtWidgets.QMainWindow):
         except Exception as e:
             print("Could not calculate OD: {}".format(e))
 
-        if self.fo.autoFit.isChecked() and self.frame == "OD":
+        if self.fo.autoFit.isChecked() and self.frame == "OD" or self.frame == "Column Density":
             self.fitCurrent()
             print("Done fitting current image")
         else:
@@ -357,6 +357,10 @@ class imfitDue(QtWidgets.QMainWindow):
                 R = self.fitK.slices.radSlice
                 RG = self.fitK.slices.radSliceFitGauss
                 RF = self.fitK.slices.radSliceFit
+                if hasattr(self.fitK, "box"):
+                    box = self.fitK.box
+                else:
+                    box = None
             except Exception as e:
                 ch0 = None
                 ch1 = None
@@ -364,6 +368,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sy = None
                 Fx = None
                 Fy = None
+                box = None
 
                 R = None
                 RG = None
@@ -379,9 +384,9 @@ class imfitDue(QtWidgets.QMainWindow):
                 image = self.odK.n
             else:
                 image = frames[species[0]][self.frame][y[0] : y[-1], x[0] : x[-1]]
-            self.figs.plotUpdate(x, y, image, ch0, ch1)
+            self.figs.plotUpdate(x, y, image, ch0, ch1, box)
 
-            if self.frame == "OD":
+            if self.frame == "OD" or self.frame == "Column Density":
                 if self.fitK is not None:
                     if self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Fermi-Dirac"
@@ -418,6 +423,11 @@ class imfitDue(QtWidgets.QMainWindow):
                     FyGauss = self.fitRb.slices.fit1Gauss
                 else:
                     FyGauss = None
+
+                if hasattr(self.fitRb, "box"):
+                    box = self.fitRb.box
+                else:
+                    box = None
             except Exception as e:
                 ch0 = None
                 ch1 = None
@@ -427,6 +437,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 Fy = None
                 FxGauss = None
                 FyGauss = None
+                box = None
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
                 print(e)
@@ -437,9 +448,8 @@ class imfitDue(QtWidgets.QMainWindow):
                 image = self.odRb.n
             else:
                 image = frames[species[1]][self.frame][y[0] : y[-1], x[0] : x[-1]]
-            self.figs.plotUpdate(x, y, image, ch0, ch1)
-
-            if self.frame == "OD":
+            self.figs.plotUpdate(x, y, image, ch0, ch1, box)
+            if self.frame == "OD" or self.frame == "Column Density":
                 if FxGauss is not None and FyGauss is not None:
                     self.figs.plotSliceUpdate(
                         x, [Sx, Fx, FxGauss], y, [Sy, Fy, FyGauss]

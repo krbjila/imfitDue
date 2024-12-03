@@ -82,39 +82,34 @@ class calcOD:
             s2 = lightCrop - darkCrop
             self.OD = -np.log(s1 / s2)
 
+            # Correct OD for fluorescence and saturation
+            # Detuning; assumed to be zero
+            delta = 0
+            # Fraction of fluorescence collected
+            Omega = 4 * np.pi * np.sin(np.arcsin(self.config["NA"]) / 2) ** 2
+            # Resonant cross section at I/Isat = 0, in um^2
+            sigma0 = SIGMA_0[self.species]
+
             Ceff = self.config["CSat"][self.species]
             bins = self.data.bin
             Ceff *= float(bins**2)
 
-            self.ODCorrected = self.OD + (s2 - s1) / Ceff
+            self.ODCorrected = (self.OD + (s2 - s1) / Ceff) / (1 - Omega)
 
             # Set all nans and infs to zero
             self.ODCorrected[np.isnan(self.ODCorrected)] = 0
             self.ODCorrected[np.isinf(self.ODCorrected)] = 0
 
             # Calculate the column density, assuming zero detuning; see Pappa et al, NJP (2011)
-            delta = 0  # Detuning; assumed to be zero
-            Omega = (
-                4 * np.pi * np.sin(np.arcsin(self.config["NA"]) / 2) ** 2
-            )  # Fraction of flourescence collected
-            sigma0 = SIGMA_0[
-                self.species
-            ]  # Resonant cross section at I/Isat = 0, in um^2
             s0 = s2 / (bins**2 * self.config["CSat"][self.species])
             Tabs = s1 / s2
-            self.n = (
-                (1 + delta**2)
-                / ((1 - Omega) * sigma0)
-                * (-np.log(Tabs) + s0 / (1 + delta**2) * (1 - Tabs))
-            )
+            self.n = (-np.log(Tabs) + s0 * (1 - Tabs)) / ((1 - Omega) * sigma0)
             self.n /= EFF[self.species]
             self.n[np.isnan(self.n)] = 0
             self.n[np.isinf(self.n)] = 0
 
             self.nerr = (
-                np.sqrt((s2 + s1) / (s2**3 * s1))
-                * (s2 * (1 + delta**2) + s0 * s1)
-                / (sigma0 * (1 - Omega))
+                (s0 * Tabs + (1 + delta^2)) / (sigma0 * (1 - Omega)) * np.sqrt((s1 + s2) / (s1 * s2))
             )
             self.nerr[np.isnan(self.nerr)] = 0
             self.nerr[np.isinf(self.nerr)] = 0
@@ -797,6 +792,7 @@ class fitOD:
                 fermiDirac,
                 p0,
                 args=(r, self.odImage.ODCorrected),
+                kwargs={"mask_above": MAX_OD_FIT},
                 bounds=(pLower, pUpper),
             )
             self.fitDataConf = confidenceIntervals(resLSQ)
@@ -823,6 +819,7 @@ class fitOD:
                 gaussian,
                 p0,
                 args=(r, self.odImage.ODCorrected),
+                kwargs={"mask_above": MAX_OD_FIT},
                 bounds=(pLower, pUpper),
             )
             self.fitDataConfGauss = confidenceIntervals(resLSQ)
@@ -1107,100 +1104,96 @@ class fitOD:
         #     self.slices.ch1 = [self.odImage.xRange0[I0]]*len(self.odImage.xRange1)
         #     self.slices.fit1 = self.fittedImage[:,I0]
 
-        # elif self.fitFunction == FIT_FUNCTIONS.index("Integrate"):
-        #     # Integration of number from computed column density
+        elif self.fitFunction == FIT_FUNCTIONS.index("Integrate"):
+            # Integration of number from computed column density
 
-        #     # Calculate average number density in border and subtract from rest of image
-        #     border = max(1, int(min(min(self.odImage.n.shape) / 10, 5)))
-        #     print("Border: {}".format(border))
-        #     interior = self.odImage.n[border:-border, border:-border]
-        #     offset = (self.odImage.n.sum() - interior.sum()) / (
-        #         self.odImage.n.size - interior.size
-        #     )
-        #     print("Offset: {}".format(offset))
-        #     interior -= offset
+            # Calculate average number density in border and subtract from rest of image
+            border = int(max(min(self.odImage.n.shape) / 10, 5))
+            border_mask = np.ones(self.odImage.n.shape)
+            border_mask[border:-border, border:-border] = 0
+            offset = np.sum(self.odImage.n * border_mask) / np.sum(border_mask)
+            self.odImage.n -= offset
 
-        #     interior_err = self.odImage.nerr[border:-border, border:-border]
+            interior = self.odImage.n[border:-border, border:-border]
+            interior_err = self.odImage.nerr[border:-border, border:-border]
 
-        #     # Compute the number by summing the pixels and multiplying by the pixel area
+            # Compute the number by summing the pixels and multiplying by the pixel area
 
-        #     raw_number = interior.sum()
-        #     number = (
-        #         raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
-        #     )
-        #     print("Number: {}".format(number))
+            raw_number = interior.sum()
+            number = (
+                raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
 
-        #     raw_error = np.sqrt((interior_err**2).sum())
-        #     error = raw_error * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
-        #     print("Error: {}".format(error))
+            error = np.sqrt((interior_err**2).sum()) * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
 
-        #     # Compute the central position and size
-        #     xrange = np.arange(interior.shape[1])
-        #     yrange = np.arange(interior.shape[0])
-        #     xc = np.sum(interior.sum(axis=0) * xrange) / raw_number
-        #     yc = np.sum(interior.sum(axis=1) * yrange) / raw_number
+            # Compute the central position and size
+            xrange = np.arange(interior.shape[1])
+            yrange = np.arange(interior.shape[0])
+            xc = np.sum(interior.sum(axis=0) * xrange) / raw_number
+            yc = np.sum(interior.sum(axis=1) * yrange) / raw_number
 
-        #     # These calculations of moments aren't exact, since the contents of the square root can be negative since the column density can be negative in some pixels.
-        #     # Therefore, all pixels less than 10 percent of the peak are dropped.
-        #     sumx = interior.sum(axis=0)
-        #     sumy = interior.sum(axis=1)
-        #     minx = maximum(sumx) / 10
-        #     miny = maximum(sumy) / 10
-        #     sigx = np.sqrt(
-        #         np.sum((sumx * (xrange - xc) ** 2)[sumx > minx])
-        #         / np.sum(sumx[sumx > minx])
-        #     )
-        #     sigy = np.sqrt(
-        #         np.sum((sumy * (yrange - yc) ** 2)[sumy > miny])
-        #         / np.sum(sumy[sumy > miny])
-        #     )
+            # Box size for plotting
+            self.box = [
+                [self.odImage.xRange0.start + border, self.odImage.xRange0.stop - border],
+                [self.odImage.xRange1.start + border, self.odImage.xRange1.stop - border],
+            ]
 
-        #     xc += border + self.odImage.xRange0.start
-        #     yc += border + self.odImage.xRange1.start
+            # These calculations of moments aren't exact, since the contents of the square root can be negative since the column density can be negative in some pixels.
+            # Therefore, all pixels less than 10 percent of the peak are dropped.
+            sumx = interior.sum(axis=0)
+            sumy = interior.sum(axis=1)
+            minx = maximum(sumx) / 10
+            miny = maximum(sumy) / 10
+            sigx = np.sqrt(
+                np.sum((sumx * (xrange - xc) ** 2)[sumx > minx])
+                / np.sum(sumx[sumx > minx])
+            )
+            sigy = np.sqrt(
+                np.sum((sumy * (yrange - yc) ** 2)[sumy > miny])
+                / np.sum(sumy[sumy > miny])
+            )
 
-        #     xc = min(max(self.odImage.xRange0.start, xc), self.odImage.xRange0.stop - 1)
-        #     yc = min(max(self.odImage.xRange1.start, yc), self.odImage.xRange1.stop - 1)
+            xc += border + self.odImage.xRange0.start
+            yc += border + self.odImage.xRange1.start
 
-        #     print("xc: {} px".format(xc))
-        #     print("yc: {} px".format(yc))
-        #     print("sigx: {} px".format(sigx))
-        #     print("sigy: {} px".format(sigy))
+            xc = min(max(self.odImage.xRange0.start, xc), self.odImage.xRange0.stop - 1)
+            yc = min(max(self.odImage.xRange1.start, yc), self.odImage.xRange1.stop - 1)
 
-        #     if isnan(sigx):
-        #         print("Sigma x invalid: setting to zero.")
-        #         sigx = 0
+            if isnan(sigx):
+                print("Sigma x invalid: setting to zero.")
+                sigx = 0
 
-        #     if isnan(sigy):
-        #         print("Sigma y invalid: setting to zero.")
-        #         sigy = 0
+            if isnan(sigy):
+                print("Sigma y invalid: setting to zero.")
+                sigy = 0
 
-        #     self.fitData = [offset, number, error, xc, yc, sigx, sigy]
-        #     self.fitDataConf = None
-        #     self.fittedImage = None
+            self.fitData = [offset, number, error, xc, yc, sigx, sigy]
+            self.fitDataConf = None
+            self.fittedImage = None
 
-        #     ### Get radial average
+            ### Get radial average
 
-        #     I0 = self.odImage.xRange0.index(round(xc))
-        #     I1 = self.odImage.xRange1.index(round(yc))
+            I0 = self.odImage.xRange0.index(round(xc))
+            I1 = self.odImage.xRange1.index(round(yc))
 
-        #     center = [I0, I1]
-        #     self.slices.radSlice = azimuthalAverage(self.odImage.n, center)
-        #     self.slices.radSliceFit = None
-        #     self.slices.radSliceFitGauss = None
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.n, center)
+            self.slices.radSliceFit = None
+            self.slices.radSliceFitGauss = None
 
-        #     ### Calculate slices through fit
+            ### Calculate slices through fit
 
-        #     self.slices.points0 = self.odImage.n[I1, :]
-        #     self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
-        #     self.slices.fit0 = None
+            self.slices.points0 = self.odImage.n[I1, :]
+            self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
+            self.slices.fit0 = None
 
-        #     self.slices.points1 = self.odImage.n[:, I0]
-        #     self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
-        #     self.slices.fit1 = None
+            self.slices.points1 = self.odImage.n[:, I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
+            self.slices.fit1 = None
 
-        # else:
-        #     print("Fit function undefined! Something went wrong!")
-        #     return -1
+        else:
+            print("Fit function undefined! Something went wrong!")
+            return -1
 
 
 class processFitResult:
@@ -1522,19 +1515,28 @@ class processFitResult:
 
         #     self.data = ['fileName', 'species', r['Band0'], r['Band1'], r['Band2'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset'], r['TOF']]
 
-        # elif self.fitObject.fitFunction == FIT_FUNCTIONS.index('Integrate'):
-        #     r = {
-        #             'offset' : self.fitObject.fitData[0],
-        #             'number' : self.fitObject.fitData[1],
-        #             'error' : self.fitObject.fitData[2],
-        #             'x0' : self.fitObject.fitData[3],
-        #             'y0' : self.fitObject.fitData[4],
-        #             'wx' : self.fitObject.fitData[5]*self.bin*self.pixelSize,
-        #             'wy' : self.fitObject.fitData[6]*self.bin*self.pixelSize,
-        #         }
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Integrate"):
+            r = {
+                "offset": self.fitObject.fitData[0],
+                "number": self.fitObject.fitData[1],
+                "error": self.fitObject.fitData[2],
+                "x0": self.fitObject.fitData[3],
+                "y0": self.fitObject.fitData[4],
+                "wx": self.fitObject.fitData[5] * self.bin * self.pixelSize,
+                "wy": self.fitObject.fitData[6] * self.bin * self.pixelSize,
+            }
 
-        #     self.data = ['fileName', r['number'], r['error'], r['wx'], r['wy'], r['x0'], r['y0'], r['offset']]
-        #     self.data_dict = r
+            self.data = [
+                "fileName",
+                r["number"],
+                r["error"],
+                r["wx"],
+                r["wy"],
+                r["x0"],
+                r["y0"],
+                r["offset"],
+            ]
+            self.data_dict = r
 
         else:
             print("Fit function undefined! Something went wrong!")

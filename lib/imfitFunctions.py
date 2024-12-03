@@ -4,12 +4,14 @@ import mpmath as mp
 from scipy.special import gamma
 
 
-def gaussian(p, r, y):
+def gaussian(p, r, y, mask_above=np.inf):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta]
     xaxis = r[0]
     yaxis = r[1]
 
     X, Y = np.meshgrid(xaxis, yaxis)
+
+    mask = np.where(y < mask_above, 1, 0)
 
     XR = X * np.cos(p[6]) - Y * np.sin(p[6])
     YR = X * np.sin(p[6]) + Y * np.cos(p[6])
@@ -25,7 +27,7 @@ def gaussian(p, r, y):
             - (YR - y0R) ** 2.0 / (2.0 * p[5] ** 2.0)
         )
         - y
-    )
+    ) * mask.ravel()
 
 
 def gaussianGradient(p, r, y):
@@ -170,7 +172,7 @@ def thomasFermi(p, r, y):
     )
 
 
-def fermiDirac(p, r, y):
+def fermiDirac(p, r, y, mask_above=np.inf):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, q]
 
     xaxis = r[0]
@@ -180,6 +182,8 @@ def fermiDirac(p, r, y):
 
     if isinstance(y, int):
         y = np.zeros(X.shape)
+
+    mask = np.where(y < mask_above, 1, 0)
 
     return (
         p[0]
@@ -192,7 +196,7 @@ def fermiDirac(p, r, y):
             )
         )
         - y.ravel()
-    )
+    ) * mask.ravel()
 
 
 def fermiDirac2D(p, r, y, angle):

@@ -23,6 +23,7 @@ FIT_FUNCTIONS = [
     "Fermi-Dirac 2D",
     "Fermi-Dirac 2D Int",
     "Thomas-Fermi",
+    "Integrate"
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -41,6 +42,7 @@ NONTWISTED_FIT_FUNCTIONS = [
     "Fermi-Dirac",
     "Fermi-Dirac 2D Int",
     "Thomas-Fermi",
+    "Integrate",
 ]
 NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -48,7 +50,6 @@ NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Fermi-Dirac",
     "Fermi-Dirac 2D Int",
 ]
-# WORKSHEET_NAMES = [ 'GaussGrad', 'GaussGrad', 'GaussGrad', 'GaussGrad', 'Gauss2', 'FermiDirac', 'BandMapV']
 WORKSHEET_NAMES = [
     "GaussGrad",
     "GaussGrad",
@@ -60,9 +61,12 @@ WORKSHEET_NAMES = [
     "FD2D",
     "FD2D",
     "ThomasFermi",
+    "Integrated",
 ]
 
 DEFAULT_MODE = "Side iXon"
+
+MAX_OD_FIT = 1e9
 
 CSAT = {
     "axial": {"K": 2970, "Rb": 2882}, # not calibrated for a while
