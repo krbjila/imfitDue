@@ -64,11 +64,10 @@ WORKSHEET_NAMES = [
 
 DEFAULT_MODE = "Side iXon"
 
-# The Rb CSat values are computed from the K CSat values, assuming identical transmission through the optics and detection efficiencies. The vertical CSat has not been calibrated recently.
 CSAT = {
-    "axial": {"K": 2970, "Rb": 2882},
-    "side": {"K": 4048, "Rb": 2123},
-    "vertical": {"K": 691, "Rb": 396},
+    "axial": {"K": 2970, "Rb": 2882}, # not calibrated for a while
+    "side": {"K": 2955, "Rb": 3276}, # calibrated 12/02/2024
+    "vertical": {"K": 691, "Rb": 396}, # calibrated 12/01/2024
 }
 
 # TODO: Check these!
