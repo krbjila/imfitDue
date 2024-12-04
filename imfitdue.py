@@ -309,21 +309,27 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.fo.fitBothCheckbox.isChecked()
                 and self.fo.fitBothCheckbox.isEnabled()
             ):
-                print("Uploading KRb to Origin")
-                upload2Origin(
-                    "KRbSpinGauss",
-                    self.fitK.fitFunction,
-                    [KProcess.data, RbProcess.data],
-                )
-                print("Done uploading KRb to Origin")
+                if "Gauss" in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
+                    print("Uploading KRb to Origin")
+                    upload2Origin(
+                        "KRbSpinGauss",
+                        self.fitK.fitFunction,
+                        [KProcess.data, RbProcess.data],
+                    )
+                    print("Done uploading KRb to Origin")
+                else:
+                    print("Uploading KRb to Origin")
+                    upload2Origin("N0", self.fitK.fitFunction, KProcess.data)
+                    upload2Origin("N1", self.fitRb.fitFunction, RbProcess.data)
+                    print("Done uploading Fermi-Dirac KRb to Origin")
                 return 1
             else:
-                if "Fermi" in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
-                    print("Uploading Fermi-Dirac KRb to Origin")
+                if "Gauss" not in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
+                    print("Uploading KRb to Origin")
                     upload2Origin("KRb", self.fitK.fitFunction, KProcess.data)
                     print("Done uploading Fermi-Dirac KRb to Origin")
                 else:
-                    print("Uploading |0,0> KRb to Origin")
+                    print("Uploading KRb to Origin")
                     upload2Origin("KRbFKGauss1", self.fitK.fitFunction, KProcess.data)
                     print("Done uploading |0,0> KRb to Origin")
                 return 1

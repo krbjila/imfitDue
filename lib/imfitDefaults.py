@@ -34,6 +34,7 @@ KRB_FIT_FUNCTIONS = [
     "Fermi-Dirac",
     "Fermi-Dirac 2D",
     "Fermi-Dirac 2D Int",
+    "Integrate",
 ]
 NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -49,6 +50,7 @@ NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian",
     "Fermi-Dirac",
     "Fermi-Dirac 2D Int",
+    "Integrate",
 ]
 WORKSHEET_NAMES = [
     "GaussGrad",
