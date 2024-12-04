@@ -23,7 +23,7 @@ FIT_FUNCTIONS = [
     "Fermi-Dirac 2D",
     "Fermi-Dirac 2D Int",
     "Thomas-Fermi",
-    "Integrate"
+    "Integrate",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -71,9 +71,9 @@ DEFAULT_MODE = "Side iXon"
 MAX_OD_FIT = 1e9
 
 CSAT = {
-    "axial": {"K": 2970, "Rb": 2882}, # not calibrated for a while
-    "side": {"K": 2955, "Rb": 3276}, # calibrated 12/02/2024
-    "vertical": {"K": 691, "Rb": 396}, # calibrated 12/01/2024
+    "axial": {"K": 2970, "Rb": 2882},  # not calibrated for a while
+    "side": {"K": 2955, "Rb": 3276},  # calibrated 12/02/2024
+    "vertical": {"K": 249, "Rb": 396},  # calibrated 12/01/2024
 }
 
 # TODO: Check these!
@@ -81,7 +81,11 @@ CSAT = {
 NA = {"axial": 0.12, "side": 0.20, "vertical": 0.5}
 
 # Pixel size (um)
-PX_SIZE = {"axial": 2.58, "side": 1.718, "vertical": 0.92} #vertical pixel size calibrated on Dec.01.2024
+PX_SIZE = {
+    "axial": 2.58,
+    "side": 1.718,
+    "vertical": 0.92,
+}  # vertical pixel size calibrated on Dec.01.2024
 
 # TODO: Check these!
 # Resonant cross section at I/Isat = 0, in um^2
@@ -430,7 +434,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["vertical"],
                 "Species": ["|0,0>", "|1,0>"],
                 "Image Path": "Vertical",
-                "Default Region": [[203, 587, 200, 200], [203, 587, 200, 200]],
+                "Default Region": [[224, 641, 200, 200], [224, 641, 200, 200]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": KRB_FIT_FUNCTIONS,
                 "Enforce same fit for both": True,
