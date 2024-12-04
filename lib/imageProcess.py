@@ -86,7 +86,7 @@ class calcOD:
             # Detuning; assumed to be zero
             delta = 0
             # Fraction of fluorescence collected
-            Omega = 4 * np.pi * np.sin(np.arcsin(self.config["NA"]) / 2) ** 2
+            Omega = np.pi*(1 - np.sqrt(1 - self.config["NA"]**2))
             # Resonant cross section at I/Isat = 0, in um^2
             sigma0 = SIGMA_0[self.species]
 
@@ -806,7 +806,7 @@ class fitOD:
 
             pUpper = [
                 np.inf,
-                15.0,
+                100.0,
                 np.max(r[0]),
                 len(r[0]),
                 np.max(r[1]),
