@@ -72,13 +72,15 @@ MAX_OD_FIT = 1e9
 
 CSAT = {
     "axial": {"K": 2970, "Rb": 2882},  # not calibrated for a while
-    "side": {"K": 2955, "Rb": 3276},  # calibrated 12/02/2024
+    "side": {"K": 2955, "Rb": 3276},  # {"K": 2072, "Rb": 2201} 12/10/2024; {"K": 2955, "Rb": 3276} calibrated 12/02/2024
     "vertical": {"K": 249, "Rb": 396},  # calibrated 12/01/2024
 }
 
 # TODO: Check these!
 # Numerical aperture
 NA = {"axial": 0.12, "side": 0.20, "vertical": 0.5}
+
+TOP_CAMERA_ANGLE = 27.7 #27.7 degree, calibrated on 12.12.2024
 
 # Pixel size (um)
 PX_SIZE = {
@@ -101,7 +103,7 @@ SIGMA_0 = {
 # Transfer efficiency
 EFF_K = 1
 EFF_Rb = 1
-EFF_GSM = 0.82 * 0.7
+EFF_GSM = 0.83 * 0.9
 EFF = {
     "K": EFF_K,
     "Rb": EFF_Rb,
@@ -420,7 +422,7 @@ IMFIT_MODES = OrderedDict(
                     },
                     "Rb": {"Shadow": 3, "Light": 4, "Dark": 5},
                 },
-                "Fit angle": 32.0,  # Deg, Twisted Gaussian fit
+                "Fit angle": TOP_CAMERA_ANGLE,  # Deg, Twisted Gaussian fit
                 "CSat": CSAT["vertical"],  # Unbinned effective C_sat,
                 "NA": NA["vertical"],
             },
@@ -449,7 +451,7 @@ IMFIT_MODES = OrderedDict(
                     },
                     "|1,0>": {"Shadow": 3, "Light": 4, "Dark": 5},
                 },
-                "Fit angle": 32.0,  # Deg, Twisted Gaussian fit
+                "Fit angle": TOP_CAMERA_ANGLE,  # Deg, Twisted Gaussian fit
                 "CSat": {
                     "|0,0>": CSAT["vertical"]["K"],
                     "|1,0>": CSAT["vertical"]["K"],
