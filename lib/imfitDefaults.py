@@ -38,6 +38,7 @@ KRB_FIT_FUNCTIONS = [
 ]
 NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
+    "Rotated Gaussian",
     "Gaussian",
     "Bigaussian",
     "Fermi-Dirac",
@@ -73,7 +74,7 @@ MAX_OD_FIT = 1e9
 CSAT = {
     "axial": {"K": 2970, "Rb": 2882},  # not calibrated for a while
     "side": {"K": 2955, "Rb": 3276},  # {"K": 2072, "Rb": 2201} 12/10/2024; {"K": 2955, "Rb": 3276} calibrated 12/02/2024
-    "vertical": {"K": 249, "Rb": 396},  # calibrated 12/01/2024
+    "vertical": {"K": 490, "Rb": 1300},  # Calibrated 12/17/24
 }
 
 # TODO: Check these!
@@ -144,35 +145,35 @@ IMFIT_MODES = OrderedDict(
                 "NA": NA["side"],
             },
         ),
-        # (
-        #     "Axial iXon",
-        #     {
-        #         ### Mode 1 - Axial iXon
-        #         "Default Path": DEFAULT_PATH + "Andor/",
-        #         "Default Suffix": "ixon_{}.npz",
-        #         "Pixel Size": PX_SIZE["axial"],
-        #         "Species": ["K", "Rb"],
-        #         "Image Path": "Axial",
-        #         "Default Region": [[140, 215, 250, 250], [130, 355, 350, 350]],
-        #         "Extension Filter": "*.npz",
-        #         "Fit Functions": FIT_FUNCTIONS,
-        #         "Enforce same fit for both": False,
-        #         "Auto Detect Binning": True,
-        #         "Array Width": 512,
-        #         "Number of Frames": 6,
-        #         "Frame Order": {
-        #             "K": {
-        #                 "Shadow": 0,
-        #                 "Light": 1,
-        #                 "Dark": 2,
-        #             },
-        #             "Rb": {"Shadow": 3, "Light": 4, "Dark": 5},
-        #         },
-        #         "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
-        #         "CSat": CSAT["axial"],  # Unbinned effective C_sat
-        #         "NA": NA["axial"],
-        #     },
-        # ),
+        (
+            "Axial iXon",
+            {
+                ### Mode 1 - Axial iXon
+                "Default Path": DEFAULT_PATH + "Andor/",
+                "Default Suffix": "ixon_{}.npz",
+                "Pixel Size": PX_SIZE["axial"],
+                "Species": ["K", "Rb"],
+                "Image Path": "Axial",
+                "Default Region": [[140, 215, 250, 250], [130, 355, 350, 350]],
+                "Extension Filter": "*.npz",
+                "Fit Functions": FIT_FUNCTIONS,
+                "Enforce same fit for both": False,
+                "Auto Detect Binning": True,
+                "Array Width": 512,
+                "Number of Frames": 6,
+                "Frame Order": {
+                    "K": {
+                        "Shadow": 0,
+                        "Light": 1,
+                        "Dark": 2,
+                    },
+                    "Rb": {"Shadow": 3, "Light": 4, "Dark": 5},
+                },
+                "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
+                "CSat": CSAT["axial"],  # Unbinned effective C_sat
+                "NA": NA["axial"],
+            },
+        ),
         (
             "Side iXon Molecules In Situ",
             {
@@ -182,7 +183,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["side"],
                 "Species": ["|0,0>", "|1,0>"],
                 "Image Path": "Side",
-                "Default Region": [[229, 316, 85, 35], [229, 316, 85, 35]],
+                "Default Region": [[186, 376, 150, 50], [186, 376, 150, 50]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": NONTWISTED_KRB_FIT_FUNCTIONS,
                 "Enforce same fit for both": True,
@@ -215,7 +216,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["side"],
                 "Species": ["|0,0>", "|1,0>"],
                 "Image Path": "Side",
-                "Default Region": [[229, 400, 200, 400], [229, 400, 50, 50]],
+                "Default Region": [[186, 400, 200, 400], [186, 400, 50, 50]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": NONTWISTED_KRB_FIT_FUNCTIONS,
                 "Enforce same fit for both": True,
