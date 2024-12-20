@@ -274,13 +274,14 @@ def upload2Origin(species, fitFunction, data):
             if (
                 FIT_FUNCTIONS[fitFunction] != "Gaussian w/ Gradient"
                 and FIT_FUNCTIONS[fitFunction] != "Gaussian Fixed"
+                and FIT_FUNCTIONS[fitFunction] != "Gaussian"
             ):
                 # data is an array with [FitResultK, FitResultRb]
                 # trim off the file name for Rb
-                # if not Gaussian w/ Gradient, add extra columns for gradient columns in origin book
-                data = [data[0]] + [0] * 2 + data[1:] + [0] * 2
+                # if not Gaussian w/ Gradient, add extra columns for gradient columns in origin book before the last
+                data = [data[0]] + data[1:-1] + [0.0]*2 + [data[-1]]
             else:
-                data = [data[0]] + [0] * 2 + [data[1]] + data[4:-1] + data[2:4]
+                data = [data[0]] + [0] * 2 + [data[1]] + data[4:-1] + data[2:4] + [0] # add zero for angle
 
             for i, d in enumerate(data):
                 uploadSuccess = orgApp.PutWorksheet(
