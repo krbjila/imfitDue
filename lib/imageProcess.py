@@ -88,7 +88,7 @@ class calcOD:
             # Fraction of fluorescence collected
             Omega = (1 - np.cos(np.arcsin(self.config["NA"])))/2
             # Resonant cross section at I/Isat = 0, in um^2
-            sigma0 = SIGMA_0[self.species]
+            sigma0 = SIGMA_0[self.species] * (2 if self.mode["Image Path"] == "Vertical" else 1) # times 2 for circular polarization
 
             Ceff = self.config["CSat"][self.species]
             bins = self.data.bin

@@ -92,7 +92,7 @@ PX_SIZE = {
 
 # TODO: Check these!
 # Resonant cross section at I/Isat = 0, in um^2
-SIGMA_0_K = 0.5 * 0.2807  # From Tiecke 40K data
+SIGMA_0_K = 0.5 * 0.2807  # From Tiecke 40K data, assuming pi polarization
 SIGMA_0_Rb = 0.5 * 0.2907  # From Steck 87Rb data, table 7, assuming pi polarization
 SIGMA_0 = {
     "K": SIGMA_0_K,
