@@ -38,7 +38,6 @@ KRB_FIT_FUNCTIONS = [
 ]
 NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
-    "Rotated Gaussian",
     "Gaussian",
     "Bigaussian",
     "Fermi-Dirac",
@@ -125,7 +124,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["side"],
                 "Species": ["K", "Rb"],
                 "Image Path": "Side",
-                "Default Region": [[140, 215, 250, 250], [120, 200, 240, 450]],
+                "Default Region": [[94, 242, 200, 200], [94, 396, 150, 150]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": NONTWISTED_FIT_FUNCTIONS,
                 "Enforce same fit for both": False,
