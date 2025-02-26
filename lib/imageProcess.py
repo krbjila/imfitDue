@@ -80,7 +80,11 @@ class calcOD:
 
             s1 = shadowCrop - darkCrop
             s2 = lightCrop - darkCrop
+
             self.OD = -np.log(s1 / s2)
+
+            OD_sat_eff = self.config.get("ODSat", {}).get(self.species, np.inf)
+            self.OD_mod = -np.log((1 + np.exp(-OD_sat_eff)) * np.exp(-self.OD) - np.exp(-OD_sat_eff))
 
             # Correct OD for fluorescence and saturation
             # Detuning; assumed to be zero
@@ -94,7 +98,7 @@ class calcOD:
             bins = self.data.bin
             Ceff *= float(bins**2)
 
-            self.ODCorrected = (self.OD + (s2 - s1) / Ceff) / (1 - Omega)
+            self.ODCorrected = (self.OD_mod + (s2 - s1) / Ceff) / (1 - Omega)
 
             # Set all nans and infs to zero
             self.ODCorrected[np.isnan(self.ODCorrected)] = 0

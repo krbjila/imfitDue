@@ -1,4 +1,5 @@
 import datetime
+import numpy as np
 
 # from matplotlib.pyplot import autoscale
 now = datetime.datetime.now()
@@ -76,6 +77,13 @@ CSAT = {
     "vertical": {"K": 490, "Rb": 1300},  # Calibrated 12/17/24
 }
 
+# https://nbi.ku.dk/english/theses/phd-theses/andrew-hilliard/Andrew_Hilliard.pdf 4.2.2
+ODSAT = {
+    "axial": {"K": np.inf, "Rb": np.inf},
+    "side": {"K": np.inf, "Rb": np.inf},
+    "vertical": {"K": np.inf, "Rb": np.inf},
+}
+
 # TODO: Check these!
 # Numerical aperture
 NA = {"axial": 0.12, "side": 0.20, "vertical": 0.5}
@@ -141,6 +149,7 @@ IMFIT_MODES = OrderedDict(
                 },
                 "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
                 "CSat": CSAT["side"],  # Unbinned effective C_sat
+                "ODSat": ODSAT["side"],
                 "NA": NA["side"],
             },
         ),
@@ -170,6 +179,7 @@ IMFIT_MODES = OrderedDict(
                 },
                 "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
                 "CSat": CSAT["axial"],  # Unbinned effective C_sat
+                "ODSat": ODSAT["axial"],
                 "NA": NA["axial"],
             },
         ),
@@ -202,6 +212,10 @@ IMFIT_MODES = OrderedDict(
                     "|0,0>": CSAT["side"]["K"],
                     "|1,0>": CSAT["side"]["K"],
                 },  # Unbinned effective C_sat,
+                "ODSat": {
+                    "|0,0>": ODSAT["side"]["K"],
+                    "|1,0>": ODSAT["side"]["K"],
+                },
                 "NA": NA["side"],
                 "Allow fit both states": True,
             },
@@ -232,9 +246,13 @@ IMFIT_MODES = OrderedDict(
                 },
                 "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
                 "CSat": {
-                    "|0,0>": CSAT["axial"]["K"],
-                    "|1,0>": CSAT["axial"]["K"],
+                    "|0,0>": CSAT["side"]["K"],
+                    "|1,0>": CSAT["side"]["K"],
                 },  # Unbinned effective C_sat,
+                "ODSat": {
+                    "|0,0>": ODSAT["side"]["K"],
+                    "|1,0>": ODSAT["side"]["K"],
+                },
                 "NA": NA["side"],
                 "Allow fit both states": False,
             },
@@ -424,6 +442,7 @@ IMFIT_MODES = OrderedDict(
                 },
                 "Fit angle": TOP_CAMERA_ANGLE,  # Deg, Twisted Gaussian fit
                 "CSat": CSAT["vertical"],  # Unbinned effective C_sat,
+                "CSat": ODSAT["vertical"],  # Unbinned effective C_sat,
                 "NA": NA["vertical"],
             },
         ),
@@ -456,6 +475,10 @@ IMFIT_MODES = OrderedDict(
                     "|0,0>": CSAT["vertical"]["K"],
                     "|1,0>": CSAT["vertical"]["K"],
                 },  # Unbinned effective C_sat,
+                "ODSat": {
+                    "|0,0>": ODSAT["vertical"]["K"],
+                    "|1,0>": ODSAT["vertical"]["K"],
+                },
                 "NA": NA["vertical"],
                 "Allow fit both states": True,
             },
