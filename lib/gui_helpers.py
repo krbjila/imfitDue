@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
+from matplotlib.patches import Rectangle
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -95,7 +96,7 @@ class ImageWindows(QtWidgets.QWidget):
         frame = str(self.plotTools.frameSelect.currentText())
         self.signalFrameChanged.emit(frame)
 
-    def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None):
+    def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None, box=None):
         colorMap = KRbCustomColors().whiteJet
         try:
             levelLow = float(self.plotTools.odMinEdit.text())
@@ -132,6 +133,16 @@ class ImageWindows(QtWidgets.QWidget):
                 self.ax0.plot(x, ch0, color=[0.75, 0, 0, 0.75])
             if ch1 is not None:
                 self.ax0.plot(ch1, y, color=[0, 0.5, 0, 0.75])
+            if box is not None:
+                self.ax0.add_patch(
+                    Rectangle(
+                        (box[0][0], box[1][0]),
+                        box[0][1] - box[0][0],
+                        box[1][1] - box[1][0],
+                        edgecolor="0.5",
+                        facecolor="none",
+                    )
+                )
 
         try:
             self.mainImage.set_clim(levelLow, self.plotTools.sliderOd())
@@ -147,7 +158,7 @@ class ImageWindows(QtWidgets.QWidget):
 
             for k in range(len(Lx)):
                 try:
-                    plotStyles = ["ok", "r"]
+                    plotStyles = ["ok", "r", "b"]
                     self.ax1.plot(x, Lx[k], plotStyles[k])
                 except Exception as e:
                     print("Could not plot x slice: {}".format(e))
@@ -442,6 +453,7 @@ class pathWidget(QtWidgets.QWidget):
         v.addLayout(h2)
 
         self.setLayout(v)
+        self.camChanged()
 
     def browseFile(self):
 
