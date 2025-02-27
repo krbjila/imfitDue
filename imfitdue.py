@@ -83,9 +83,12 @@ class imfitDue(QtWidgets.QMainWindow):
         self.figs.plotTools.atomSelectGroup.buttonClicked.connect(self.plotCurrent)
         self.figs.signalFrameChanged.connect(self.frameChanged)
 
-        for i in range(2):
+        for i in range(4):
             for j in range(4):
                 self.roi.region[i][j].returnPressed.connect(self.currentODCalc)
+        for i in range(2):
+            self.roi.bgCheck[i].clicked.connect(self.currentODCalc)
+            self.roi.bgInside[i].clicked.connect(self.currentODCalc)
 
         self.av.averageButton.clicked.connect(self.averageImages)
         self.fo.uploadButton.clicked.connect(self.process2Origin)
@@ -142,8 +145,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
         species = IMFIT_MODES[self.mode]["Species"]
         try:
-            self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.bgK, self.roi.bgInside[0].isChecked())
-            self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.bgRb, self.roi.bgInside[1].isChecked())
+            self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.bgK if self.roi.bgCheck[0].isChecked() else None, self.roi.bgInside[0].isChecked())
+            self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.bgRb if self.roi.bgCheck[1].isChecked() else None, self.roi.bgInside[1].isChecked())
         except Exception as e:
             print("Could not calculate OD: {}".format(e))
 
