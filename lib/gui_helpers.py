@@ -135,10 +135,11 @@ class ImageWindows(QtWidgets.QWidget):
                 self.ax0.plot(ch1, y, color=[0, 0.5, 0, 0.75])
             if box is not None:
                 self.ax0.add_patch(
+                    #box: [xc, yc, width, height]
                     Rectangle(
-                        (box[0][0], box[1][0]),
-                        box[0][1] - box[0][0],
-                        box[1][1] - box[1][0],
+                        (box[0] - box[2] / 2, box[1] - box[3] / 2),
+                        box[2],
+                        box[3],
                         edgecolor="0.5",
                         facecolor="none",
                     )
@@ -354,6 +355,7 @@ class regionWidget(QtWidgets.QWidget):
         topLabels = ["XC", "YC", "CrX", "CrY"]
         # sideLabels = ATOM_NAMES
         sideLabels = IMFIT_MODES[DEFAULT_MODE]["Species"]
+        sideLabels += [i + " BG" for i in IMFIT_MODES[DEFAULT_MODE]["Species"]]
 
         font = QtGui.QFont()
         font.setBold(True)
@@ -365,28 +367,52 @@ class regionWidget(QtWidgets.QWidget):
             x = QtWidgets.QLabel(topLabels[k])
             x.setFont(font)
             self.grid.addWidget(x, 0, k + 1, 1, 1)
-        for k in range(2):
+        for k in range(4):
             x = QtWidgets.QLabel(sideLabels[k])
             self.atom_labels.append(x)
             x.setFont(font)
             self.grid.addWidget(x, k + 1, 0, 1, 1)
 
-        self.region = [[0] * 4, [0] * 4]
+        self.region = [[0] * 4, [0] * 4, [0] * 4, [0] * 4]
 
-        for i in range(2):
+        for i in range(4):
             for j in range(4):
-                self.region[i][j] = QtWidgets.QLineEdit(
-                    str(IMFIT_MODES[DEFAULT_MODE]["Default Region"][i][j])
-                )
+                if i < 2:
+                    self.region[i][j] = QtWidgets.QLineEdit(
+                        str(IMFIT_MODES[DEFAULT_MODE]["Default Region"][i][j])
+                    )
+                else:
+                    self.region[i][j] = QtWidgets.QLineEdit(
+                        str(IMFIT_MODES[DEFAULT_MODE]["Default Background"][i - 2][j])
+                    )
                 self.region[i][j].setValidator(QtGui.QIntValidator())
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j], i + 1, j + 1, 1, 1)
+
+        # add background subtraction checkboxes
+        self.bgCheck = [0,0]
+        self.bgInside = [0,0]
+        for i in range(2):
+            self.bgCheck[i] = QtWidgets.QCheckBox("Subtract BG?")
+            self.bgCheck[i].setToolTip("Subtract background from {}?".format(IMFIT_MODES[DEFAULT_MODE]["Species"][i]))
+            self.bgCheck[i].setChecked(True)
+            self.grid.addWidget(self.bgCheck[i], i + 1, 5, 1, 1)
+            self.bgInside[i] = QtWidgets.QCheckBox("Inside?")
+            self.bgInside[i].setToolTip("Background from inside the region if checked, outside if unchecked")
+            self.bgInside[i].setChecked(False)
+            self.grid.addWidget(self.bgInside[i], i + 3, 5, 1, 1)
+        
 
         self.setLayout(self.grid)
 
     def setDefaultRegion(self, mode):
         try:
             region = IMFIT_MODES[mode]["Default Region"]
+            if "Default Background" in IMFIT_MODES[mode]:
+                background = IMFIT_MODES[mode]["Default Background"]
+            else:
+                # make background 80% of region size at same center position
+                background = [[region[i][0], region[i][1], round(region[i][2]*0.8), round(region[i][3]*0.8)] for i in range(2)]
         except AttributeError:
             print("regionWidget.setDefaultRegion error: requested mode doesn't exist")
             return -1
@@ -394,6 +420,8 @@ class regionWidget(QtWidgets.QWidget):
         for i in range(2):
             for j in range(4):
                 self.region[i][j].setText(str(region[i][j]))
+                self.region[i + 2][j].setText(str(background[i][j]))
+                
         return 0
 
 

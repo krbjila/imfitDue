@@ -27,6 +27,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
         self.regionRb = [0] * 4
         self.regionK = [0] * 4
+        self.bgRb = [0] * 4
+        self.bgK = [0] * 4
 
         self.initializeGui()
         self.createToolbar()
@@ -134,11 +136,14 @@ class imfitDue(QtWidgets.QMainWindow):
         for i in range(4):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
+            self.bgK[i] = float(self.roi.region[2][i].text())
+            self.bgRb[i] = float(self.roi.region[3][i].text())
+            
 
         species = IMFIT_MODES[self.mode]["Species"]
         try:
-            self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
-            self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+            self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.bgK, self.roi.bgInside[0].isChecked())
+            self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.bgRb, self.roi.bgInside[1].isChecked())
         except Exception as e:
             print("Could not calculate OD: {}".format(e))
 
@@ -352,6 +357,8 @@ class imfitDue(QtWidgets.QMainWindow):
             x = self.odK.xRange0
             y = self.odK.xRange1
 
+            box = self.bgK
+
             try:
                 ch0 = self.fitK.slices.ch0
                 ch1 = self.fitK.slices.ch1
@@ -363,10 +370,6 @@ class imfitDue(QtWidgets.QMainWindow):
                 R = self.fitK.slices.radSlice
                 RG = self.fitK.slices.radSliceFitGauss
                 RF = self.fitK.slices.radSliceFit
-                if hasattr(self.fitK, "box"):
-                    box = self.fitK.box
-                else:
-                    box = None
             except Exception as e:
                 ch0 = None
                 ch1 = None
@@ -374,7 +377,6 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sy = None
                 Fx = None
                 Fy = None
-                box = None
 
                 R = None
                 RG = None
@@ -382,7 +384,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
 
-                print(e)
+                print("Could not plot K slice: {}".format(e))
 
             if self.frame == "OD":
                 image = self.odK.ODCorrected
@@ -411,6 +413,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
             x = self.odRb.xRange0
             y = self.odRb.xRange1
+            box = self.bgRb
 
             try:
                 ch0 = self.fitRb.slices.ch0
@@ -430,10 +433,6 @@ class imfitDue(QtWidgets.QMainWindow):
                 else:
                     FyGauss = None
 
-                if hasattr(self.fitRb, "box"):
-                    box = self.fitRb.box
-                else:
-                    box = None
             except Exception as e:
                 ch0 = None
                 ch1 = None
@@ -443,10 +442,9 @@ class imfitDue(QtWidgets.QMainWindow):
                 Fy = None
                 FxGauss = None
                 FyGauss = None
-                box = None
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
-                print(e)
+                print("Could not plot Rb slice: {}".format(e))
 
             if self.frame == "OD":
                 image = self.odRb.ODCorrected

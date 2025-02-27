@@ -18,9 +18,9 @@ from scipy import ndimage as ndimage
 
 class calcOD:
 
-    def __init__(self, data, species, mode, region=[]):
+    def __init__(self, data, species, mode, region=[], bg=None, bg_inside=False):
 
-        ### Note that the region is passed as [x0, y0, xcrop, ycrop]
+        ### Note that the region and background are passed as [x0, y0, xcrop, ycrop]
         ### Crop is symmetric about center (x0,y0)
 
         self.data = data
@@ -30,6 +30,8 @@ class calcOD:
         self.mode = mode
         self.config = IMFIT_MODES[mode]
         self.species = species
+        self.bg = bg
+        self.bg_inside = bg_inside
 
         if len(region) == 4:
             self.xCenter0 = region[0]
@@ -39,19 +41,6 @@ class calcOD:
             self.updateAll()
         else:
             print("The region of interest was not properly defined.")
-
-        # if checkAtom(species) < 0:
-        #     pass
-        # else:
-        #     self.atom = checkAtom(species)
-        #     if len(region) == 4:
-        #         self.xCenter0 = region[0]
-        #         self.xCenter1 = region[1]
-        #         self.xCrop0 = region[2]
-        #         self.xCrop1 = region[3]
-        #         self.updateAll()
-        #     else:
-        #         print('The region of interest was not properly defined.')
 
     def setRegion(self, region):
         if len(region) == 4:
@@ -80,6 +69,28 @@ class calcOD:
 
             s1 = shadowCrop - darkCrop
             s2 = lightCrop - darkCrop
+
+            if self.bg is not None:
+                bg_reg = calcOD.calcROI(self.bg[0], self.bg[1], self.bg[2], self.bg[3], self.data)
+                if bg_reg != -1:
+                    bg_range_0 = bg_reg[0]
+                    bg_range_1 = bg_reg[1]
+
+                    if self.bg_inside:
+                        bg_mask = np.zeros_like(light, dtype=bool)
+                        bg_mask[bg_range_1[0]:bg_range_1[-1], bg_range_0[0]:bg_range_0[-1]] = True
+                    else:
+                        bg_mask = np.ones_like(light, dtype=bool)
+                        bg_mask[bg_range_1[0]:bg_range_1[-1], bg_range_0[0]:bg_range_0[-1]] = False
+                    bg_mask = cropArray(bg_mask, self.xRange1, self.xRange0)
+                    self.bg_mask = bg_mask
+
+                    s1_bg_avg = np.mean(s1[bg_mask])
+                    s2_bg_avg = np.mean(s2[bg_mask])
+                    s2 = s2 * s1_bg_avg / s2_bg_avg  # scale s2 to match s1 background
+                else:
+                    print("The background subtraction region was not properly defined. Proceeding without background subtraction.")
+                    self.bg_mask = None
 
             self.OD = -np.log(s1 / s2)
 
@@ -118,33 +129,41 @@ class calcOD:
             self.nerr[np.isnan(self.nerr)] = 0
             self.nerr[np.isinf(self.nerr)] = 0
 
-    def defineROI(self):
-        if self.xCenter0 > self.data.hImgSize or self.xCenter0 < 0:
+    def calcROI(xCenter0, xCenter1, xCrop0, xCrop1, data):
+        if xCenter0 > data.hImgSize or xCenter0 < 0:
             print("The horizontal center is out of range.")
             return -1
-        elif self.xCenter1 > self.data.vImgSize or self.xCenter1 < 0:
+        elif xCenter1 > data.vImgSize or xCenter1 < 0:
             print("The vertical center is out of range.")
             return -1
 
-        r0 = int(self.xCenter0 - np.floor(self.xCrop0 / 2))
-        r1 = int(self.xCenter0 + np.floor(self.xCrop0 / 2))
-        r2 = int(self.xCenter1 - np.floor(self.xCrop1 / 2))
-        r3 = int(self.xCenter1 + np.floor(self.xCrop1 / 2))
+        r0 = int(xCenter0 - np.floor(xCrop0 / 2))
+        r1 = int(xCenter0 + np.floor(xCrop0 / 2))
+        r2 = int(xCenter1 - np.floor(xCrop1 / 2))
+        r3 = int(xCenter1 + np.floor(xCrop1 / 2))
 
         if r0 < 0:
             r0 = 0
 
-        if r1 > self.data.hImgSize:
-            r1 = self.data.hImgSize
+        if r1 > data.hImgSize:
+            r1 = data.hImgSize - 1
 
         if r2 < 0:
             r2 = 0
 
-        if r3 > self.data.vImgSize:
-            r3 = self.data.vImgSize
+        if r3 > data.vImgSize:
+            r3 = data.vImgSize - 1
 
-        self.xRange0 = range(r0, r1)
-        self.xRange1 = range(r2, r3)
+        return range(r0, r1), range(r2, r3)
+
+    def defineROI(self):
+        ROI = calcOD.calcROI(self.xCenter0, self.xCenter1, self.xCrop0, self.xCrop1, self.data)
+        if ROI != -1:
+            self.xRange0 = ROI[0]
+            self.xRange1 = ROI[1]
+        else:
+            print("The region of interest was not properly defined.")
+            return -1
 
 
 class fitOD:
@@ -1110,16 +1129,10 @@ class fitOD:
 
         elif self.fitFunction == FIT_FUNCTIONS.index("Integrate"):
             # Integration of number from computed column density
+            # Exclude the background from the integration
 
-            # Calculate average number density in border and subtract from rest of image
-            border = int(max(min(self.odImage.n.shape) / 10, 5))
-            border_mask = np.ones(self.odImage.n.shape)
-            border_mask[border:-border, border:-border] = 0
-            offset = np.sum(self.odImage.n * border_mask) / np.sum(border_mask)
-            self.odImage.n -= offset
-
-            interior = self.odImage.n[border:-border, border:-border]
-            interior_err = self.odImage.nerr[border:-border, border:-border]
+            interior = self.odImage.n * ~self.odImage.bg_mask
+            interior_err = self.odImage.nerr * ~self.odImage.bg_mask
 
             # Compute the number by summing the pixels and multiplying by the pixel area
 
@@ -1136,12 +1149,6 @@ class fitOD:
             xc = np.sum(interior.sum(axis=0) * xrange) / raw_number
             yc = np.sum(interior.sum(axis=1) * yrange) / raw_number
 
-            # Box size for plotting
-            self.box = [
-                [self.odImage.xRange0.start + border, self.odImage.xRange0.stop - border],
-                [self.odImage.xRange1.start + border, self.odImage.xRange1.stop - border],
-            ]
-
             # These calculations of moments aren't exact, since the contents of the square root can be negative since the column density can be negative in some pixels.
             # Therefore, all pixels less than 10 percent of the peak are dropped.
             sumx = interior.sum(axis=0)
@@ -1157,9 +1164,6 @@ class fitOD:
                 / np.sum(sumy[sumy > miny])
             )
 
-            xc += border + self.odImage.xRange0.start
-            yc += border + self.odImage.xRange1.start
-
             xc = min(max(self.odImage.xRange0.start, xc), self.odImage.xRange0.stop - 1)
             yc = min(max(self.odImage.xRange1.start, yc), self.odImage.xRange1.stop - 1)
 
@@ -1171,7 +1175,7 @@ class fitOD:
                 print("Sigma y invalid: setting to zero.")
                 sigy = 0
 
-            self.fitData = [offset, number, error, xc, yc, sigx, sigy]
+            self.fitData = [0, number, error, xc, yc, sigx, sigy]
             self.fitDataConf = None
             self.fittedImage = None
 

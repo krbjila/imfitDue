@@ -133,6 +133,7 @@ IMFIT_MODES = OrderedDict(
                 "Species": ["K", "Rb"],
                 "Image Path": "Side",
                 "Default Region": [[94, 242, 200, 200], [94, 396, 150, 150]],
+                "Default Background": [[94, 242, 150, 150], [94, 396, 100, 100]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": NONTWISTED_FIT_FUNCTIONS,
                 "Enforce same fit for both": False,
