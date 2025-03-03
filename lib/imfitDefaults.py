@@ -103,7 +103,8 @@ SIGMA_0 = {
 # Transfer efficiency
 EFF_K = 1
 EFF_Rb = 1
-EFF_GSM = 0.83 * 0.9
+EFF_GSM = 0.86 * 0.79   # Feshbach imaging x 4.5 kV/cm STIRAP eff
+#EFF_GSM = 0.83 * 0.9 # Feshbach imaging x at zero field
 EFF = {
     "K": EFF_K,
     "Rb": EFF_Rb,
@@ -141,6 +142,35 @@ IMFIT_MODES = OrderedDict(
                 },
                 "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
                 "CSat": CSAT["side"],  # Unbinned effective C_sat
+                "NA": NA["side"],
+            },
+        ),
+        (
+            "Side iXon SG", # Stern-Gerlach imaging - slightly hacky imaging of other K location on Rb frame.
+            {
+                ### Mode 1 - Side iXon
+                "Default Path": DEFAULT_PATH + "Andor/",
+                "Default Suffix": "ixon_{}.npz",
+                "Pixel Size": PX_SIZE["side"],
+                "Species": ["K", "K"],
+                "Image Path": "Side",
+                "Default Region": [[105, 177, 200, 50], [105, 225, 200, 50]],
+                "Extension Filter": "*.npz",
+                "Fit Functions": NONTWISTED_FIT_FUNCTIONS,
+                "Enforce same fit for both": False,
+                "Auto Detect Binning": True,
+                "Array Width": 512,
+                "Number of Frames": 6,
+                "Frame Order": {
+                    "K": {
+                        "Shadow": 0,
+                        "Light": 3,
+                        "Dark": 5,
+                    },
+                    "K": {"Shadow": 0, "Light": 3, "Dark": 5},
+                },
+                "Fit angle": 0.0,  # Deg, Twisted Gaussian fit
+                "CSat": {"K": 1200, "Rb": 1200},#CSAT["side"],  # Unbinned effective C_sat
                 "NA": NA["side"],
             },
         ),
