@@ -188,7 +188,7 @@ def upload2Origin(species, fitFunction, data):
     if fitFunction != -1:
         worksheetName = species + WORKSHEET_NAMES[fitFunction]
         longname = species + " " + FIT_FUNCTIONS[fitFunction]
-
+        print(worksheetName)
         if species == "KRbSpinGauss" and "Gaussian" in FIT_FUNCTIONS[fitFunction]:
             template = "KRbSpinGauss"
             worksheetName = "KRbSpinGauss1"

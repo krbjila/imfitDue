@@ -30,6 +30,54 @@ def gaussian(p, r, y, mask_above=np.inf):
     ) * mask.ravel()
 
 
+# Gaussian with Gradient; Mask above a certain radius
+def gaussian_mask_sigma(
+    p,
+    r,
+    y,
+    mask_radius_x=50, # should be 1E-6 for default, 10 for testing
+    mask_radius_y=50,
+    x0_mask=0,
+    y0_mask=0,
+    theta_mask=0,
+):
+    ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis, yaxis)
+
+    XR = X * np.cos(p[6]) - Y * np.sin(p[6])
+    YR = X * np.sin(p[6]) + Y * np.cos(p[6])
+
+    x0R = p[2] * np.cos(p[6]) - p[4] * np.sin(p[6])
+    y0R = p[2] * np.sin(p[6]) + p[4] * np.cos(p[6])
+
+    z = np.ravel(
+        p[0]
+        + p[1]
+        * np.exp(
+            -((XR - x0R) ** 2.0) / (2.0 * p[3] ** 2.0)
+            - (YR - y0R) ** 2.0 / (2.0 * p[5] ** 2.0)
+        )
+        + p[7] * (XR - x0R)
+        + p[8] * (YR - y0R)
+    )
+
+    XR_mask = (X - x0_mask) * np.cos(theta_mask) - (Y - y0_mask) * np.sin(
+        theta_mask
+    )
+    YR_mask = (X - x0_mask) * np.sin(theta_mask) + (Y - y0_mask) * np.cos(
+        theta_mask
+    )
+
+    QR = (XR_mask) ** 2 / mask_radius_x**2 + (YR_mask) ** 2 / mask_radius_y**2
+
+    mask = np.where(QR > 1, 1, 0)
+
+    return (z - np.ravel(y)) * mask.ravel()
+
+
 def gaussianGradient(p, r, y):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
     xaxis = r[0]

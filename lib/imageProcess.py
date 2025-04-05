@@ -276,6 +276,174 @@ class fitOD:
                 self.slices.points1.append(f(self.odImage.xRange1[k], ch1[k])[0])
                 self.slices.fit1.append(gaussian(resLSQ.x, [ch1[k], r[1][k]], 0)[0])
             self.slices.ch1 = ch1
+        
+        elif self.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma"):
+            # We mask EXCLUSION_RADIUS * initial sigma around the center of the fit
+            EXCLUSION_RADIUS = 1.5
+
+            def subtract_gradient(od):
+                (dy, dx) = np.shape(od)
+                X2D, Y2D = np.meshgrid(np.arange(dx), np.arange(dy))
+                A = np.matrix(
+                    np.column_stack((X2D.ravel(), Y2D.ravel(), np.ones(dx * dy)))
+                )
+                B = od.flatten()
+                C = np.dot((A.T * A).I * A.T, B).flatten()
+                bg = np.reshape(C * A.T, (dy, dx))
+                return np.asarray(od - bg)
+            
+            # Gaussian fit with gradient TO BE UPDATED TO MASK FITTING
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+
+            r = [None, None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+            xmin = np.min(r[0])
+            ymin = np.min(r[1])
+
+            data = self.odImage.ODCorrected
+            od_no_bg = subtract_gradient(data)
+            blur = ndimage.gaussian_filter(od_no_bg, 5, mode="constant")
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+            p0 = [
+                0,
+                M,
+                self.odImage.xRange0[I1],
+                20,
+                self.odImage.xRange1[I0],
+                20,
+                0,
+                0,
+                0,
+            ]
+            pUpper = [
+                np.inf,
+                50.0,
+                np.max(r[0]),
+                len(r[0]),
+                np.max(r[1]),
+                len(r[1]),
+                2*np.pi,
+                40,
+                40,
+            ]
+            pLower = [
+                -np.inf,
+                0.0,
+                np.min(r[0]),
+                0,
+                np.min(r[1]),
+                0,
+                -2*np.pi,
+                -40,
+                -40,
+                ]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            pks = peak_local_max(blur, min_distance=20, exclude_border=2, num_peaks=3)
+            guesses = [p0]
+            for pk in pks:
+                yc = pk[0]
+                xc = pk[1]
+                peak = data[yc, xc]
+                offset = np.mean(data)
+                if peak > 0:
+                    (sigx, sigy) = 15, 15
+                    guess = [offset, peak, xmin + xc, sigx, ymin + yc, sigy, 0, 0.0, 0.0]
+                    guesses.append(checkGuess(guess, pUpper, pLower))
+
+            best_fit = None
+            best_guess = np.inf
+
+            # Initial Gaussian Fit
+            for guess in guesses:
+                try:
+                    # print("Trying guess: {}".format(guess))
+                    res = least_squares(
+                        gaussian_mask_sigma,
+                        guess,
+                        args=(r, self.odImage.ODCorrected),
+                        bounds=(pLower, pUpper),
+                        kwargs={
+                            "mask_radius_x": 1E-6,
+                            "mask_radius_y": 1E-6,
+                            "x0_mask": self.odImage.ODCorrected.shape[1] / 2,
+                            "y0_mask": self.odImage.ODCorrected.shape[0] / 2,
+                            "theta_mask": 0,
+                        }
+                    )
+                    # print("Cost: {}".format(res.cost))
+                    if not res.success:
+                        print("Warning: fit did not converge.")
+                    elif res.cost < best_guess:
+                        best_guess = res.cost
+                        best_fit = res
+                except ValueError as e:
+                    print("Error fitting image: {}".format(e))
+            
+            updated_guess = res.x
+            best_fit = None
+            best_guess = np.inf
+            # print('UPDATED GUESS: {}'.format(updated_guess))
+            try:
+                # print("Trying guess: {}".format(guess))
+                res = least_squares(
+                    gaussian_mask_sigma,
+                    guess,
+                    args=(r, self.odImage.ODCorrected),
+                    bounds=(pLower, pUpper),
+                    kwargs={
+                        "mask_radius_x": EXCLUSION_RADIUS * np.abs(updated_guess[3]),
+                        "mask_radius_y": EXCLUSION_RADIUS * np.abs(updated_guess[5]),
+                        "x0_mask": np.abs(updated_guess[2]),
+                        "y0_mask": np.abs(updated_guess[4]),
+                        "theta_mask": np.abs(updated_guess[6]),
+                    }
+                )
+                # print("Cost: {}".format(res.cost))
+                if not res.success:
+                    print("Warning: fit did not converge.")
+                elif res.cost < best_guess:
+                    best_guess = res.cost
+                    best_fit = res
+            except ValueError as e:
+                print("Error fitting image: {}".format(e))
+
+            resLSQ = best_fit
+            # print("Best fit: {}".format(resLSQ))
+            if resLSQ is not None:
+                self.fitDataConf = confidenceIntervals(resLSQ)
+                self.fitData = resLSQ.x
+                self.fittedImage = gaussian_mask_sigma(resLSQ.x, r, 0,
+                                                       mask_radius_x = EXCLUSION_RADIUS * np.abs(updated_guess[3]),
+                                                       mask_radius_y = EXCLUSION_RADIUS * np.abs(updated_guess[5]),
+                                                       x0_mask = np.abs(updated_guess[2]),
+                                                       y0_mask = np.abs(updated_guess[4]),
+                                                       theta_mask = np.abs(updated_guess[6])
+                        ).reshape(
+                    self.odImage.ODCorrected.shape
+                )
+
+            ### Get radial average
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = [0] * len(self.slices.radSlice)
+
+            ### Calculate slices through fit
+
+            self.slices.points0 = self.odImage.ODCorrected[I1, :]
+            self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1, :]
+
+            self.slices.points1 = self.odImage.ODCorrected[:, I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
+            self.slices.fit1 = self.fittedImage[:, I0]
+
+            print("Done with fit function!")
 
         elif self.fitFunction == FIT_FUNCTIONS.index("Twisted Gaussian"):
 
@@ -1279,6 +1447,38 @@ class processFitResult:
             ]
             self.data_dict = r
 
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index(
+            "Gaussian Mask Sigma"
+        ):
+
+            r = {
+                "offset": self.fitObject.fitData[0],
+                "dODdx": self.fitObject.fitData[7] / self.bin * self.pixelSize,
+                "dODdy": self.fitObject.fitData[8] / self.bin * self.pixelSize,
+                "peakOD": self.fitObject.fitData[1],
+                "x0": self.fitObject.fitData[2],
+                "y0": self.fitObject.fitData[4],
+                "wx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
+                "wy": self.fitObject.fitData[5] * self.bin * self.pixelSize,
+                "angle": self.fitObject.fitData[6],
+            }
+
+            print(r)
+            self.data = [
+                "fileName",
+                r["peakOD"],
+                r["dODdx"],
+                r["dODdy"],
+                r["wx"],
+                r["wy"],
+                r["x0"],
+                r["y0"],
+                r["offset"],
+                r["angle"],
+            ]
+            self.data_dict = r
+        
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index(
             "Gaussian w/ Gradient"
         ) or self.fitObject.fitFunction == FIT_FUNCTIONS.index("Gaussian Fixed"):
