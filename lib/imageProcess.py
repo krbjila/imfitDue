@@ -423,6 +423,31 @@ class fitOD:
                         ).reshape(
                     self.odImage.ODCorrected.shape
                 )
+            
+            # Integration of number from computed column density
+
+            # Calculate average number density in border and subtract from rest of image
+            border = int(max(min(self.odImage.n.shape) / 10, 5))
+            border_mask = np.ones(self.odImage.n.shape)
+            border_mask[border:-border, border:-border] = 0
+            offset = np.sum(self.odImage.n * border_mask) / np.sum(border_mask)
+            self.odImage.n -= offset
+
+            interior = self.odImage.n[border:-border, border:-border]
+            interior_err = self.odImage.nerr[border:-border, border:-border]
+
+            # Compute the number by summing the pixels and multiplying by the pixel area
+
+            raw_number = interior.sum()
+            number = (
+                raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
+
+            error = np.sqrt((interior_err**2).sum()) * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+
+            self.fitData = np.append(self.fitData, number)
+            self.fitData = np.append(self.fitData, error)
+
 
             ### Get radial average
             I0 = self.odImage.xRange0.index(int(self.fitData[2]))
@@ -586,6 +611,30 @@ class fitOD:
                         ).reshape(
                     self.odImage.ODCorrected.shape
                 )
+            
+            # Integration of number from computed column density
+
+            # Calculate average number density in border and subtract from rest of image
+            border = int(max(min(self.odImage.n.shape) / 10, 5))
+            border_mask = np.ones(self.odImage.n.shape)
+            border_mask[border:-border, border:-border] = 0
+            offset = np.sum(self.odImage.n * border_mask) / np.sum(border_mask)
+            self.odImage.n -= offset
+
+            interior = self.odImage.n[border:-border, border:-border]
+            interior_err = self.odImage.nerr[border:-border, border:-border]
+
+            # Compute the number by summing the pixels and multiplying by the pixel area
+
+            raw_number = interior.sum()
+            number = (
+                raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
+
+            error = np.sqrt((interior_err**2).sum()) * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+
+            self.fitData = np.append(self.fitData, number)
+            self.fitData = np.append(self.fitData, error)
 
             ### Get radial average
             I0 = self.odImage.xRange0.index(int(self.fitData[2]))
@@ -1626,6 +1675,8 @@ class processFitResult:
                 "wx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
                 "wy": self.fitObject.fitData[5] * self.bin * self.pixelSize,
                 "angle": self.fitObject.fitData[6],
+                "N": self.fitObject.fitData[9],
+                "Nerr": self.fitObject.fitData[10],
             }
 
             print(r)
@@ -1640,6 +1691,8 @@ class processFitResult:
                 r["y0"],
                 r["offset"],
                 r["angle"],
+                r["N"],
+                r["Nerr"],
             ]
             self.data_dict = r
         
@@ -1658,6 +1711,8 @@ class processFitResult:
                 "wx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
                 "wy": self.fitObject.fitData[5] * self.bin * self.pixelSize,
                 "angle": 0,
+                "N": self.fitObject.fitData[8],
+                "Nerr": self.fitObject.fitData[9],
             }
 
             print(r)
@@ -1672,6 +1727,8 @@ class processFitResult:
                 r["y0"],
                 r["offset"],
                 r["angle"],
+                r["N"],
+                r["Nerr"],
             ]
             self.data_dict = r
         
