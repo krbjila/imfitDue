@@ -25,6 +25,7 @@ FIT_FUNCTIONS = [
     "Thomas-Fermi",
     "Integrate",
     "Gaussian Mask Sigma",
+    "Gaussian Mask Sigma No Rot",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -37,15 +38,18 @@ KRB_FIT_FUNCTIONS = [
     "Fermi-Dirac 2D Int",
     "Integrate",
     "Gaussian Mask Sigma",
+    "Gaussian Mask Sigma No Rot",
 ]
 NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
     "Gaussian",
+    "Gaussian Mask Sigma",
     "Bigaussian",
     "Fermi-Dirac",
     "Fermi-Dirac 2D Int",
     "Thomas-Fermi",
     "Integrate",
+    "Gaussian Mask Sigma No Rot",
 ]
 NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -53,6 +57,8 @@ NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Fermi-Dirac",
     "Fermi-Dirac 2D Int",
     "Integrate",
+    "Gaussian Mask Sigma",
+    "Gaussian Mask Sigma No Rot",
 ]
 WORKSHEET_NAMES = [
     "GaussGrad",
@@ -66,6 +72,7 @@ WORKSHEET_NAMES = [
     "FD2D",
     "ThomasFermi",
     "Integrated",
+    "GaussMask",
     "GaussMask",
 ]
 
