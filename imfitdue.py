@@ -418,7 +418,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     elif self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Fermi-Dirac 2D Int"
                     ):
-                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fy], y, [Sy])
+                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fy], x, [Sy]) # 2nd plot is x instead of y: it's for integration along y so you want to plot the x axis
                     else:
                         self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
 

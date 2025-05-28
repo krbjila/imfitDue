@@ -1367,6 +1367,25 @@ class fitOD:
             m, c = np.linalg.lstsq(A, od_int, rcond=None)[0]
             od_int_no_bg = od_int - (m * np.arange(len(od_int)) + c)
 
+
+            # 2D Gaussian fit
+            # Parameters: [offset, amplitude, x0, wx, y0, wy]
+            # Only to get the center point for the x slice
+            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20]
+            pUpper = [np.inf, 50.0, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1])]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ = least_squares(
+                gaussianNoRot,
+                p0,
+                args=(r, self.odImage.ODCorrected),
+                bounds=(pLower, pUpper),
+            )
+
+            y_for_x_slice = resLSQ.x[4] - r[1][0]
+            x_for_y_slice = resLSQ.x[2] - r[0][0]
+
             # 1D Gaussian fit to integrated OD
             # Parameters: [offset, amplitude, x0, wx]
             est_bg = np.quantile(od_int, 0.1)
@@ -1393,17 +1412,17 @@ class fitOD:
                 args=(np.array(r[0]), od_int),
                 bounds=(pLower, pUpper),
             )
-
+            
             self.fitDataConfGauss = confidenceIntervals(resLSQ)
             self.fitDataGauss = resLSQ.x
             self.fittedImageGauss = gaussian1D(resLSQ.x, np.array(r[0]), 0)
 
             self.slices.points0 = od_int
             self.slices.points1 = self.odImage.ODCorrected[
-                :, round(resLSQ.x[2] - r[1][0])
+                round(y_for_x_slice), : #bug fixed 2025/05/28; vertical slice 
             ]
-            self.slices.ch0 = None
-            self.slices.ch1 = np.ones(len(r[1])) * resLSQ.x[2]
+            self.slices.ch0 = np.ones(len(r[0])) * y_for_x_slice + r[1][0]
+            self.slices.ch1 = None
             self.slices.fit0 = self.fittedImageGauss
 
             # Fermi--Dirac fit
