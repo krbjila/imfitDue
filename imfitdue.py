@@ -186,11 +186,12 @@ class imfitDue(QtWidgets.QMainWindow):
                 for idx, species in enumerate(species_list):
                     frame_list = list(self.currentFile.frames[species].keys())
                     for idy, frame_name in enumerate(frame_list):
-                        cntr = idx * len(frame_list) + idy
                         #Actually put the average image in the current image dict
                         self.currentFile.frames[species][frame_name] = avg_frame_dict[species][frame_name] / float(len(x))
                 
                 self.currentODCalc()
+                self.currentFile.fileName = "Average of " + str(x)
+                print(str(self.currentFile.fileName))
             self.autoloader.is_active = True
         except Exception as e:
             print("Could not average images: {}".format(e))
