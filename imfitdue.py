@@ -153,34 +153,48 @@ class imfitDue(QtWidgets.QMainWindow):
         self.autoloader.is_active = True
         print("Done calculating current OD")
 
-    def averageImages(self):
+    def averageImages(self): # FOR NOW IMPLEMENTING ONLY FOR iXon Side
         self.autoloader.is_active = False
 
         self.pf.autoLoad.setChecked(False)
         try:
             x = self.av.getFileNumbers()
-
-            path = IMFIT_MODES[self.mode]["Default Path"]
+            print(str(self.pf.filePath.text()))
+            path = str(self.pf.filePath.text()) #IMFIT_MODES[self.mode]["Default Path"]
 
             firstFile = True
             if x is not None:
                 for k in x:
-                    print(path.format(k))
-                    self.currentFile = readImage(self.mode, path.format(k))
+                    # FOR NOW IMPLEMENTING ONLY FOR iXon Side
+                    print('Loading file: {}'.format((path + 'ixon_{}.npz').format(k)))
+                    self.currentFile = readImage(self.mode,  (path + 'ixon_{}.npz').format(k))
                     if self.currentFile is None:
                         return
                     if firstFile:
-                        imageMean = self.currentFile.img
+                        avg_frame_dict = self.currentFile.frames
+                        species_list = list(self.currentFile.frames.keys())
                         firstFile = False
                     else:
-                        imageMean += self.currentFile.img
+                        frames, metadata = self.currentFile.getData()
+                        species_list = list(self.currentFile.frames.keys())
+                        for idx, species in enumerate(species_list):
+                            frame_list = list(self.currentFile.frames[species].keys())
+                            for idy, frame_name in enumerate(frame_list):
+                                species_frame = self.currentFile.frames[species][frame_name]
+                                avg_frame_dict[species][frame_name] += species_frame
 
-                    self.currentFile.img = imageMean / float(len(x))
-
+                for idx, species in enumerate(species_list):
+                    frame_list = list(self.currentFile.frames[species].keys())
+                    for idy, frame_name in enumerate(frame_list):
+                        cntr = idx * len(frame_list) + idy
+                        #Actually put the average image in the current image dict
+                        self.currentFile.frames[species][frame_name] = avg_frame_dict[species][frame_name] / float(len(x))
+                
                 self.currentODCalc()
             self.autoloader.is_active = True
         except Exception as e:
             print("Could not average images: {}".format(e))
+
 
     def fitCurrent(self):
         # TODO: Understand what this does and adjust to be more readable
