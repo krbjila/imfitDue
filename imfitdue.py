@@ -3,7 +3,7 @@
 
 import sys, os
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 import ctypes
 
 from lib.imageRead import *
@@ -202,6 +202,7 @@ class imfitDue(QtWidgets.QMainWindow):
         rbAtom = 1
         kAtom = 0
         TOF = float(self.fo.tof.text())
+        WingRad = float(self.fo.gausswingrad.text())
         pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
         fitRbcheckbox = (
@@ -222,6 +223,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     kAtom,
                     TOF,
                     pxl,
+                    WingRad = WingRad # Added WingRad parameter to fitOD
                 )
                 print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
@@ -539,7 +541,23 @@ class imfitDue(QtWidgets.QMainWindow):
         self.mainWidget = QtWidgets.QWidget()
         self.mainWidget.setAutoFillBackground(True)
         p = self.mainWidget.palette()
-        p.setColor(self.mainWidget.backgroundRole(), QtCore.Qt.white)
+        # # Added for Darkmode style:
+        # p.setColor(QtGui.QPalette.Window, QtGui.QColor(53, 53, 53))
+        # p.setColor(QtGui.QPalette.WindowText, QtCore.Qt.white)
+        # p.setColor(QtGui.QPalette.Base, QtGui.QColor(25, 25, 25))
+        # p.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(53, 53, 53))
+        # p.setColor(QtGui.QPalette.ToolTipBase, QtCore.Qt.black)
+        # p.setColor(QtGui.QPalette.ToolTipText, QtCore.Qt.white)
+        # p.setColor(QtGui.QPalette.Text, QtCore.Qt.white)
+        # p.setColor(QtGui.QPalette.Button, QtGui.QColor(53, 53, 53))
+        # p.setColor(QtGui.QPalette.ButtonText, QtCore.Qt.white)
+        # p.setColor(QtGui.QPalette.BrightText, QtCore.Qt.red)
+        # p.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
+        # p.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
+        # p.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
+        # p.setColor(self.mainWidget.backgroundRole(), QtGui.QColor('#33373B'))  #QtCore.Qt.black)
+        p.setColor(self.mainWidget.backgroundRole(), QtCore.Qt.white)  #)
+        self.mainWidget.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         self.mainWidget.setPalette(p)
         self.mainWidget.setLayout(h)
 
@@ -763,8 +781,15 @@ if __name__ == "__main__":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyle('Fusion')
     w = imfitDue()
     w.setGeometry(100, 100, 1200, 800)
+
+    try:
+        font = QtGui .QFont("Arial", 8)
+        app.setFont(font)
+    except Exception as e:
+        raise (e)
 
     appico = QtGui.QIcon("main.ico")
     w.setWindowIcon(appico)

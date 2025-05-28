@@ -145,7 +145,7 @@ class calcOD:
 
 class fitOD:
 
-    def __init__(self, mode, odImage, fitFunction, species, TOF, pxl):
+    def __init__(self, mode, odImage, fitFunction, species, TOF, pxl, **kwargs):
 
         self.species = species
         self.TOF = TOF
@@ -163,6 +163,10 @@ class fitOD:
 
         self.mode = mode
         self.config = IMFIT_MODES[mode]
+        
+        for k, val in kwargs.items():
+            if k == "WingRad":
+                self.WingRad = val
 
         self.setFitFunction(fitFunction)
         self.fitODImage()
@@ -279,7 +283,7 @@ class fitOD:
         
         elif self.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma"):
             # We mask EXCLUSION_RADIUS * initial sigma around the center of the fit
-            EXCLUSION_RADIUS = 1.5
+            EXCLUSION_RADIUS = self.WingRad
 
             def subtract_gradient(od):
                 (dy, dx) = np.shape(od)
@@ -473,7 +477,7 @@ class fitOD:
 
         elif self.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma No Rot"):
             # We mask EXCLUSION_RADIUS * initial sigma around the center of the fit
-            EXCLUSION_RADIUS = 1.5
+            EXCLUSION_RADIUS = self.WingRad
 
             def subtract_gradient(od):
                 (dy, dx) = np.shape(od)

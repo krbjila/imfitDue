@@ -564,6 +564,11 @@ class fitOptionsWidget(QtWidgets.QWidget):
         self.idEdit.setDisabled(True)
         self.databaseButton = QtWidgets.QPushButton("Upload to Database")
 
+        self.gausswingrad = QtWidgets.QLineEdit("1.5")
+        wing_validator = QtGui.QDoubleValidator()
+        self.gausswingrad.setValidator(wing_validator)
+        self.gausswingrad.setFixedWidth(38)
+
         self.tof = QtWidgets.QLineEdit("6")
         tof_validator = QtGui.QDoubleValidator()
         tof_validator.setBottom(0)
@@ -573,7 +578,12 @@ class fitOptionsWidget(QtWidgets.QWidget):
         #### Layout Stuff
 
         h0 = QtWidgets.QHBoxLayout()
+        # Added for Gaussian Wing Fitting
+        h0 = QtWidgets.QHBoxLayout()
+        h0.addWidget(QtWidgets.QLabel("Exclude σ:"))
+        h0.addWidget(self.gausswingrad)
         h0.addStretch(1)
+        # Above is what is added
         self.RbLabel = QtWidgets.QLabel("Fit Rb to:")
         h0.addWidget(self.RbLabel)
         h0.addWidget(self.rbFitFunction)
