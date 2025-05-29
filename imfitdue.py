@@ -244,6 +244,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     rbAtom,
                     TOF + 6,
                     pxl,
+                    WingRad = WingRad # Added WingRad parameter to fitOD
                 )
                 print(processFitResult(self.fitRb, self.mode).data_dict)
             except Exception as e:
