@@ -522,7 +522,7 @@ class imfitDue(QtWidgets.QMainWindow):
         gb1.setLayout(gb1l)
 
         v0 = QtWidgets.QVBoxLayout()
-        v0.addStretch(4)
+        v0.addStretch(1.5)
         v0.addWidget(gb1)
         v0.addStretch(1)
 
@@ -578,7 +578,8 @@ class imfitDue(QtWidgets.QMainWindow):
         # p.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
         # p.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
         # p.setColor(self.mainWidget.backgroundRole(), QtGui.QColor('#33373B'))  #QtCore.Qt.black)
-        p.setColor(self.mainWidget.backgroundRole(), QtCore.Qt.white)  #)
+        # p.setColor(self.mainWidget.backgroundRole(), QtCore.Qt.white)  #)
+        p.setColor(self.mainWidget.backgroundRole(), QtGui.QColor('#fcfbfd')) 
         self.mainWidget.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         self.mainWidget.setPalette(p)
         self.mainWidget.setLayout(h)
@@ -805,15 +806,15 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')
     w = imfitDue()
-    w.setGeometry(100, 100, 1200, 800)
-
+    w.setGeometry(100, 100, 1200, 600)
+    
     try:
-        font = QtGui .QFont("Arial", 8)
+        font = QtGui.QFont("Arial", 8)
         app.setFont(font)
     except Exception as e:
         raise (e)
 
-    appico = QtGui.QIcon("main.ico")
+    appico = QtGui.QIcon("IconKRb.ico")
     w.setWindowIcon(appico)
 
     w.show()

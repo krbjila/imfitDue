@@ -33,7 +33,7 @@ class ImageWindows(QtWidgets.QWidget):
         self.setup()
 
     def setup(self):
-        self.figure = Figure(facecolor="white", tight_layout=True)
+        self.figure = Figure(facecolor="#fcfbfd", tight_layout=True)
         self.canvas = FigureCanvas(self.figure)
         self.canvas.setContentsMargins(0, 0, 0, 0)
         self.canvas.setFixedSize(1040, 640)
