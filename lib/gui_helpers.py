@@ -159,14 +159,22 @@ class ImageWindows(QtWidgets.QWidget):
             for k in range(len(Lx)):
                 try:
                     plotStyles = ["ok", "r", "b"]
-                    self.ax1.plot(x, Lx[k], plotStyles[k])
+                    self.ax1.plot(x, Lx[k], plotStyles[k], markersize=4, markerfacecolor ='lightskyblue', markeredgewidth = .75)
+
+                    # Scale y axis to the first slice, use 5% / 10% margins; 5% is default margins of pyplot 
+                    Delta_y = Lx[0].max() - Lx[0].min()
+                    self.ax1.set_ylim([Lx[0].min() - .05*Delta_y, Lx[0].max() + .1*Delta_y])
                 except Exception as e:
                     print("Could not plot x slice: {}".format(e))
 
             for k in range(len(Ly)):
                 try:
                     plotStyles = ["ok", "g", "r"]
-                    self.ax2.plot(y, Ly[k], plotStyles[k])
+                    self.ax2.plot(y, Ly[k], plotStyles[k], markersize=4, markerfacecolor ='lightskyblue', markeredgewidth = .75)
+
+                    # Scale y axis to the first slice, use 5%/10% margins; 5% is default margins of pyplot 
+                    Delta_y = Ly[0].max() - Ly[0].min()
+                    self.ax2.set_ylim([Ly[0].min() - .05*Delta_y, Ly[0].max() + .1*Delta_y])
                 except Exception as e:
                     print("Could not plot y slice: {}".format(e))
 
@@ -249,7 +257,7 @@ class plotTools(QtWidgets.QWidget):
         self.odMinEdit.returnPressed.connect(self.updateSlider)
 
         self.odSlider = QtWidgets.QSlider(QtCore.Qt.Vertical)
-        self.odSlider.setFixedHeight(400)
+        self.odSlider.setFixedHeight(350)
         self.odSlider.setMaximum(max_slider)
         self.odSlider.setMinimum(min_slider)
         self.odSlider.setValue(10)

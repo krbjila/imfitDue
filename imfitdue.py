@@ -202,7 +202,11 @@ class imfitDue(QtWidgets.QMainWindow):
         rbAtom = 1
         kAtom = 0
         TOF = float(self.fo.tof.text())
-        WingRad = float(self.fo.gausswingrad.text())
+
+        WingRad = 0.0
+        if self.fo.gausswingrad.text() != '':
+            WingRad = float(self.fo.gausswingrad.text())
+        
         pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
         fitRbcheckbox = (
@@ -223,7 +227,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     kAtom,
                     TOF,
                     pxl,
-                    WingRad = WingRad # Added WingRad parameter to fitOD
+                    WingRad = WingRad # Added WingRad parameter to fitOD for Gaussian Wing Fitting
                 )
                 print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
@@ -244,7 +248,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     rbAtom,
                     TOF + 6,
                     pxl,
-                    WingRad = WingRad # Added WingRad parameter to fitOD
+                    WingRad = WingRad # Added WingRad parameter to fitOD for Gaussian Wing Fitting
                 )
                 print(processFitResult(self.fitRb, self.mode).data_dict)
             except Exception as e:
@@ -376,7 +380,9 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sx = self.fitK.slices.points0
                 Sy = self.fitK.slices.points1
                 Fx = self.fitK.slices.fit0
+                Fxa = self.fitK.slices.fit0a
                 Fy = self.fitK.slices.fit1
+                Fya = self.fitK.slices.fit1a
 
                 R = self.fitK.slices.radSlice
                 RG = self.fitK.slices.radSliceFitGauss
@@ -391,7 +397,9 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sx = None
                 Sy = None
                 Fx = None
+                Fxa = None
                 Fy = None
+                Fya = None
                 box = None
 
                 R = None
@@ -418,10 +426,15 @@ class imfitDue(QtWidgets.QMainWindow):
                         self.figs.plotSliceUpdate(
                             x, [Sx, Fx], np.arange(len(R)), [R, RG, RF]
                         )
+                    if self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Gaussian Mask Sigma"
+                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma No Rot"):
+                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
                     elif self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Fermi-Dirac 2D Int"
                     ):
-                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fy], x, [Sy]) # 2nd plot is x instead of y: it's for integration along y so you want to plot the x axis
+                        # 2nd plot is x instead of y: it's for integration along y so you want to plot the x axis
+                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fy], x, [Sy])
                     else:
                         self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
 
@@ -436,7 +449,9 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sx = self.fitRb.slices.points0
                 Sy = self.fitRb.slices.points1
                 Fx = self.fitRb.slices.fit0
+                Fxa = self.fitRb.slices.fit0a
                 Fy = self.fitRb.slices.fit1
+                Fya = self.fitRb.slices.fit1a
 
                 if hasattr(self.fitRb.slices, "fit0Gauss"):
                     FxGauss = self.fitRb.slices.fit0Gauss
@@ -458,7 +473,9 @@ class imfitDue(QtWidgets.QMainWindow):
                 Sx = None
                 Sy = None
                 Fx = None
+                Fxa = None
                 Fy = None
+                Fya = None
                 FxGauss = None
                 FyGauss = None
                 box = None
@@ -480,6 +497,10 @@ class imfitDue(QtWidgets.QMainWindow):
                     )
                 else:
                     self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
+                if self.fitRb.fitFunction == FIT_FUNCTIONS.index(
+                        "Gaussian Mask Sigma"
+                    ) or self.fitRb.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma No Rot"):
+                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)

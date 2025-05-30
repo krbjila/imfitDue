@@ -163,7 +163,7 @@ class fitOD:
 
         self.mode = mode
         self.config = IMFIT_MODES[mode]
-        
+
         for k, val in kwargs.items():
             if k == "WingRad":
                 self.WingRad = val
@@ -175,9 +175,11 @@ class fitOD:
         def __init__(self):
             self.points0 = []
             self.fit0 = []
+            self.fit0a = [] # Added for Gaussian Wing Fitting
             self.ch0 = None
             self.points1 = []
             self.fit1 = []
+            self.fit1a = [] # Added for Gaussian Wing Fitting
             self.ch1 = None
             self.radSlice = None
             self.radSliceFit = None
@@ -428,6 +430,16 @@ class fitOD:
                     self.odImage.ODCorrected.shape
                 )
             
+                fittedImage_no_mask = gaussian_mask_sigma(resLSQ.x, r, 0,
+                                                        mask_radius_x = 1E-9,
+                                                        mask_radius_y = 1E-9,
+                                                        x0_mask = np.abs(updated_guess[2]),
+                                                        y0_mask = np.abs(updated_guess[4]),
+                                                        theta_mask = np.abs(updated_guess[6])
+                        ).reshape(
+                    self.odImage.ODCorrected.shape
+                )
+            
             # Integration of number from computed column density
 
             # Calculate average number density in border and subtract from rest of image
@@ -467,10 +479,12 @@ class fitOD:
             self.slices.points0 = self.odImage.ODCorrected[I1, :]
             self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
             self.slices.fit0 = self.fittedImage[I1, :]
+            self.slices.fit0a = fittedImage_no_mask[I1, :]
 
             self.slices.points1 = self.odImage.ODCorrected[:, I0]
             self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:, I0]
+            self.slices.fit1a = fittedImage_no_mask[:, I0]
 
             print("Done with fit function!")
         
@@ -615,6 +629,15 @@ class fitOD:
                         ).reshape(
                     self.odImage.ODCorrected.shape
                 )
+                # For plotting:
+                fittedImage_no_mask = gaussian_mask_sigma_no_rot(resLSQ.x, r, 0,
+                                            mask_radius_x = 1E-9,
+                                            mask_radius_y = 1E-9,
+                                            x0_mask = np.abs(updated_guess[2]),
+                                            y0_mask = np.abs(updated_guess[4]),
+                        ).reshape(
+                    self.odImage.ODCorrected.shape
+                )
             
             # Integration of number from computed column density
 
@@ -654,10 +677,12 @@ class fitOD:
             self.slices.points0 = self.odImage.ODCorrected[I1, :]
             self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
             self.slices.fit0 = self.fittedImage[I1, :]
+            self.slices.fit0a = fittedImage_no_mask[I1, :]
 
             self.slices.points1 = self.odImage.ODCorrected[:, I0]
             self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:, I0]
+            self.slices.fit1a = fittedImage_no_mask[:, I0]
 
             print("Done with fit function!")
         
