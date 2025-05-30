@@ -497,10 +497,11 @@ class imfitDue(QtWidgets.QMainWindow):
                     )
                 else:
                     self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
-                if self.fitRb.fitFunction == FIT_FUNCTIONS.index(
-                        "Gaussian Mask Sigma"
-                    ) or self.fitRb.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma No Rot"):
-                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
+                if self.fitRb is not None:
+                    if self.fitRb.fitFunction == FIT_FUNCTIONS.index(
+                            "Gaussian Mask Sigma"
+                        ) or self.fitRb.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma No Rot"):
+                            self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)
