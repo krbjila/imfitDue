@@ -522,7 +522,7 @@ class imfitDue(QtWidgets.QMainWindow):
         gb1.setLayout(gb1l)
 
         v0 = QtWidgets.QVBoxLayout()
-        v0.addStretch(1.5)
+        v0.addStretch(2)
         v0.addWidget(gb1)
         v0.addStretch(1)
 
