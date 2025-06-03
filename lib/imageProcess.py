@@ -463,6 +463,7 @@ class fitOD:
 
             self.fitData = np.append(self.fitData, number)
             self.fitData = np.append(self.fitData, error)
+            self.fitData = np.append(self.fitData, EXCLUSION_RADIUS)
 
 
             ### Get radial average
@@ -662,6 +663,7 @@ class fitOD:
 
             self.fitData = np.append(self.fitData, number)
             self.fitData = np.append(self.fitData, error)
+            self.fitData = np.append(self.fitData, EXCLUSION_RADIUS)
 
             ### Get radial average
             I0 = self.odImage.xRange0.index(int(self.fitData[2]))
@@ -1725,6 +1727,7 @@ class processFitResult:
                 "angle": self.fitObject.fitData[6],
                 "N": self.fitObject.fitData[9],
                 "Nerr": self.fitObject.fitData[10],
+                "ExclR": self.fitObject.fitData[11],
             }
 
             print(r)
@@ -1741,6 +1744,7 @@ class processFitResult:
                 r["angle"],
                 r["N"],
                 r["Nerr"],
+                r["ExclR"],
             ]
             self.data_dict = r
         
@@ -1761,6 +1765,7 @@ class processFitResult:
                 "angle": 0,
                 "N": self.fitObject.fitData[8],
                 "Nerr": self.fitObject.fitData[9],
+                "ExclR": self.fitObject.fitData[10],
             }
 
             print(r)
@@ -1777,6 +1782,7 @@ class processFitResult:
                 r["angle"],
                 r["N"],
                 r["Nerr"],
+                r["ExclR"],
             ]
             self.data_dict = r
         
