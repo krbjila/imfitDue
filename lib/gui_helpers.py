@@ -159,22 +159,40 @@ class ImageWindows(QtWidgets.QWidget):
             for k in range(len(Lx)):
                 try:
                     plotStyles = ["ok", "r", "b"]
-                    self.ax1.plot(x, Lx[k], plotStyles[k], markersize=4, markerfacecolor ='lightskyblue', markeredgewidth = .75)
+                    self.ax1.plot(
+                        x,
+                        Lx[k],
+                        plotStyles[k],
+                        markersize=4,
+                        markerfacecolor="lightskyblue",
+                        markeredgewidth=0.75,
+                    )
 
-                    # Scale y axis to the first slice, use 5% / 10% margins; 5% is default margins of pyplot 
+                    # Scale y axis to the first slice, use 5% / 10% margins; 5% is default margins of pyplot
                     Delta_y = Lx[0].max() - Lx[0].min()
-                    self.ax1.set_ylim([Lx[0].min() - .05*Delta_y, Lx[0].max() + .1*Delta_y])
+                    self.ax1.set_ylim(
+                        [Lx[0].min() - 0.05 * Delta_y, Lx[0].max() + 0.1 * Delta_y]
+                    )
                 except Exception as e:
                     print("Could not plot x slice: {}".format(e))
 
             for k in range(len(Ly)):
                 try:
                     plotStyles = ["ok", "g", "r"]
-                    self.ax2.plot(y, Ly[k], plotStyles[k], markersize=4, markerfacecolor ='lightskyblue', markeredgewidth = .75)
+                    self.ax2.plot(
+                        y,
+                        Ly[k],
+                        plotStyles[k],
+                        markersize=4,
+                        markerfacecolor="lightskyblue",
+                        markeredgewidth=0.75,
+                    )
 
-                    # Scale y axis to the first slice, use 5%/10% margins; 5% is default margins of pyplot 
+                    # Scale y axis to the first slice, use 5%/10% margins; 5% is default margins of pyplot
                     Delta_y = Ly[0].max() - Ly[0].min()
-                    self.ax2.set_ylim([Ly[0].min() - .05*Delta_y, Ly[0].max() + .1*Delta_y])
+                    self.ax2.set_ylim(
+                        [Ly[0].min() - 0.05 * Delta_y, Ly[0].max() + 0.1 * Delta_y]
+                    )
                 except Exception as e:
                     print("Could not plot y slice: {}".format(e))
 
@@ -641,18 +659,40 @@ class averageWidget(QtWidgets.QWidget):
 
     def setup(self):
 
+        vbox = QtWidgets.QVBoxLayout()
+
         self.averageEdit = QtWidgets.QLineEdit()
         self.averageButton = QtWidgets.QPushButton("Average")
 
-        box = QtWidgets.QHBoxLayout()
-        box.addWidget(QtWidgets.QLabel("Images to Average: "))
-        box.addWidget(self.averageEdit)
-        box.addWidget(self.averageButton)
+        self.bgEdit = QtWidgets.QLineEdit()
+        self.bgSubtract = QtWidgets.QCheckBox("Subtract BG Images?")
+        self.bgSubtract.setChecked(False)
 
-        self.setLayout(box)
+        avgbox = QtWidgets.QHBoxLayout()
+        bgbox = QtWidgets.QHBoxLayout()
+
+        avgbox.addWidget(QtWidgets.QLabel("Images to Average: "))
+        avgbox.addWidget(self.averageEdit)
+        avgbox.addWidget(self.averageButton)
+
+        bgbox.addWidget(QtWidgets.QLabel("Background Frames: "))
+        bgbox.addWidget(self.bgEdit)
+        bgbox.addWidget(self.bgSubtract)
+
+        vbox.addLayout(avgbox)
+        vbox.addLayout(bgbox)
+
+        self.setLayout(vbox)
 
     def getFileNumbers(self):
         x = self.averageEdit.text()
+        if x == "":
+            return None
+        else:
+            return getImagesFromRange(x)
+
+    def getBackgroundFileNumbers(self):
+        x = self.bgEdit.text()
         if x == "":
             return None
         else:

@@ -83,7 +83,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
         for i in range(2):
             for j in range(4):
-                self.roi.region[i][j].returnPressed.connect(self.currentODCalc)
+                self.roi.region[i][j].returnPressed.connect(self.updateCrop)
 
         self.av.averageButton.clicked.connect(self.averageImages)
         self.fo.uploadButton.clicked.connect(self.process2Origin)
@@ -128,6 +128,25 @@ class imfitDue(QtWidgets.QMainWindow):
         else:
             print("File not found!")
 
+    def currentBGCalc(self):
+        self.autoloader.is_active = False
+
+        for i in range(4):
+            self.regionK[i] = float(self.roi.region[0][i].text())
+            self.regionRb[i] = float(self.roi.region[1][i].text())
+
+        species = IMFIT_MODES[self.mode]["Species"]
+        try:
+            self.odKBG = calcOD(self.BGFile, species[0], self.mode, self.regionK)
+            self.odRbBG = calcOD(self.BGFile, species[1], self.mode, self.regionRb)
+            # plt.figure()
+            # plt.imshow(self.odKBG.ODCorrected)
+        except Exception as e:
+            print("Could not calculate BG: {}".format(e))
+
+        self.autoloader.is_active = True
+        print("Done calculating current BG")
+
     def currentODCalc(self):
         self.autoloader.is_active = False
 
@@ -139,10 +158,23 @@ class imfitDue(QtWidgets.QMainWindow):
         try:
             self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
             self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+            if self.av.bgSubtract.isChecked():
+                self.odK.OD = self.odK.OD - self.odKBG.OD
+                self.odRb.OD = self.odRb.OD - self.odRbBG.OD
+                self.odK.ODCorrected = self.odK.ODCorrected - self.odKBG.ODCorrected
+                self.odRb.ODCorrected = self.odRb.ODCorrected - self.odRbBG.ODCorrected
+                self.odK.n = self.odK.n - self.odKBG.n
+                self.odRb.n = self.odRb.n - self.odRbBG.n
+                self.odK.nerr = np.sqrt(self.odK.nerr**2 + self.odKBG.nerr**2)
+                self.odRb.nerr = np.sqrt(self.odRb.nerr**2 + self.odRbBG.nerr**2)
         except Exception as e:
             print("Could not calculate OD: {}".format(e))
 
-        if self.fo.autoFit.isChecked() and self.frame == "OD" or self.frame == "Column Density":
+        if (
+            self.fo.autoFit.isChecked()
+            and self.frame == "OD"
+            or self.frame == "Column Density"
+        ):
             self.fitCurrent()
             print("Done fitting current image")
         else:
@@ -153,21 +185,74 @@ class imfitDue(QtWidgets.QMainWindow):
         self.autoloader.is_active = True
         print("Done calculating current OD")
 
-    def averageImages(self): # FOR NOW IMPLEMENTING ONLY FOR iXon Side
+    def updateCrop(self):
+        if self.av.bgSubtract.isChecked():
+            self.averageImages()
+        else:
+            self.currentODCalc()
+
+    def averageImages(self):  # FOR NOW IMPLEMENTING ONLY FOR iXon Side
+        # For now the background subtraction has not been extensively tested yet
         self.autoloader.is_active = False
 
         self.pf.autoLoad.setChecked(False)
         try:
             x = self.av.getFileNumbers()
             print(str(self.pf.filePath.text()))
-            path = str(self.pf.filePath.text()) #IMFIT_MODES[self.mode]["Default Path"]
+
+            path = str(
+                self.pf.filePath.text()
+            )  # IMFIT_MODES[self.mode]["Default Path"]
+
+            if self.av.bgSubtract.isChecked():
+                y = self.av.getBackgroundFileNumbers()
+                firstBGFile = True
+                if y is not None:
+                    for k in y:
+                        # FOR NOW IMPLEMENTING ONLY FOR iXon Side
+                        print(
+                            "Subtracting file: {}".format(
+                                (path + "ixon_{}.npz").format(k)
+                            )
+                        )
+                        self.BGFile = readImage(
+                            self.mode, (path + "ixon_{}.npz").format(k)
+                        )
+                        if self.BGFile is None:
+                            return
+                        if firstBGFile:
+                            bg_frame_dict = self.BGFile.frames
+                            species_list = list(self.BGFile.frames.keys())
+                            firstBGFile = False
+                        else:
+                            species_list = list(self.BGFile.frames.keys())
+                            for idx, species in enumerate(species_list):
+                                frame_list = list(self.BGFile.frames[species].keys())
+                                for idy, frame_name in enumerate(frame_list):
+                                    species_frame_bg = self.BGFile.frames[species][
+                                        frame_name
+                                    ]
+                                    bg_frame_dict[species][
+                                        frame_name
+                                    ] += species_frame_bg
+
+                    for idx, species in enumerate(species_list):
+                        frame_list = list(self.BGFile.frames[species].keys())
+                        for idy, frame_name in enumerate(frame_list):
+                            # Actually put the average image in the current image dict
+                            self.BGFile.frames[species][frame_name] = bg_frame_dict[
+                                species
+                            ][frame_name] / float(len(y))
+                    self.currentBGCalc()
 
             firstFile = True
             if x is not None:
                 for k in x:
                     # FOR NOW IMPLEMENTING ONLY FOR iXon Side
-                    print('Loading file: {}'.format((path + 'ixon_{}.npz').format(k)))
-                    self.currentFile = readImage(self.mode,  (path + 'ixon_{}.npz').format(k))
+                    print("Loading file: {}".format((path + "ixon_{}.npz").format(k)))
+                    self.currentFile = readImage(
+                        self.mode, (path + "ixon_{}.npz").format(k)
+                    )
                     if self.currentFile is None:
                         return
                     if firstFile:
@@ -180,22 +265,25 @@ class imfitDue(QtWidgets.QMainWindow):
                         for idx, species in enumerate(species_list):
                             frame_list = list(self.currentFile.frames[species].keys())
                             for idy, frame_name in enumerate(frame_list):
-                                species_frame = self.currentFile.frames[species][frame_name]
+                                species_frame = self.currentFile.frames[species][
+                                    frame_name
+                                ]
                                 avg_frame_dict[species][frame_name] += species_frame
 
                 for idx, species in enumerate(species_list):
                     frame_list = list(self.currentFile.frames[species].keys())
                     for idy, frame_name in enumerate(frame_list):
-                        #Actually put the average image in the current image dict
-                        self.currentFile.frames[species][frame_name] = avg_frame_dict[species][frame_name] / float(len(x))
-                
+                        # Actually put the average image in the current image dict
+                        self.currentFile.frames[species][frame_name] = avg_frame_dict[
+                            species
+                        ][frame_name] / float(len(x))
+
                 self.currentODCalc()
                 self.currentFile.fileName = "Average of " + str(x)
                 print(str(self.currentFile.fileName))
             self.autoloader.is_active = True
         except Exception as e:
             print("Could not average images: {}".format(e))
-
 
     def fitCurrent(self):
         # TODO: Understand what this does and adjust to be more readable
@@ -204,9 +292,9 @@ class imfitDue(QtWidgets.QMainWindow):
         TOF = float(self.fo.tof.text())
 
         WingRad = 0.0
-        if self.fo.gausswingrad.text() != '':
+        if self.fo.gausswingrad.text() != "":
             WingRad = float(self.fo.gausswingrad.text())
-        
+
         pxl = IMFIT_MODES[self.mode]["Pixel Size"]
 
         fitRbcheckbox = (
@@ -227,7 +315,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     kAtom,
                     TOF,
                     pxl,
-                    WingRad = WingRad # Added WingRad parameter to fitOD for Gaussian Wing Fitting
+                    WingRad=WingRad,  # Added WingRad parameter to fitOD for Gaussian Wing Fitting
                 )
                 print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
@@ -248,7 +336,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     rbAtom,
                     TOF + 6,
                     pxl,
-                    WingRad = WingRad # Added WingRad parameter to fitOD for Gaussian Wing Fitting
+                    WingRad=WingRad,  # Added WingRad parameter to fitOD for Gaussian Wing Fitting
                 )
                 print(processFitResult(self.fitRb, self.mode).data_dict)
             except Exception as e:
@@ -428,7 +516,9 @@ class imfitDue(QtWidgets.QMainWindow):
                         )
                     if self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Gaussian Mask Sigma"
-                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma No Rot"):
+                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Gaussian Mask Sigma No Rot"
+                    ):
                         self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
                     elif self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Fermi-Dirac 2D Int"
@@ -499,9 +589,11 @@ class imfitDue(QtWidgets.QMainWindow):
                     self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
                 if self.fitRb is not None:
                     if self.fitRb.fitFunction == FIT_FUNCTIONS.index(
-                            "Gaussian Mask Sigma"
-                        ) or self.fitRb.fitFunction == FIT_FUNCTIONS.index("Gaussian Mask Sigma No Rot"):
-                            self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
+                        "Gaussian Mask Sigma"
+                    ) or self.fitRb.fitFunction == FIT_FUNCTIONS.index(
+                        "Gaussian Mask Sigma No Rot"
+                    ):
+                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)
@@ -580,7 +672,7 @@ class imfitDue(QtWidgets.QMainWindow):
         # p.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
         # p.setColor(self.mainWidget.backgroundRole(), QtGui.QColor('#33373B'))  #QtCore.Qt.black)
         # p.setColor(self.mainWidget.backgroundRole(), QtCore.Qt.white)  #)
-        p.setColor(self.mainWidget.backgroundRole(), QtGui.QColor('#fcfbfd')) 
+        p.setColor(self.mainWidget.backgroundRole(), QtGui.QColor("#fcfbfd"))
         self.mainWidget.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         self.mainWidget.setPalette(p)
         self.mainWidget.setLayout(h)
@@ -805,10 +897,10 @@ if __name__ == "__main__":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     app = QtWidgets.QApplication(sys.argv)
-    app.setStyle('Fusion')
+    app.setStyle("Fusion")
     w = imfitDue()
     w.setGeometry(100, 100, 1200, 600)
-    
+
     try:
         font = QtGui.QFont("Arial", 8)
         app.setFont(font)
