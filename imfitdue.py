@@ -212,11 +212,11 @@ class imfitDue(QtWidgets.QMainWindow):
                         # FOR NOW IMPLEMENTING ONLY FOR iXon Side
                         print(
                             "Subtracting file: {}".format(
-                                (path + "ixon_{}.npz").format(k)
+                                (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
                             )
                         )
                         self.BGFile = readImage(
-                            self.mode, (path + "ixon_{}.npz").format(k)
+                            self.mode, (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
                         )
                         if self.BGFile is None:
                             return
@@ -249,9 +249,9 @@ class imfitDue(QtWidgets.QMainWindow):
             if x is not None:
                 for k in x:
                     # FOR NOW IMPLEMENTING ONLY FOR iXon Side
-                    print("Loading file: {}".format((path + "ixon_{}.npz").format(k)))
+                    print("Loading file: {}".format((path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)))
                     self.currentFile = readImage(
-                        self.mode, (path + "ixon_{}.npz").format(k)
+                        self.mode, (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
                     )
                     if self.currentFile is None:
                         return
