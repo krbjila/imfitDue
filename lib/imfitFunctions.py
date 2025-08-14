@@ -19,15 +19,18 @@ def gaussian(p, r, y, mask_above=np.inf):
     x0R = p[2] * np.cos(p[6]) - p[4] * np.sin(p[6])
     y0R = p[2] * np.sin(p[6]) + p[4] * np.cos(p[6])
 
-    return np.ravel(
-        p[0]
-        + p[1]
-        * np.exp(
-            -((XR - x0R) ** 2.0) / (2.0 * p[3] ** 2.0)
-            - (YR - y0R) ** 2.0 / (2.0 * p[5] ** 2.0)
+    return (
+        np.ravel(
+            p[0]
+            + p[1]
+            * np.exp(
+                -((XR - x0R) ** 2.0) / (2.0 * p[3] ** 2.0)
+                - (YR - y0R) ** 2.0 / (2.0 * p[5] ** 2.0)
+            )
+            - y
         )
-        - y
-    ) * mask.ravel()
+        * mask.ravel()
+    )
 
 
 # Gaussian with Gradient; Mask above a certain radius
@@ -35,8 +38,8 @@ def gaussian_mask_sigma(
     p,
     r,
     y,
-    mask_radius_x=50, # should be 1E-6 for default, 10 for testing
-    mask_radius_y=50,
+    mask_radius_x=1e-6,  # should be 1E-6 for default, 10 for testing
+    mask_radius_y=1e-6,
     x0_mask=0,
     y0_mask=0,
     theta_mask=0,
@@ -64,12 +67,8 @@ def gaussian_mask_sigma(
         + p[8] * (YR - y0R)
     )
 
-    XR_mask = (X - x0_mask) * np.cos(theta_mask) - (Y - y0_mask) * np.sin(
-        theta_mask
-    )
-    YR_mask = (X - x0_mask) * np.sin(theta_mask) + (Y - y0_mask) * np.cos(
-        theta_mask
-    )
+    XR_mask = (X - x0_mask) * np.cos(theta_mask) - (Y - y0_mask) * np.sin(theta_mask)
+    YR_mask = (X - x0_mask) * np.sin(theta_mask) + (Y - y0_mask) * np.cos(theta_mask)
 
     QR = (XR_mask) ** 2 / mask_radius_x**2 + (YR_mask) ** 2 / mask_radius_y**2
 
@@ -83,8 +82,8 @@ def gaussian_mask_sigma_no_rot(
     p,
     r,
     y,
-    mask_radius_x=50, # should be 1E-6 for default, 10 for testing
-    mask_radius_y=50,
+    mask_radius_x=1e-6,  # should be 1E-6 for default, 10 for testing
+    mask_radius_y=1e-6,
     x0_mask=0,
     y0_mask=0,
 ):
@@ -99,14 +98,14 @@ def gaussian_mask_sigma_no_rot(
         + p[1]
         * np.exp(
             -((X - p[2]) ** 2.0) / (2.0 * p[3] ** 2.0)
-            -((Y - p[4]) ** 2.0) / (2.0 * p[5] ** 2.0)
+            - ((Y - p[4]) ** 2.0) / (2.0 * p[5] ** 2.0)
         )
         + p[6] * (X - p[2])
         + p[7] * (Y - p[4])
     )
 
-    X_mask = (X - x0_mask)
-    Y_mask = (Y - y0_mask)
+    X_mask = X - x0_mask
+    Y_mask = Y - y0_mask
 
     QR = (X_mask) ** 2 / mask_radius_x**2 + (Y_mask) ** 2 / mask_radius_y**2
 
