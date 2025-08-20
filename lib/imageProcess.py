@@ -1472,9 +1472,11 @@ class fitOD:
             # mass = 40 * amu2kg
 
             if self.mbemu == "K":
-                mass = 40 * amu2kg  # kg
+                mass0 = 40
+                mass = mass0 * amu2kg  # kg
             elif self.mbemu == "KRb":
-                mass = 127 * amu2kg  # kg
+                mass0 = 127
+                mass = mass0 * amu2kg  # kg
             else:
                 raise ValueError("Unknown species: {}".format(self.odImage.species))
             
@@ -1535,6 +1537,14 @@ class fitOD:
             self.fitDataConf = confidenceIntervals(resLSQ)
             self.fitData = resLSQ.x
             self.fitData = np.append(self.fitData, betamu_3D)
+            self.fitData = np.append(self.fitData, self.TOF)
+            self.fitData = np.append(self.fitData, self.fx)
+            self.fitData = np.append(self.fitData, self.fy)
+            self.fitData = np.append(self.fitData, self.fz)
+            self.fitData = np.append(self.fitData, number)
+            self.fitData = np.append(self.fitData, self.Nscaler)
+            self.fitData = np.append(self.fitData, mass0)
+
             self.fittedImage = fermiDirac_fixed_bemu(
                 resLSQ.x,
                 r,
@@ -2267,6 +2277,13 @@ class processFitResult:
                 * self.bin
                 * self.pixelSize,
                 "peakODClassical": self.fitObject.fitDataGauss[1],
+                "TOF": self.fitObject.fitData[7],
+                "fx": self.fitObject.fitData[8],
+                "fy": self.fitObject.fitData[9],
+                "fz": self.fitObject.fitData[10],
+                "N": self.fitObject.fitData[11],
+                "Nscaler": self.fitObject.fitData[12],
+                "mass": self.fitObject.fitData[13],
             }
 
             self.data = [
@@ -2281,6 +2298,13 @@ class processFitResult:
                 r["y0"],
                 r["offset"],
                 r["TTF"],
+                r["TOF"],
+                r["fx"],
+                r["fy"],
+                r["fz"],
+                r["N"],
+                r["Nscaler"],
+                r["mass"],
             ]
             self.data_dict = r
 
