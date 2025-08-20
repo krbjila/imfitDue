@@ -601,11 +601,40 @@ class fitOptionsWidget(QtWidgets.QWidget):
         self.tof.setValidator(tof_validator)
         self.tof.setFixedWidth(30)
 
+        self.fx = QtWidgets.QLineEdit(str(FREQS["fx"]))
+        fx_validator = QtGui.QDoubleValidator()
+        fx_validator.setBottom(0)
+        self.fx.setValidator(fx_validator)
+        self.fx.setFixedWidth(50)
+
+        self.fy = QtWidgets.QLineEdit(str(FREQS["fy"]))
+        fy_validator = QtGui.QDoubleValidator()
+        fy_validator.setBottom(0)
+        self.fy.setValidator(fy_validator)
+        self.fy.setFixedWidth(60)
+        
+        self.fz = QtWidgets.QLineEdit(str(FREQS["fz"]))
+        fz_validator = QtGui.QDoubleValidator()
+        fz_validator.setBottom(0)
+        self.fz.setValidator(fz_validator)
+        self.fz.setFixedWidth(50)
+
+        self.massSelectGroup = QtWidgets.QButtonGroup()
+        self.krbMass = QtWidgets.QRadioButton("KRb")
+        self.kMass = QtWidgets.QRadioButton("K")
+        self.kMass.setChecked(True)
+        self.massSelectGroup.addButton(self.krbMass)
+        self.massSelectGroup.addButton(self.kMass)
+
+        self.Nscaler = QtWidgets.QLineEdit("1")
+        Nscaler_validator = QtGui.QDoubleValidator()
+        Nscaler_validator.setBottom(0)
+        self.Nscaler.setValidator(Nscaler_validator)
+        self.Nscaler.setFixedWidth(50)
         #### Layout Stuff
 
         h0 = QtWidgets.QHBoxLayout()
         # Added for Gaussian Wing Fitting
-        h0 = QtWidgets.QHBoxLayout()
         h0.addWidget(QtWidgets.QLabel("Exclude σ:"))
         h0.addWidget(self.gausswingrad)
         h0.addStretch(1)
@@ -627,6 +656,23 @@ class fitOptionsWidget(QtWidgets.QWidget):
         self.idLabel = QtWidgets.QLabel("ID:")
         h1b.addWidget(self.idLabel)
         h1b.addWidget(self.idEdit)
+        
+        h1c = QtWidgets.QHBoxLayout()
+        h1c.addWidget(QtWidgets.QLabel("Fixed βμ fit:"))
+        h1c.addWidget(self.kMass)
+        h1c.addWidget(self.krbMass)
+        h1c.addStretch(1)
+        h1c.addWidget(QtWidgets.QLabel("N-scaler:"))
+        h1c.addWidget(self.Nscaler)
+        h1c.addStretch(1)
+
+        h1d = QtWidgets.QHBoxLayout()
+        h1d.addStretch(1)
+        h1d.addWidget(QtWidgets.QLabel("[fx, fy, fz] (Hz):"))
+        h1d.addStretch(1)
+        h1d.addWidget(self.fx)
+        h1d.addWidget(self.fy)
+        h1d.addWidget(self.fz)
 
         h2 = QtWidgets.QHBoxLayout()
         h2.addWidget(self.fitButton)
@@ -637,6 +683,8 @@ class fitOptionsWidget(QtWidgets.QWidget):
         v0.addLayout(h0)
         v0.addLayout(h1)
         v0.addLayout(h1b)
+        v0.addLayout(h1c)
+        v0.addLayout(h1d)
         v0.addLayout(h2)
 
         v1 = QtWidgets.QGridLayout()

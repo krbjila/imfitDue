@@ -96,7 +96,8 @@ def confidenceIntervals(res_lsq):
 
 
 def getTTF(fitObject):
-    if fitObject.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac"):
+    if fitObject.fitFunction == FIT_FUNCTIONS.index(
+        "Fermi-Dirac"):
         TTF = (6.0 * polylog.fermi_poly3(fitObject.fitData[6])) ** (-1.0 / 3.0)
         TTFErr = 0.5 * (
             (6.0 * polylog.fermi_poly3(fitObject.fitData[6] - fitObject.fitDataConf[6]))
@@ -108,6 +109,9 @@ def getTTF(fitObject):
             ** (-1.0 / 3.0)
         )
         return TTF, TTFErr
+    if fitObject.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac fixed betamu"):
+        TTF = (6.0 * polylog.fermi_poly3(fitObject.fitData[6])) ** (-1.0 / 3.0)
+        return TTF
     else:
         print("T/TF only available for Fermi-Dirac fit.")
         return -1, -1

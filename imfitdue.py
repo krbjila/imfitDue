@@ -289,7 +289,28 @@ class imfitDue(QtWidgets.QMainWindow):
         # TODO: Understand what this does and adjust to be more readable
         rbAtom = 1
         kAtom = 0
-        TOF = float(self.fo.tof.text())
+        TOF = 0
+        fx = 0
+        fy = 0
+        fz = 0
+        Nscaler = 1 #fudge factor for the number of particles in the fiex betamu fit
+
+        if self.fo.tof.text() != "":
+            TOF = float(self.fo.tof.text())
+        if self.fo.fx.text() != "":
+            fx = float(self.fo.fx.text())
+        if self.fo.fy.text() != "":
+            fy = float(self.fo.fy.text())
+        if self.fo.fz.text() != "":
+            fz = float(self.fo.fz.text())
+        if self.fo.Nscaler.text() != "":
+            Nscaler = float(self.fo.Nscaler.text())
+        
+        mass_betamu_fit_species = "K"
+        if self.fo.kMass.isChecked():
+            mass_betamu_fit_species = "K"
+        if self.fo.krbMass.isChecked():
+            mass_betamu_fit_species = "KRb"
 
         WingRad = 0.0
         if self.fo.gausswingrad.text() != "":
@@ -315,7 +336,12 @@ class imfitDue(QtWidgets.QMainWindow):
                     kAtom,
                     TOF,
                     pxl,
-                    WingRad=WingRad,  # Added WingRad parameter to fitOD for Gaussian Wing Fitting
+                    WingRad = WingRad, # Added WingRad parameter to fitOD for Gaussian Wing Fitting
+                    fx = fx,
+                    fy = fy,
+                    fz = fz,
+                    mbemu = mass_betamu_fit_species,
+                    Nscaler = Nscaler,
                 )
                 print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
@@ -337,6 +363,11 @@ class imfitDue(QtWidgets.QMainWindow):
                     TOF + 6,
                     pxl,
                     WingRad=WingRad,  # Added WingRad parameter to fitOD for Gaussian Wing Fitting
+                    fx = fx,
+                    fy = fy,
+                    fz = fz,
+                    mbemu = mass_betamu_fit_species,
+                    Nscaler = Nscaler,
                 )
                 print(processFitResult(self.fitRb, self.mode).data_dict)
             except Exception as e:
@@ -510,7 +541,11 @@ class imfitDue(QtWidgets.QMainWindow):
                 if self.fitK is not None:
                     if self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Fermi-Dirac"
-                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac 2D"):
+                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Fermi-Dirac 2D"
+                        ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                            "Fermi-Dirac fixed betamu"
+                            ):
                         self.figs.plotSliceUpdate(
                             x, [Sx, Fx], np.arange(len(R)), [R, RG, RF]
                         )

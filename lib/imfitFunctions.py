@@ -2,6 +2,8 @@ import numpy as np
 from lib.polylog import dilog
 import mpmath as mp
 from scipy.special import gamma
+import lib.polylog as polylog_lib
+from lib.imfitDefaults import FREQS, PX_SIZE, NAT_CONSTANTS
 
 
 def gaussian(p, r, y, mask_above=np.inf):
@@ -275,6 +277,61 @@ def fermiDirac(p, r, y, mask_above=np.inf):
         * dilog(
             -np.exp(
                 p[6]
+                - (X.ravel() - p[2]) ** 2.0 / (2 * p[3] ** 2.0)
+                - (Y.ravel() - p[4]) ** 2 / (2 * p[5] ** 2)
+            )
+        )
+        - y.ravel()
+    ) * mask.ravel()
+
+def fermiDirac_fixed_bemu(p, r, y, mask_above=np.inf, N0 = 1E3, TOF = 0,
+                          omega_x = 2 * np.pi * FREQS["fx"],
+                          omega_y = 2 * np.pi * FREQS["fy"],
+                          omega_z = 2 * np.pi * FREQS["fz"],
+                          pxsz_um = PX_SIZE["side"] * 1E-6,
+                          mass = 40 * NAT_CONSTANTS["amu2kg"]):
+    """
+    Fermi-Dirac distribution with fixed chemical potential (betamu) to match a given number of particles N0.
+    This is a 3D version that takes into account the TOF and the trap frequencies.
+    """
+    ### Parameters: [offset, amplitude, x0, wx, y0, wy]
+    # Take N as a constraint
+    ### constants
+    hbar = NAT_CONSTANTS["hbar"] # J s
+    kB = NAT_CONSTANTS["kB"]  # J/K
+
+    omega_bar = (omega_x * omega_y * omega_z) ** (1 / 3)
+
+    Tx = mass * omega_x**2 * (p[3] * pxsz_um)**2 / (1 + omega_x**2 * TOF**2) / kB
+    Ty = mass * omega_y**2 * (p[5] * pxsz_um)**2 / (1 + omega_y**2 * TOF**2) / kB
+    T_avg = (Tx**2 * Ty) ** (1/3) # take geometric mean of Tx and Ty
+    
+    # Find where betamu for the given T gives us the right number of particles
+    betamu_range = np.linspace(-10, 20, 5000)
+    N_checker_3D = (
+                    (kB * T_avg / (hbar * omega_bar)) ** 3
+                    ) * polylog_lib.fermi_poly3(betamu_range)
+    
+    N_diff_3D = np.abs(N_checker_3D - N0)
+    ind_N_3D = np.where(N_diff_3D == np.min(N_diff_3D))[0]
+    betamu_3D = betamu_range[ind_N_3D[0]]
+
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis, yaxis)
+
+    if isinstance(y, int):
+        y = np.zeros(X.shape)
+
+    mask = np.where(y < mask_above, 1, 0)
+
+    return (
+        p[0]
+        - p[1]
+        * dilog(
+            -np.exp(
+                betamu_3D
                 - (X.ravel() - p[2]) ** 2.0 / (2 * p[3] ** 2.0)
                 - (Y.ravel() - p[4]) ** 2 / (2 * p[5] ** 2)
             )

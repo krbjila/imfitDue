@@ -171,6 +171,16 @@ class fitOD:
         for k, val in kwargs.items():
             if k == "WingRad":
                 self.WingRad = val
+            if k == "fx":
+                self.fx = val
+            if k == "fy":
+                self.fy = val
+            if k == "fz":
+                self.fz = val
+            if k == "mbemu":
+                self.mbemu = val
+            if k == "Nscaler":
+                self.Nscaler = val
 
         self.setFitFunction(fitFunction)
         self.fitODImage()
@@ -1329,6 +1339,264 @@ class fitOD:
             self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:, I0]
 
+        elif self.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac fixed betamu"):
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy]
+
+            r = [None, None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+
+            # INITIAL Gaussian fit with gradient
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+            p0 = [
+                0,
+                M,
+                self.odImage.xRange0[I1],
+                20,
+                self.odImage.xRange1[I0],
+                20,
+                0,
+                0,
+                0,
+            ]
+            # we barely allow an angle
+            pUpper = [
+                np.inf,
+                100.0,
+                np.max(r[0]),
+                len(r[0]),
+                np.max(r[1]),
+                len(r[1]),
+                0.00001,
+                np.inf,
+                np.inf,
+            ]
+            pLower = [
+                -np.inf,
+                0.0,
+                np.min(r[0]),
+                0,
+                np.min(r[1]),
+                0,
+                -0.00001,
+                -np.inf,
+                -np.inf,
+            ]
+
+            resLSQ = least_squares(
+                gaussianGradient,
+                p0,
+                args=(r, self.odImage.ODCorrected),
+                bounds=(pLower, pUpper),
+            )
+
+            # Integration of number from computed column density. This is to give
+            # a relation between T and betamu since N = -(k_B T / (hbar * omega_bar))^3 Li_3(-exp(betamu))
+            # we take it as a constraint for our fit
+
+            # Compute the number by summing the pixels and multiplying by the pixel area
+            # subtract the offset from the initial Gaussian fit, as well as the gradients
+            # We make a background image where we just set the amplitude to zero, so that
+            # we only have the offset and the gradients
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+            bg_res = [
+                resLSQ.x[0],
+                0,
+                resLSQ.x[2],
+                resLSQ.x[3],
+                resLSQ.x[4],
+                resLSQ.x[5],
+                resLSQ.x[6],
+                resLSQ.x[7],
+                resLSQ.x[8],
+            ]
+
+            # fitted bg converted to density
+            getsigma = SIGMA_0[self.odImage.species] * (
+                2 if IMFIT_MODES[self.odImage.mode]["Image Path"] == "Vertical" else 1
+            )
+
+            fitted_bg = (
+                gaussianGradient(
+                    bg_res,
+                    r,
+                    0,
+                ).reshape(self.odImage.ODCorrected.shape)
+                / getsigma
+            )
+
+            raw_number = (self.odImage.n - fitted_bg).sum()
+            number = (
+                raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
+            print("Computed number from image: {:.2e}".format(number))
+            
+            # multiply the number with the fudge factor
+            number *= self.Nscaler
+
+            r = [None, None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+
+            # Fermi--Dirac fit with fixed betamu
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy]
+            p0 = [
+                resLSQ.x[0],
+                resLSQ.x[1],
+                resLSQ.x[2],
+                resLSQ.x[3],
+                resLSQ.x[4],
+                resLSQ.x[5],
+            ]  # An initial q of 0 corresponds to T/TF=0.56
+            pUpper = [
+                np.inf,
+                np.inf,
+                np.max(r[0]),
+                len(r[0]),
+                np.max(r[1]),
+                len(r[1]),
+            ]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            TOF0 = self.TOF * 1e-3  # Convert TOF from ms to s
+
+
+            # Other input constants
+            hbar =  NAT_CONSTANTS["hbar"]  # J s
+            kB = NAT_CONSTANTS["kB"]  # J/K
+            omega_x = 2 * np.pi * self.fx
+            omega_y = 2 * np.pi * self.fy
+            omega_z = 2 * np.pi * self.fz
+            amu2kg = NAT_CONSTANTS["amu2kg"]  # kg
+            # mass = 40 * amu2kg
+
+            if self.mbemu == "K":
+                mass = 40 * amu2kg  # kg
+            elif self.mbemu == "KRb":
+                mass = 127 * amu2kg  # kg
+            else:
+                raise ValueError("Unknown species: {}".format(self.odImage.species))
+            
+            pxsz_um = self.config["Pixel Size"] * self.odImage.data.bin * 1e-6
+            print("Pixel size: {:f} um".format(pxsz_um * 1e6))
+
+            resLSQ = least_squares(
+                fermiDirac_fixed_bemu,
+                p0,
+                args=(r, self.odImage.ODCorrected),
+                kwargs={
+                    "N0": number,
+                    "TOF": TOF0,
+                    "omega_x": omega_x,
+                    "omega_y": omega_y,
+                    "omega_z": omega_z,
+                    "pxsz_um": pxsz_um,
+                    "mass": mass,
+                },  # Constrain THE NUMBER
+                bounds=(pLower, pUpper),
+                xtol=3e-16,  # Change tolerance for the fit; needed for convergence
+                ftol=3e-16,
+                diff_step=[1e-12, 1e-12, 0.01, 0.01, 0.01, 0.01],
+            )
+
+            # From fit get betamu (needs to be cleaned once we use the inputs)
+
+            omega_bar = (omega_x * omega_y * omega_z) ** (1 / 3)
+            Tx = (
+                mass
+                * omega_x**2
+                * (resLSQ.x[3] * pxsz_um) ** 2
+                / (1 + omega_x**2 * TOF0**2)
+                / kB
+            )
+            Ty = (
+                mass
+                * omega_y**2
+                * (resLSQ.x[5] * pxsz_um) ** 2
+                / (1 + omega_y**2 * TOF0**2)
+                / kB
+            )
+            T_avg = (Tx**2 * Ty) ** (1 / 3)
+            print("Fitted T_avg: {:f} nK".format(T_avg * 1e9))
+
+            # Find where betamu for the given T gives us the right number of particles
+            betamu_range = np.linspace(-10, 20, 5000)
+            N_checker_3D = (
+                (kB * T_avg / (hbar * omega_bar)) ** 3
+            ) * polylog_lib.fermi_poly3(betamu_range)
+
+            N_diff_3D = np.abs(N_checker_3D - number)
+            ind_N_3D = np.where(N_diff_3D == np.min(N_diff_3D))[0]
+            betamu_3D = betamu_range[ind_N_3D[0]]
+
+            print("Computed betamu: {:.2f}".format(betamu_3D))
+
+            self.fitDataConf = confidenceIntervals(resLSQ)
+            self.fitData = resLSQ.x
+            self.fitData = np.append(self.fitData, betamu_3D)
+            self.fittedImage = fermiDirac_fixed_bemu(
+                resLSQ.x,
+                r,
+                0,
+                N0=number,
+                TOF=TOF0,
+                omega_x=omega_x,
+                omega_y=omega_y,
+                omega_z=omega_z,
+                pxsz_um = pxsz_um,
+                mass = mass,
+            ).reshape(self.odImage.ODCorrected.shape)
+
+            # Gaussian fit
+            p0 = [0, M, self.odImage.xRange0[I1], 20, self.odImage.xRange1[I0], 20, 0]
+
+            pUpper = [
+                np.inf,
+                100.0,
+                np.max(r[0]),
+                len(r[0]),
+                np.max(r[1]),
+                len(r[1]),
+                0.00001,
+            ]
+            pLower = [-np.inf, 0.0, np.min(r[0]), 0, np.min(r[1]), 0, -0.00001]
+
+            resLSQ = least_squares(
+                gaussian,
+                p0,
+                args=(r, self.odImage.ODCorrected),
+                kwargs={"mask_above": MAX_OD_FIT},
+                bounds=(pLower, pUpper),
+            )
+            self.fitDataConfGauss = confidenceIntervals(resLSQ)
+            self.fitDataGauss = resLSQ.x
+            self.fittedImageGauss = gaussian(self.fitDataGauss, r, 0).reshape(
+                self.odImage.ODCorrected.shape
+            )
+
+            #######################################################################################################################
+
+            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
+            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+
+            # azAverage -- I'm not sure what the correct index should be for azAverage...
+            center = [I0, I1]
+            self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            self.slices.radSliceFitGauss = azimuthalAverage(
+                self.fittedImageGauss, center
+            )
+
+            ### Calculate slices through fit (No rotation)
+            self.slices.points0 = self.odImage.ODCorrected[I1, :]
+            self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
+            self.slices.fit0 = self.fittedImage[I1, :]
+
+            self.slices.points1 = self.odImage.ODCorrected[:, I0]
+            self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
+            self.slices.fit1 = self.fittedImage[:, I0]
+
         elif self.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac 2D"):
 
             r = [None, None]
@@ -1955,6 +2223,43 @@ class processFitResult:
                 "wy": self.fitObject.fitData[5] * self.bin * self.pixelSize,
                 "q": self.fitObject.fitData[6],
                 "TTF": getTTF(self.fitObject)[0][0],
+                "wxClassical": self.fitObject.fitDataGauss[3]
+                * self.bin
+                * self.pixelSize,
+                "wyClassical": self.fitObject.fitDataGauss[5]
+                * self.bin
+                * self.pixelSize,
+                "peakODClassical": self.fitObject.fitDataGauss[1],
+            }
+
+            self.data = [
+                "fileName",
+                r["peakODClassical"],
+                r["wxClassical"],
+                r["wyClassical"],
+                r["peakOD"],
+                r["wx"],
+                r["wy"],
+                r["x0"],
+                r["y0"],
+                r["offset"],
+                r["TTF"],
+            ]
+            self.data_dict = r
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index(
+            "Fermi-Dirac fixed betamu"
+        ):
+
+            r = {
+                "offset": self.fitObject.fitData[0],
+                "peakOD": self.fitObject.fitData[1],
+                "x0": self.fitObject.fitData[2],
+                "y0": self.fitObject.fitData[4],
+                "wx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
+                "wy": self.fitObject.fitData[5] * self.bin * self.pixelSize,
+                "q": self.fitObject.fitData[6],
+                "TTF": getTTF(self.fitObject)[0],
                 "wxClassical": self.fitObject.fitDataGauss[3]
                 * self.bin
                 * self.pixelSize,

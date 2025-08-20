@@ -11,6 +11,12 @@ FILESEP = "/"
 AUTOSCALE_MIN = 2  # percentile
 AUTOSCALE_HEADROOM = 1.1  # factor above max
 
+NAT_CONSTANTS = {
+    "hbar": 1.0545718e-34,  # J s
+    "kB": 1.380649e-23,  # J/K
+    "amu2kg": 1.66053907e-27,  # kg
+}
+
 # FIT_FUNCTIONS = ['Gaussian w/ Gradient', 'Gaussian', 'Rotated Gaussian', 'Twisted Gaussian', 'Bigaussian', 'Fermi-Dirac', 'Vertical BandMap']
 FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -26,6 +32,7 @@ FIT_FUNCTIONS = [
     "Integrate",
     "Gaussian Mask Sigma",
     "Gaussian Mask Sigma No Rot",
+    "Fermi-Dirac fixed betamu",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -39,6 +46,7 @@ KRB_FIT_FUNCTIONS = [
     "Integrate",
     "Gaussian Mask Sigma",
     "Gaussian Mask Sigma No Rot",
+    "Fermi-Dirac fixed betamu",
 ]
 NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -50,6 +58,7 @@ NONTWISTED_FIT_FUNCTIONS = [
     "Thomas-Fermi",
     "Integrate",
     "Gaussian Mask Sigma No Rot",
+    "Fermi-Dirac fixed betamu",
 ]
 NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -74,6 +83,7 @@ WORKSHEET_NAMES = [
     "Integrated",
     "GaussMask",
     "GaussMask",
+    "FDbemu",
 ]
 
 DEFAULT_MODE = "Side iXon"
@@ -84,6 +94,13 @@ CSAT = {
     "axial": {"K": 2970, "Rb": 2882},  # not calibrated for a while
     "side": {"K": 2955, "Rb": 3276},  # {"K": 2072, "Rb": 2201} 12/10/2024; {"K": 2955, "Rb": 3276} calibrated 12/02/2024
     "vertical": {"K": 490, "Rb": 1300},  # Calibrated 12/17/24
+}
+
+# Used as defaults for the input fields in the GUI
+FREQS = {
+    "fx": 32.0,  # frequency in Hz
+    "fy": 171.1,
+    "fz": 26.0,
 }
 
 # TODO: Check these!
