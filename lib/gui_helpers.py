@@ -408,8 +408,49 @@ class regionWidget(QtWidgets.QWidget):
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j], i + 1, j + 1, 1, 1)
 
-        self.setLayout(self.grid)
+        
+        # self.CsatK = QtWidgets.QLineEdit(str(IMFIT_MODES[DEFAULT_MODE]["CSat"]["K"]))
+        self.CsatK = QtWidgets.QLabel(str(IMFIT_MODES[DEFAULT_MODE]["CSat"]["K"]))
+        # csatk_validator = QtGui.QDoubleValidator()
+        # csatk_validator.setBottom(0)
+        # self.CsatK.setValidator(csatk_validator)
+        # self.CsatK.setFixedWidth(80)
+        self.CsatKlabel = QtWidgets.QLabel("K CSAT:")
+        
+        # self.CsatRb = QtWidgets.QLineEdit(str(IMFIT_MODES[DEFAULT_MODE]["CSat"]["Rb"]))
+        self.CsatRb = QtWidgets.QLabel(str(IMFIT_MODES[DEFAULT_MODE]["CSat"]["Rb"]))
+        # csatrb_validator = QtGui.QDoubleValidator()
+        # csatrb_validator.setBottom(0)
+        # self.CsatRb.setValidator(csatrb_validator)
+        # self.CsatRb.setFixedWidth(80)
+        self.CsatRblabel = QtWidgets.QLabel("Rb CSAT:")
+        
+        self.grid.addWidget(self.CsatKlabel)
+        self.grid.addWidget(self.CsatK)
+        self.grid.addWidget(self.CsatRblabel)
+        self.grid.addWidget(self.CsatRb)
 
+        
+
+        self.setLayout(self.grid)
+    def setCsat(self, mode):
+            speciesA = IMFIT_MODES[mode]["Species"][0]
+            speciesB = IMFIT_MODES[mode]["Species"][1]
+            try:
+                print("Setting Csat for species {}".format(speciesA))
+                CsatA = IMFIT_MODES[mode]["CSat"][speciesA]
+                print("Setting Csat for species {}".format(speciesB))
+                CsatB = IMFIT_MODES[mode]["CSat"][speciesB]
+            except AttributeError:
+                print("regionWidget.setCSAT error")
+                return -1
+            self.CsatK.setText(str(CsatA))
+            self.CsatRb.setText(str(CsatB))
+
+            self.CsatKlabel.setText(str(speciesA) + " Csat:")
+            self.CsatRblabel.setText(str(speciesB) + " Csat:")
+            return 0
+    
     def setDefaultRegion(self, mode):
         try:
             region = IMFIT_MODES[mode]["Default Region"]

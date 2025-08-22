@@ -632,6 +632,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)
+        self.roi.setCsat(self.mode)
 
     def initializeGui(self):
 
@@ -654,7 +655,7 @@ class imfitDue(QtWidgets.QMainWindow):
         v0.addWidget(gb1)
         v0.addStretch(1)
 
-        gb2 = QtWidgets.QGroupBox("Region Selection")
+        gb2 = QtWidgets.QGroupBox("Region Selection and Csat")
         gb2.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         gb2l = QtWidgets.QVBoxLayout()
         h0 = QtWidgets.QHBoxLayout()
