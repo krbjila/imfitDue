@@ -32,6 +32,7 @@ FIT_FUNCTIONS = [
     "Integrate",
     "Gaussian Mask Sigma",
     "Gaussian Mask Sigma No Rot",
+    "Gauss (Mask) Int",
     "Fermi-Dirac fixed betamu",
 ]
 KRB_FIT_FUNCTIONS = [
@@ -58,6 +59,7 @@ NONTWISTED_FIT_FUNCTIONS = [
     "Thomas-Fermi",
     "Integrate",
     "Gaussian Mask Sigma No Rot",
+    "Gauss (Mask) Int",
     "Fermi-Dirac fixed betamu",
 ]
 NONTWISTED_KRB_FIT_FUNCTIONS = [
@@ -81,6 +83,7 @@ WORKSHEET_NAMES = [
     "FD2D",
     "ThomasFermi",
     "Integrated",
+    "GaussMask",
     "GaussMask",
     "GaussMask",
     "FDbemu",

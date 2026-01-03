@@ -1834,6 +1834,260 @@ class fitOD:
 
             self.slices.fit1 = self.fittedImage
 
+
+        elif self.fitFunction == FIT_FUNCTIONS.index("Gauss (Mask) Int"):
+            # Gaussian fit with gradient in 1D with masked center
+            ### Parameters: [offset, amplitude, x0, wx, dODdx]
+
+            r = [None, None]
+            r[0] = self.odImage.xRange0  # x
+            r[1] = self.odImage.xRange1  # y
+
+            # Fit integrated OD
+            od_int = np.sum(self.odImage.ODCorrected, axis=0)
+            od_int *= self.config["Pixel Size"] * self.odImage.data.bin
+
+             # We mask EXCLUSION_RADIUS * initial sigma around the center of the fit
+            EXCLUSION_RADIUS = self.WingRad
+
+            def subtract_gradient(od):
+                (dy, dx) = np.shape(od)
+                X2D, Y2D = np.meshgrid(np.arange(dx), np.arange(dy))
+                A = np.matrix(
+                    np.column_stack((X2D.ravel(), Y2D.ravel(), np.ones(dx * dy)))
+                )
+                B = od.flatten()
+                C = np.dot((A.T * A).I * A.T, B).flatten()
+                bg = np.reshape(C * A.T, (dy, dx))
+                return np.asarray(od - bg)
+
+            # First perform a 2D Gaussian fit to get initial parameters
+            r = [None, None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+            xmin = np.min(r[0])
+            ymin = np.min(r[1])
+
+            data = self.odImage.ODCorrected
+            od_no_bg = subtract_gradient(data)
+            blur = ndimage.gaussian_filter(od_no_bg, 5, mode="constant")
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, dODdx, dODdy]
+            p0 = [
+                0,
+                M,
+                self.odImage.xRange0[I1],
+                20,
+                self.odImage.xRange1[I0],
+                20,
+                0,
+                0,
+            ]
+            pUpper = [
+                np.inf,
+                50.0,
+                np.max(r[0]),
+                len(r[0]),
+                np.max(r[1]),
+                len(r[1]),
+                40,
+                40,
+            ]
+            pLower = [
+                -np.inf,
+                0.0,
+                np.min(r[0]),
+                0,
+                np.min(r[1]),
+                0,
+                -40,
+                -40,
+            ]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            pks = peak_local_max(blur, min_distance=20, exclude_border=2, num_peaks=3)
+            guesses = [p0]
+            for pk in pks:
+                yc = pk[0]
+                xc = pk[1]
+                peak = data[yc, xc]
+                offset = np.mean(data)
+                if peak > 0:
+                    (sigx, sigy) = 15, 15
+                    guess = [offset, peak, xmin + xc, sigx, ymin + yc, sigy, 0.0, 0.0]
+                    guesses.append(checkGuess(guess, pUpper, pLower))
+
+            best_fit = None
+            best_guess = np.inf
+
+            # Initial Gaussian Fit
+            for guess in guesses:
+                try:
+                    # print("Trying guess: {}".format(guess))
+                    res = least_squares(
+                        gaussian_mask_sigma_no_rot,
+                        guess,
+                        args=(r, self.odImage.ODCorrected),
+                        bounds=(pLower, pUpper),
+                        kwargs={
+                            "mask_radius_x": 1e-6,
+                            "mask_radius_y": 1e-6,
+                            "x0_mask": self.odImage.ODCorrected.shape[1] / 2,
+                            "y0_mask": self.odImage.ODCorrected.shape[0] / 2,
+                        },
+                    )
+                    # print("Cost: {}".format(res.cost))
+                    if not res.success:
+                        print("Warning: fit did not converge.")
+                    elif res.cost < best_guess:
+                        best_guess = res.cost
+                        best_fit = res
+                except ValueError as e:
+                    print("Error fitting image: {}".format(e))
+            res2D = res.x
+
+            updated_guess = res.x[[0,1,2,3,6]] # only keep the parts relevant for 1D fit
+            best_fit = None
+            best_guess = np.inf
+            # print('UPDATED GUESS: {}'.format(updated_guess))
+            
+            pUpper = [
+                np.inf,
+                50.0,
+                np.max(r[0]),
+                len(r[0]),
+                40,
+            ]
+            pLower = [
+                -np.inf,
+                0.0,
+                np.min(r[0]),
+                0,
+                -40,
+            ]
+            try:
+                # print("Trying guess: {}".format(guess))
+                res = least_squares(
+                    gaussian_mask_sigma_1D,
+                    updated_guess,
+                    args=(np.array(r[0]), od_int),
+                    bounds=(pLower, pUpper),
+                    kwargs={
+                        "mask_radius_x": EXCLUSION_RADIUS * np.abs(updated_guess[3]),
+                        "x0_mask": np.abs(updated_guess[2]),
+                    },
+                )
+                # print("Cost: {}".format(res.cost))
+                if not res.success:
+                    print("Warning: fit did not converge.")
+                elif res.cost < best_guess:
+                    best_guess = res.cost
+                    best_fit = res
+            except ValueError as e:
+                print("Error fitting image: {}".format(e))
+
+            resLSQ = best_fit
+            # print("Best fit: {}".format(resLSQ))
+            if resLSQ is not None:
+                self.fitDataConf = confidenceIntervals(resLSQ)
+                self.fitData = resLSQ.x
+                resplot = resLSQ.x.copy()
+                resplot[0] = 0 # set offset to zero for plotting, we add it later
+                self.fittedImage = gaussian_mask_sigma_1D(
+                    resplot,
+                    np.array(r[0]),
+                    0,
+                    mask_radius_x=EXCLUSION_RADIUS * np.abs(updated_guess[3]),
+                    x0_mask=np.abs(updated_guess[2]),
+                ).reshape(od_int.shape) + resLSQ.x[0]
+                # For plotting:
+                fittedImage_no_mask = gaussian_mask_sigma_1D(
+                    resplot,
+                    np.array(r[0]),
+                    0,
+                    mask_radius_x=1e-9,
+                    x0_mask=np.abs(updated_guess[2]),
+                ).reshape(od_int.shape) + resLSQ.x[0]
+
+            # Integration of number from computed column density
+
+            # Compute the number by summing the pixels and multiplying by the pixel area
+            # subtract the offset from the initial Gaussian fit, as well as the gradients
+            # We make a background image where we just set the amplitude to zero, so that
+            # we only have the offset and the gradients
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, dODdx, dODdy]
+            bg_res = [
+                res2D[0],
+                0,
+                res2D[2],
+                res2D[3],
+                res2D[4],
+                res2D[5],
+                res2D[6],
+                res2D[7],
+            ]
+
+            # fitted bg converted to density
+            getsigma = SIGMA_0[self.odImage.species] * (
+                2 if IMFIT_MODES[self.odImage.mode]["Image Path"] == "Vertical" else 1
+            )
+
+            fitted_bg = (
+                gaussian_mask_sigma_no_rot(
+                    bg_res,
+                    r,
+                    0,
+                    mask_radius_x=1e-9,
+                    mask_radius_y=1e-9,
+                    x0_mask=np.abs(updated_guess[2]),
+                    y0_mask=np.abs(updated_guess[4]),
+                ).reshape(self.odImage.ODCorrected.shape)
+                / getsigma
+            )
+
+            raw_number = (self.odImage.n - fitted_bg).sum()
+            number = (
+                raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
+
+            error = (
+                np.sqrt((self.odImage.nerr**2).sum())
+                * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
+
+            self.fitData = np.append(self.fitData, number)
+            self.fitData = np.append(self.fitData, error)
+            self.fitData = np.append(self.fitData, EXCLUSION_RADIUS)
+
+            ### Get radial average
+            print('TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST')
+            print('FITDATA: {}'.format(self.fitData))
+            print('TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST')
+
+            # self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
+            # self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)
+            # self.slices.radSliceFitGauss = [0] * len(self.slices.radSlice)
+
+            ### Calculate slices through fit
+            y_for_x_slice = res2D[4] - r[1][0]
+            # x_for_y_slice = res2D[2] - r[0][0]
+
+            self.slices.points0 = od_int
+            self.slices.ch0 = np.ones(len(r[0])) * y_for_x_slice + r[1][0]
+            self.slices.fit0 = self.fittedImage
+            self.slices.fit0a = fittedImage_no_mask
+
+            # The other slice is just the cut along x as well
+            self.slices.points1 = self.odImage.ODCorrected[
+                round(y_for_x_slice), :
+            ]
+            self.slices.ch1 = None
+
+            self.fitDataConfGauss = confidenceIntervals(resLSQ)
+            self.fitDataGauss = resLSQ.x
+            self.fittedImageGauss = gaussian1D(resLSQ.x, np.array(r[0]), 0)
+
+            print("Done with fit function!")
+
         # elif self.fitFunction == FIT_FUNCTIONS.index('Vertical BandMap'):
         #     # TODO: Make this depend properly on the species. Disabled for now.
         #     # Band mapping function in the vertical direction
@@ -2341,7 +2595,7 @@ class processFitResult:
                 r["TTF"],
             ]
             self.data_dict = r
-
+        
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Fermi-Dirac 2D Int"):
             r = {
                 "offset": self.fitObject.fitDataGauss[1],  # self.fitObject.fitData[0],
@@ -2378,6 +2632,42 @@ class processFitResult:
                 r["TTF"],
             ]
             self.data_dict = r
+
+
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Gauss (Mask) Int"):
+            r = {
+                "offset": self.fitObject.fitData[0],
+                "dODdx": self.fitObject.fitData[4] / self.bin * self.pixelSize,
+                "dODdy": 0,
+                "peakOD": self.fitObject.fitData[1],
+                "x0": self.fitObject.fitData[2],
+                "y0": 0,
+                "wx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
+                "wy": 0,
+                "angle": 0,
+                "N": self.fitObject.fitData[5],
+                "Nerr": self.fitObject.fitData[6],
+                "ExclR": self.fitObject.fitData[7],
+            }
+
+            print(r)
+            self.data = [
+                "fileName",
+                r["peakOD"],
+                r["dODdx"],
+                r["dODdy"],
+                r["wx"],
+                r["wy"],
+                r["x0"],
+                r["y0"],
+                r["offset"],
+                r["angle"],
+                r["N"],
+                r["Nerr"],
+                r["ExclR"],
+            ]
+            self.data_dict = r
+
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Thomas-Fermi"):
             r = {

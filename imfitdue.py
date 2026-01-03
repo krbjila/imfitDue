@@ -560,6 +560,13 @@ class imfitDue(QtWidgets.QMainWindow):
                     ):
                         # 2nd plot is x instead of y: it's for integration along y so you want to plot the x axis
                         self.figs.plotSliceUpdate(x, [Sx, Fx, Fy], x, [Sy])
+                    
+                    elif self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Gauss (Mask) Int"
+                    ):
+                        # 2nd plot is x instead of y: it's for integration along y so you want to plot the x axis
+                        self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], x, [Sy])
+                    
                     else:
                         self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
 

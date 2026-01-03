@@ -115,6 +115,33 @@ def gaussian_mask_sigma_no_rot(
 
     return (z - np.ravel(y)) * mask.ravel()
 
+# Gaussian with Gradient; Mask above a certain radius
+def gaussian_mask_sigma_1D(
+    p,
+    r,
+    y,
+    mask_radius_x=1e-6,  # should be 1E-6 for default
+    x0_mask=0,
+):
+    ### Parameters: [offset, amplitude, x0, wx, dODdx]
+    X = r
+
+    z = np.ravel(
+        p[0]
+        + p[1]
+        * np.exp(
+            -((X - p[2]) ** 2.0) / (2.0 * p[3] ** 2.0)
+        )
+        + p[4] * (X - p[2])
+    )
+
+    X_mask = X - x0_mask
+
+    QR = (X_mask) ** 2 / mask_radius_x**2
+    mask = np.where(QR > 1, 1, 0)
+
+    return (z - np.ravel(y)) * mask.ravel()
+
 
 def gaussianGradient(p, r, y):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
