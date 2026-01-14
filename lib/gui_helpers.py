@@ -328,7 +328,7 @@ class plotTools(QtWidgets.QWidget):
         self.setLayout(vbox)
 
     def sliderOd(self):
-        return float(self.odMinEdit.text()) + float(self.odMaxEdit.text()) * (
+        return float(self.odMinEdit.text()) + (float(self.odMaxEdit.text())-float(self.odMinEdit.text())) * (
             self.odSlider.value() - self.odSlider.minimum()
         ) / (self.odSlider.maximum() - self.odSlider.minimum())
 
