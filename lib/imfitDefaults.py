@@ -94,8 +94,8 @@ DEFAULT_MODE = "Side iXon"
 MAX_OD_FIT = 1e9
 
 CSAT = {
-    "axial": {"K": 1000, "Rb": 1000},  # not calibrated for a while $ {"K": 2970, "Rb": 2882} calibrated when??
-    "side": {"K": 2955, "Rb": 3276},  # {"K": 2072, "Rb": 2201} 12/10/2024; {"K": 2955, "Rb": 3276} calibrated 12/02/2024
+    "axial": {"K": 2970, "Rb": 2882},  # not calibrated for a while $  calibrated when??
+    "side": {"K": 1000, "Rb": 1000},  # {"K": 2072, "Rb": 2201} 12/10/2024; {"K": 2955, "Rb": 3276} calibrated 12/02/2024
     "vertical": {"K": 490, "Rb": 1300},  # Calibrated 12/17/24
 }
 

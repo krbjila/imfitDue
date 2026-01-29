@@ -21,7 +21,7 @@ from datetime import datetime
 def show_warning_messagebox_defringing():
     msg = QtWidgets.QMessageBox()
     msg.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-    msg.setText("Warning: Have you initialized the defringing?")
+    msg.setText("Warning: Have you initialized the defringing? \n Perhaps the region changed?")
     msg.setWindowTitle("Warning MessageBox")
     msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
     retval = msg.exec()
@@ -157,8 +157,6 @@ class imfitDue(QtWidgets.QMainWindow):
         try:
             self.odKBG = calcOD(self.BGFile, species[0], self.mode, self.regionK)
             self.odRbBG = calcOD(self.BGFile, species[1], self.mode, self.regionRb)
-            # plt.figure()
-            # plt.imshow(self.odKBG.ODCorrected)
         except Exception as e:
             print("Could not calculate BG: {}".format(e))
 
@@ -181,6 +179,8 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
 
             elif self.av.b2_bgsu.isChecked():
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
                 self.odK.OD = self.odK.OD - self.odKBG.OD
                 self.odRb.OD = self.odRb.OD - self.odRbBG.OD
                 self.odK.ODCorrected = self.odK.ODCorrected - self.odKBG.ODCorrected
@@ -364,6 +364,9 @@ class imfitDue(QtWidgets.QMainWindow):
 
             if self.av.b2_bgsu.isChecked():
                 y = self.av.getBackgroundFileNumbers()
+                # self.BGFile = None # reinitialize BGFiles - didn't resolve issue
+                # self.odKBG = None
+                # self.odRbBG = None
                 firstBGFile = True
                 if y is not None:
                     for k in y:
@@ -431,7 +434,17 @@ class imfitDue(QtWidgets.QMainWindow):
                             shad0 = avg_frame_dict["K"]["Shadow"] - avg_frame_dict["K"]["Dark"]
                             shad1 = cropArray(shad0, xRange1K, xRange0K)
 
-                            a_F_lg = light1.ravel()[self.ind_maskK].T  # following Vogel notation
+                            reg_sz_np = self.regionK[2]*self.regionK[3] - self.pK[2]*self.pK[3]
+
+                            if reg_sz_np != np.size(self.Ref_Mat_lgK[0,:]):
+                                show_warning_messagebox_defringing()
+
+
+                            print(np.size(self.Ref_Mat_lgK[0,:]))
+                            print(np.size(xRange0K)*np.size(xRange1K))
+                            print(np.size(light1.ravel()[self.ind_maskK]))
+
+                            a_F_lg = light1.ravel()[self.ind_maskK].T # following Vogel notation
                             a_F_sh = shad1.ravel()[self.ind_maskK].T  # following Vogel notation
                             
                             t_lg = self.Ref_Mat_lgK @ a_F_lg
@@ -459,8 +472,6 @@ class imfitDue(QtWidgets.QMainWindow):
                         for idx, species in enumerate(species_list):
 
                             if defringe_flag and species == "K":
-                                    print("Defringing...")
-
                                     light0 = self.currentFile.frames["K"]["Light"] - self.currentFile.frames["K"]["Dark"]
                                     light1 = cropArray(light0, xRange1K, xRange0K)
                                     shad0 = self.currentFile.frames["K"]["Shadow"] - self.currentFile.frames["K"]["Dark"]
