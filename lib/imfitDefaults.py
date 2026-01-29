@@ -94,7 +94,7 @@ DEFAULT_MODE = "Side iXon"
 MAX_OD_FIT = 1e9
 
 CSAT = {
-    "axial": {"K": 2970, "Rb": 2882},  # not calibrated for a while
+    "axial": {"K": 1000, "Rb": 1000},  # not calibrated for a while $ {"K": 2970, "Rb": 2882} calibrated when??
     "side": {"K": 2955, "Rb": 3276},  # {"K": 2072, "Rb": 2201} 12/10/2024; {"K": 2955, "Rb": 3276} calibrated 12/02/2024
     "vertical": {"K": 490, "Rb": 1300},  # Calibrated 12/17/24
 }
@@ -155,7 +155,8 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["side"],
                 "Species": ["K", "Rb"],
                 "Image Path": "Side",
-                "Default Region": [[94, 242, 200, 200], [94, 396, 150, 150]],
+                "Default Region": [[210, 450, 200, 200], [210, 700, 150, 150]],
+                "Default Particle Region": [[210, 450, 80, 40], [210, 700, 50, 50]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": NONTWISTED_FIT_FUNCTIONS,
                 "Enforce same fit for both": False,

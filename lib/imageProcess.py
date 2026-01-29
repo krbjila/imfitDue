@@ -2059,9 +2059,7 @@ class fitOD:
             self.fitData = np.append(self.fitData, EXCLUSION_RADIUS)
 
             ### Get radial average
-            print('TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST')
             print('FITDATA: {}'.format(self.fitData))
-            print('TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST')
 
             # self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
             # self.slices.radSliceFit = azimuthalAverage(self.fittedImage, center)

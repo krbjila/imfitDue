@@ -18,6 +18,13 @@ from bson.json_util import loads, dumps
 
 from datetime import datetime
 
+def show_warning_messagebox_defringing():
+    msg = QtWidgets.QMessageBox()
+    msg.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+    msg.setText("Warning: Have you initialized the defringing?")
+    msg.setWindowTitle("Warning MessageBox")
+    msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
+    retval = msg.exec()
 
 class imfitDue(QtWidgets.QMainWindow):
     def __init__(self, Parent=None):
@@ -27,6 +34,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
         self.regionRb = [0] * 4
         self.regionK = [0] * 4
+        self.pRb = [0] * 4
+        self.pK = [0] * 4
 
         self.initializeGui()
         self.createToolbar()
@@ -47,6 +56,14 @@ class imfitDue(QtWidgets.QMainWindow):
         self.currentFile = None
         self.odK = None
         self.odRb = None
+                
+        self.Ref_Mat_Full_lgK = None
+        self.Ref_Mat_lgK = None
+        self.Ref_Mat_Full_shK = None
+        self.Ref_Mat_shK = None
+        self.RFRFT_inv_lgK = None
+        self.RFRFT_inv_shK = None
+        self.ind_maskK = None
 
     def setupDatabase(self):
         """
@@ -86,6 +103,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.roi.region[i][j].returnPressed.connect(self.updateCrop)
 
         self.av.averageButton.clicked.connect(self.averageImages)
+        self.av.initdefrButton.clicked.connect(self.intializeDefringe)
         self.fo.uploadButton.clicked.connect(self.process2Origin)
         self.fo.databaseButton.clicked.connect(self.process2Database)
 
@@ -153,12 +171,16 @@ class imfitDue(QtWidgets.QMainWindow):
         for i in range(4):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
+            self.pK[i] = float(self.av.region_p[0][i].text())
+            self.pRb[i] = float(self.av.region_p[1][i].text())
 
         species = IMFIT_MODES[self.mode]["Species"]
         try:
-            self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
-            self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
-            if self.av.bgSubtract.isChecked():
+            if self.av.b1_nobg.isChecked():
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+
+            elif self.av.b2_bgsu.isChecked():
                 self.odK.OD = self.odK.OD - self.odKBG.OD
                 self.odRb.OD = self.odRb.OD - self.odRbBG.OD
                 self.odK.ODCorrected = self.odK.ODCorrected - self.odKBG.ODCorrected
@@ -167,6 +189,12 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.odRb.n = self.odRb.n - self.odRbBG.n
                 self.odK.nerr = np.sqrt(self.odK.nerr**2 + self.odKBG.nerr**2)
                 self.odRb.nerr = np.sqrt(self.odRb.nerr**2 + self.odRbBG.nerr**2)
+
+            elif self.av.b3_defr.isChecked():
+                # The plan is to defringe in the averaging function, so here we just calculate the OD normally
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+
         except Exception as e:
             print("Could not calculate OD: {}".format(e))
 
@@ -186,10 +214,132 @@ class imfitDue(QtWidgets.QMainWindow):
         print("Done calculating current OD")
 
     def updateCrop(self):
-        if self.av.bgSubtract.isChecked():
+        if self.av.b2_bgsu.isChecked():
             self.averageImages()
         else:
             self.currentODCalc()
+
+
+    def intializeDefringe(self):  # FOR NOW IMPLEMENTING ONLY FOR iXon side and for K and Rb
+        # At the moment this code is quite messy: I copy pasted a lot of code from elsewhere. It could have been a function...
+        for i in range(4):
+            self.regionK[i] = float(self.roi.region[0][i].text())
+            self.regionRb[i] = float(self.roi.region[1][i].text())
+            self.pK[i] = float(self.av.region_p[0][i].text())
+            self.pRb[i] = float(self.av.region_p[1][i].text())
+
+        particle_regK = [self.pK[0], self.pK[1], self.pK[2], self.pK[3]]
+        particle_regRb = [self.pRb[0], self.pRb[1], self.pRb[2], self.pRb[3]]
+
+        regionK = [self.regionK[0], self.regionK[1], self.regionK[2], self.regionK[3]]
+        regionRb = [self.regionRb[0], self.regionRb[1], self.regionRb[2], self.regionRb[3]]
+
+        x_recK = int(particle_regK[0] - particle_regK[2]/2 - (regionK[0] - regionK[2]/2))
+        y_recK = int(particle_regK[1] - particle_regK[3]/2 - (regionK[1] - regionK[3]/2))
+
+        x_recRb = int(particle_regRb[0] - particle_regRb[2]/2 - (regionRb[0] - regionRb[2]/2))
+        y_recRb = int(particle_regRb[1] - particle_regRb[3]/2 - (regionRb[1] - regionRb[3]/2))
+
+        maskK = np.zeros((int(regionK[3]), int(regionK[2]))) + 1
+        maskK[
+            y_recK : y_recK + int(particle_regK[3]),
+            x_recK : x_recK + int(particle_regK[2]),
+        ] = 0
+        ind_maskK = np.where(maskK.ravel() != 0)
+        self.ind_maskK = ind_maskK
+
+        y = self.av.getBackgroundFileNumbers()
+
+        path = str(
+                self.pf.filePath.text()
+            )
+
+        species = IMFIT_MODES[self.mode]["Species"]
+
+        sz_frame = 0
+        # Use first image to get size of full light frames
+        if y is not None:
+            try:
+                initializer = readImage(
+                    self.mode, (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(y[0])
+                )
+                if initializer is None:
+                    return
+                
+                sz_frame = np.size(initializer.getFrame(species[0], "Shadow"))
+
+            except Exception as e:
+                print("Could not defringe images: {}".format(e))
+        
+        Ref_Mat_Full_lgK = np.zeros((sz_frame, np.size(y)))
+        Ref_Mat_Full_shK = np.zeros((sz_frame, np.size(y)))
+
+        Ref_Mat_lgK = np.zeros((np.size(ind_maskK), np.size(y)))
+        Ref_Mat_shK = np.zeros((np.size(ind_maskK), np.size(y)))
+
+
+        r0K = int(regionK[0] - np.floor(regionK[2] / 2))
+        r1K = int(regionK[0] + np.floor(regionK[2] / 2))
+        r2K = int(regionK[1] - np.floor(regionK[3] / 2))
+        r3K = int(regionK[1] + np.floor(regionK[3] / 2))
+
+        xRange0K = range(r0K, r1K)
+        xRange1K = range(r2K, r3K)
+        
+        if y is not None:
+            try:
+                i_cnt = 0
+                for k in y:
+                    print(
+                        "Reading file: {}".format(
+                            (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
+                        )
+                    )
+                    self.BGFile = readImage(
+                        self.mode, (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
+                    )
+                    if self.BGFile is None:
+                        return
+                    shadow = self.BGFile.getFrame(species[0], "Shadow")
+                    light = self.BGFile.getFrame(species[0], "Light")
+                    dark = self.BGFile.getFrame(species[0], "Dark")
+
+                    shadowCrop = cropArray(shadow, xRange1K, xRange0K)
+                    lightCrop = cropArray(light, xRange1K, xRange0K)
+                    darkCrop = cropArray(dark, xRange1K, xRange0K)
+
+                    s1 = shadowCrop - darkCrop
+                    s2 = lightCrop - darkCrop
+                    s1f = shadow - dark
+                    s2f = light - dark
+                                    
+                    Ref_Mat_Full_lgK[:, i_cnt] = s2f.ravel()
+                    Ref_Mat_lgK[:, i_cnt] = s2.ravel()[ind_maskK]
+
+                    Ref_Mat_Full_shK[:, i_cnt] = s1f.ravel()
+                    Ref_Mat_shK[:, i_cnt] = s1.ravel()[ind_maskK]
+                    i_cnt += 1
+
+                # TO DO: Return these matrices to the main imfitDue class
+                # then use them in computing the corrected OD
+                self.Ref_Mat_Full_lgK = Ref_Mat_Full_lgK
+                self.Ref_Mat_Full_shK = Ref_Mat_Full_shK
+
+                Ref_Mat_lgK = Ref_Mat_lgK.T
+                RFRFT_inv_lgK = np.linalg.inv(Ref_Mat_lgK @ Ref_Mat_lgK.T)
+                Ref_Mat_shK = Ref_Mat_shK.T
+                RFRFT_inv_shK = np.linalg.inv(Ref_Mat_shK @ Ref_Mat_shK.T)
+
+                self.Ref_Mat_lgK = Ref_Mat_lgK
+                self.RFRFT_inv_lgK = RFRFT_inv_lgK
+                self.Ref_Mat_shK = Ref_Mat_shK
+                self.RFRFT_inv_shK = RFRFT_inv_shK
+
+            except Exception as e:
+                print("Could not defringe images: {}".format(e))
+        
+
+
 
     def averageImages(self):  # FOR NOW IMPLEMENTING ONLY FOR iXon Side
         # For now the background subtraction has not been extensively tested yet
@@ -204,12 +354,20 @@ class imfitDue(QtWidgets.QMainWindow):
                 self.pf.filePath.text()
             )  # IMFIT_MODES[self.mode]["Default Path"]
 
-            if self.av.bgSubtract.isChecked():
+            defringe_flag = False
+            if self.av.b3_defr.isChecked():
+                if np.any(self.Ref_Mat_Full_lgK == None):
+                    show_warning_messagebox_defringing()
+                else:
+                    print("Defringing during averaging is not yet implemented for Rb.")
+                    defringe_flag = True
+
+            if self.av.b2_bgsu.isChecked():
                 y = self.av.getBackgroundFileNumbers()
                 firstBGFile = True
                 if y is not None:
                     for k in y:
-                        # FOR NOW IMPLEMENTING ONLY FOR iXon Side
+                        
                         print(
                             "Subtracting file: {}".format(
                                 (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
@@ -248,7 +406,6 @@ class imfitDue(QtWidgets.QMainWindow):
             firstFile = True
             if x is not None:
                 for k in x:
-                    # FOR NOW IMPLEMENTING ONLY FOR iXon Side
                     print("Loading file: {}".format((path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)))
                     self.currentFile = readImage(
                         self.mode, (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
@@ -258,22 +415,90 @@ class imfitDue(QtWidgets.QMainWindow):
                     if firstFile:
                         avg_frame_dict = self.currentFile.frames
                         species_list = list(self.currentFile.frames.keys())
+                        
+                        if defringe_flag:
+                            regionK = [self.regionK[0], self.regionK[1], self.regionK[2], self.regionK[3]]
+                            r0K = int(regionK[0] - np.floor(regionK[2] / 2))
+                            r1K = int(regionK[0] + np.floor(regionK[2] / 2))
+                            r2K = int(regionK[1] - np.floor(regionK[3] / 2))
+                            r3K = int(regionK[1] + np.floor(regionK[3] / 2))
+
+                            xRange0K = range(r0K, r1K)
+                            xRange1K = range(r2K, r3K)
+
+                            light0 = avg_frame_dict["K"]["Light"] - avg_frame_dict["K"]["Dark"]
+                            light1 = cropArray(light0, xRange1K, xRange0K)
+                            shad0 = avg_frame_dict["K"]["Shadow"] - avg_frame_dict["K"]["Dark"]
+                            shad1 = cropArray(shad0, xRange1K, xRange0K)
+
+                            a_F_lg = light1.ravel()[self.ind_maskK].T  # following Vogel notation
+                            a_F_sh = shad1.ravel()[self.ind_maskK].T  # following Vogel notation
+                            
+                            t_lg = self.Ref_Mat_lgK @ a_F_lg
+                            weight_vec_lg = self.RFRFT_inv_lgK @ t_lg
+
+                            t_sh = self.Ref_Mat_shK @ a_F_sh
+                            weight_vec_sh = self.RFRFT_inv_shK @ t_sh
+
+                            a_cor_lg = light0.ravel() - weight_vec_lg @ self.Ref_Mat_Full_lgK.T
+                            light0_defringe = a_cor_lg.reshape(np.shape(light0)) + light0
+
+                            a_cor_sh = shad0.ravel() - weight_vec_sh @ self.Ref_Mat_Full_shK.T
+                            shad0_defringe = a_cor_sh.reshape(np.shape(light0)) + light0
+
+                            # Dirty solution - since defringing was computed with dark frames already subtracted
+                            # we just set the dark frame to zero in the following
+                            avg_frame_dict["K"]["Light"] = light0_defringe
+                            avg_frame_dict["K"]["Shadow"] = shad0_defringe
+                            avg_frame_dict["K"]["Dark"] = light0_defringe*0
+
                         firstFile = False
                     else:
                         frames, metadata = self.currentFile.getData()
                         species_list = list(self.currentFile.frames.keys())
                         for idx, species in enumerate(species_list):
-                            frame_list = list(self.currentFile.frames[species].keys())
-                            for idy, frame_name in enumerate(frame_list):
-                                species_frame = self.currentFile.frames[species][
-                                    frame_name
-                                ]
-                                avg_frame_dict[species][frame_name] += species_frame
+
+                            if defringe_flag and species == "K":
+                                    print("Defringing...")
+
+                                    light0 = self.currentFile.frames["K"]["Light"] - self.currentFile.frames["K"]["Dark"]
+                                    light1 = cropArray(light0, xRange1K, xRange0K)
+                                    shad0 = self.currentFile.frames["K"]["Shadow"] - self.currentFile.frames["K"]["Dark"]
+                                    shad1 = cropArray(shad0, xRange1K, xRange0K)
+
+                                    a_F_lg = light1.ravel()[self.ind_maskK].T  # following Vogel notation
+                                    a_F_sh = shad1.ravel()[self.ind_maskK].T  # following Vogel notation
+                                    
+                                    t_lg = self.Ref_Mat_lgK @ a_F_lg
+                                    weight_vec_lg = self.RFRFT_inv_lgK @ t_lg
+
+                                    t_sh = self.Ref_Mat_shK @ a_F_sh
+                                    weight_vec_sh = self.RFRFT_inv_shK @ t_sh
+
+                                    a_cor_lg = light0.ravel() - weight_vec_lg @ self.Ref_Mat_Full_lgK.T
+                                    light0_defringe = a_cor_lg.reshape(np.shape(light0)) + light0
+
+                                    a_cor_sh = shad0.ravel() - weight_vec_sh @ self.Ref_Mat_Full_shK.T
+                                    shad0_defringe = a_cor_sh.reshape(np.shape(light0)) + light0
+
+                                    # Dirty solution - since defringing was computed with dark frames already subtracted
+                                    # we just set the dark frame to zero in the following
+                                    avg_frame_dict["K"]["Light"] += light0_defringe
+                                    avg_frame_dict["K"]["Shadow"] += shad0_defringe
+                                    avg_frame_dict["K"]["Dark"] += light0_defringe*0
+
+                            else:
+                                frame_list = list(self.currentFile.frames[species].keys())
+                                for idy, frame_name in enumerate(frame_list):
+                                    species_frame = self.currentFile.frames[species][
+                                        frame_name
+                                    ]
+                                    avg_frame_dict[species][frame_name] += species_frame
 
                 for idx, species in enumerate(species_list):
                     frame_list = list(self.currentFile.frames[species].keys())
                     for idy, frame_name in enumerate(frame_list):
-                        # Actually put the average image in the current image dict
+                        # Actually put the average image in the current image dict and divide by the number of imgs
                         self.currentFile.frames[species][frame_name] = avg_frame_dict[
                             species
                         ][frame_name] / float(len(x))
@@ -490,6 +715,8 @@ class imfitDue(QtWidgets.QMainWindow):
         species = IMFIT_MODES[self.mode]["Species"]
         if self.figs.plotTools.kSelect.isChecked():
 
+            box = self.pK if self.av.b3_defr.isChecked() else None
+            
             x = self.odK.xRange0
             y = self.odK.xRange1
 
@@ -506,10 +733,12 @@ class imfitDue(QtWidgets.QMainWindow):
                 R = self.fitK.slices.radSlice
                 RG = self.fitK.slices.radSliceFitGauss
                 RF = self.fitK.slices.radSliceFit
-                if hasattr(self.fitK, "box"):
-                    box = self.fitK.box
-                else:
-                    box = None
+                if box is None: # old box usage below, not sure what the old usage of the box was
+                    if hasattr(self.fitK, "box"):
+                        box = self.fitK.box
+                    else:
+                        box = None
+            
             except Exception as e:
                 ch0 = None
                 ch1 = None
@@ -519,7 +748,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 Fxa = None
                 Fy = None
                 Fya = None
-                box = None
+                # box = None
 
                 R = None
                 RG = None
@@ -572,6 +801,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
         if self.figs.plotTools.rbSelect.isChecked():
 
+            box = self.pRb if self.av.b3_defr.isChecked() else None
+            
             x = self.odRb.xRange0
             y = self.odRb.xRange1
 
@@ -595,10 +826,11 @@ class imfitDue(QtWidgets.QMainWindow):
                 else:
                     FyGauss = None
 
-                if hasattr(self.fitRb, "box"):
-                    box = self.fitRb.box
-                else:
-                    box = None
+                if box is None: # old box usage below, not sure what the old usage of the box was
+                    if hasattr(self.fitRb, "box"):
+                        box = self.fitRb.box
+                    else:
+                        box = None
             except Exception as e:
                 ch0 = None
                 ch1 = None
@@ -610,7 +842,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 Fya = None
                 FxGauss = None
                 FyGauss = None
-                box = None
+                # box = None
                 self.figs.ax1.cla()
                 self.figs.ax2.cla()
                 print(e)
@@ -622,6 +854,7 @@ class imfitDue(QtWidgets.QMainWindow):
             else:
                 image = frames[species[1]][self.frame][y[0] : y[-1], x[0] : x[-1]]
             self.figs.plotUpdate(x, y, image, ch0, ch1, box)
+
             if self.frame == "OD" or self.frame == "Column Density":
                 if FxGauss is not None and FyGauss is not None:
                     self.figs.plotSliceUpdate(
@@ -675,7 +908,7 @@ class imfitDue(QtWidgets.QMainWindow):
         v0.addWidget(gb2)
         v0.addStretch(1)
 
-        gb4 = QtWidgets.QGroupBox("Averaging")
+        gb4 = QtWidgets.QGroupBox("Averaging and Defringing")
         gb4.setStyleSheet(self.getStyleSheet("./lib/styles.qss"))
         gb4l = QtWidgets.QVBoxLayout()
         gb4l.addWidget(self.av)

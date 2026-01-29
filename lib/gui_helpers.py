@@ -135,12 +135,14 @@ class ImageWindows(QtWidgets.QWidget):
                 self.ax0.plot(ch1, y, color=[0, 0.5, 0, 0.75])
             if box is not None:
                 self.ax0.add_patch(
+                    #box: [xc, yc, width, height]
                     Rectangle(
-                        (box[0][0], box[1][0]),
-                        box[0][1] - box[0][0],
-                        box[1][1] - box[1][0],
+                        (box[0] - box[2] / 2, box[1] - box[3] / 2),
+                        box[2],
+                        box[3],
                         edgecolor="0.5",
                         facecolor="none",
+                        linewidth=2.5,
                     )
                 )
 
@@ -751,25 +753,74 @@ class averageWidget(QtWidgets.QWidget):
         vbox = QtWidgets.QVBoxLayout()
 
         self.averageEdit = QtWidgets.QLineEdit()
-        self.averageButton = QtWidgets.QPushButton("Average")
+        self.averageButton = QtWidgets.QPushButton("Average  / Defringe")
+        self.initdefrButton = QtWidgets.QPushButton("Read Defringe Files")
 
         self.bgEdit = QtWidgets.QLineEdit()
-        self.bgSubtract = QtWidgets.QCheckBox("Subtract BG Images?")
-        self.bgSubtract.setChecked(False)
 
         avgbox = QtWidgets.QHBoxLayout()
         bgbox = QtWidgets.QHBoxLayout()
 
-        avgbox.addWidget(QtWidgets.QLabel("Images to Average: "))
+        avgbox.addWidget(QtWidgets.QLabel("Images to Average:   "))
         avgbox.addWidget(self.averageEdit)
         avgbox.addWidget(self.averageButton)
 
         bgbox.addWidget(QtWidgets.QLabel("Background Frames: "))
         bgbox.addWidget(self.bgEdit)
-        bgbox.addWidget(self.bgSubtract)
+        bgbox.addWidget(self.initdefrButton)
+
+        topLabels_p = ["XCp", "YCp", "CrXp", "CrYp"]
+        # sideLabels = ATOM_NAMES
+        sideLabels_p = IMFIT_MODES[DEFAULT_MODE]["Species"]
+
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setPointSize(10)
+
+        self.group1 = QtWidgets.QButtonGroup()
+
+        self.b1_nobg = QtWidgets.QRadioButton("No BG Subtraction")
+        self.b2_bgsu = QtWidgets.QRadioButton("BG Subtraction")
+        self.b3_defr = QtWidgets.QRadioButton("Defringe")
+        self.b1_nobg.setChecked(True)
+        
+        self.grid = QtWidgets.QGridLayout()
+        self.atom_labels = []
+        
+        x = QtWidgets.QLabel('Particle Region:')
+        x.setFont(font)
+        self.grid.addWidget(x, 0, 1, 1, 1)
+        
+        for k in range(4):
+            x = QtWidgets.QLabel(topLabels_p[k])
+            x.setFont(font)
+            x.setToolTip("Background for defringing taken from outside the region")
+            self.grid.addWidget(x, 0, k + 2, 1, 1)
+        for k in range(2):
+            x = QtWidgets.QLabel(sideLabels_p[k])
+            self.atom_labels.append(x)
+            x.setFont(font)
+            self.grid.addWidget(x, k + 1, 1, 1, 1)
+
+        self.region_p = [[0] * 4, [0] * 4]
+        
+        self.grid.addWidget(self.b1_nobg, 0, 0, 1, 1)
+        self.grid.addWidget(self.b2_bgsu, 1, 0, 1, 1)
+        self.grid.addWidget(self.b3_defr, 2, 0, 1, 1)
+
+        for i in range(2):
+            for j in range(4):
+                self.region_p[i][j] = QtWidgets.QLineEdit(
+                    str(IMFIT_MODES[DEFAULT_MODE]["Default Particle Region"][i][j])
+                )
+                self.region_p[i][j].setValidator(QtGui.QIntValidator())
+                self.region_p[i][j].setFixedWidth(50)
+                self.grid.addWidget(self.region_p[i][j], i + 1, j + 2, 1, 1)
+
 
         vbox.addLayout(avgbox)
         vbox.addLayout(bgbox)
+        vbox.addLayout(self.grid)
 
         self.setLayout(vbox)
 
