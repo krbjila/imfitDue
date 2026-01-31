@@ -18,10 +18,26 @@ from bson.json_util import loads, dumps
 
 from datetime import datetime
 
-def show_warning_messagebox_defringing():
+# ADDED FOR DEBUGGING PURPOSES
+class PlotWindow(QtWidgets.QMainWindow):
+    def __init__(self, img):
+        super().__init__()
+        self.setWindowTitle("Matplotlib Window")
+
+        fig = Figure()
+        canvas = FigureCanvas(fig)
+        self.setCentralWidget(canvas)
+
+        ax = fig.add_subplot(111)
+        ax.imshow(img, cmap='viridis')
+        ax.set_title("My Plot")
+
+        canvas.draw()
+
+def show_warning_messagebox_defringing(warning_text="Warning: Have you initialized the defringing? \nPerhaps the region changed?"):
     msg = QtWidgets.QMessageBox()
     msg.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-    msg.setText("Warning: Have you initialized the defringing? \n Perhaps the region changed?")
+    msg.setText(warning_text)
     msg.setWindowTitle("Warning MessageBox")
     msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
     retval = msg.exec()
@@ -36,6 +52,7 @@ class imfitDue(QtWidgets.QMainWindow):
         self.regionK = [0] * 4
         self.pRb = [0] * 4
         self.pK = [0] * 4
+        self.fK = [0] * 2
 
         self.initializeGui()
         self.createToolbar()
@@ -101,6 +118,10 @@ class imfitDue(QtWidgets.QMainWindow):
         for i in range(2):
             for j in range(4):
                 self.roi.region[i][j].returnPressed.connect(self.updateCrop)
+                
+        for i in range(2):
+            for j in range(2):
+                self.roi.fitregion[i][j].returnPressed.connect(self.cropaverageImages)
 
         self.av.averageButton.clicked.connect(self.averageImages)
         self.av.initdefrButton.clicked.connect(self.intializeDefringe)
@@ -171,6 +192,9 @@ class imfitDue(QtWidgets.QMainWindow):
             self.regionRb[i] = float(self.roi.region[1][i].text())
             self.pK[i] = float(self.av.region_p[0][i].text())
             self.pRb[i] = float(self.av.region_p[1][i].text())
+            
+        for i in range(2):
+            self.fK[i] = float(self.roi.fitregion[0][i].text())
 
         species = IMFIT_MODES[self.mode]["Species"]
         try:
@@ -194,6 +218,15 @@ class imfitDue(QtWidgets.QMainWindow):
                 # The plan is to defringe in the averaging function, so here we just calculate the OD normally
                 self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
                 self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+                
+                # fitbox = self.fK
+                fitregionK = self.regionK.copy()
+                fitregionK[2] = self.fK[0]
+                fitregionK[3] = self.fK[1]
+                self.odKfit = calcOD(self.currentFile, species[0], self.mode, fitregionK)
+                # For debugging purposes only:
+                # self.plot_window = PlotWindow(self.odKfit.ODCorrected)
+                # self.plot_window.show()
 
         except Exception as e:
             print("Could not calculate OD: {}".format(e))
@@ -214,10 +247,19 @@ class imfitDue(QtWidgets.QMainWindow):
         print("Done calculating current OD")
 
     def updateCrop(self):
+        for i in range(2):
+            for j in range(2):
+                if float(self.roi.fitregion[i][j].text()) > float(self.roi.region[i][j + 2].text()):
+                    self.roi.fitregion[i][j].setText(self.roi.region[i][j + 2].text())
+
         if self.av.b2_bgsu.isChecked():
             self.averageImages()
         else:
             self.currentODCalc()
+        # also set the defringe particle region xc and yc to the crop region xc and yc
+        for i in range(2):
+           self.av.region_p[0][i].setText(self.roi.region[0][i].text())
+           self.av.region_p[1][i].setText(self.roi.region[1][i].text())
 
 
     def intializeDefringe(self):  # FOR NOW IMPLEMENTING ONLY FOR iXon side and for K and Rb
@@ -263,6 +305,14 @@ class imfitDue(QtWidgets.QMainWindow):
                 initializer = readImage(
                     self.mode, (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(y[0])
                 )
+                # # DEBUG
+                # test = initializer.getFrame(species[0], "Shadow")
+                # self.plot_window = PlotWindow(test[
+                #                                 y_recK : y_recK + int(particle_regK[3]),
+                #                                 x_recK : x_recK + int(particle_regK[2]),
+                #                             ])
+                # self.plot_window.show()
+
                 if initializer is None:
                     return
                 
@@ -339,7 +389,19 @@ class imfitDue(QtWidgets.QMainWindow):
                 print("Could not defringe images: {}".format(e))
         
 
-
+    def cropaverageImages(self):
+        update_flag = True
+        # Check if the selected fitting range lies within the overall crop region
+        for i in range(2):
+            for j in range(2):
+                if float(self.roi.fitregion[i][j].text()) > float(self.roi.region[i][j + 2].text()):
+                    update_flag = False
+        if update_flag:
+            # self.intializeDefringe()
+            self.averageImages()
+        else:
+            warn_str = 'Please select a fitting range that is smaller than the cropped region!'
+            show_warning_messagebox_defringing(warn_str)
 
     def averageImages(self):  # FOR NOW IMPLEMENTING ONLY FOR iXon Side
         # For now the background subtraction has not been extensively tested yet
@@ -565,20 +627,40 @@ class imfitDue(QtWidgets.QMainWindow):
                         str(self.fo.kFitFunction.currentText())
                     )
                 )
-                self.fitK = fitOD(
-                    self.mode,
-                    self.odK,
-                    str(self.fo.kFitFunction.currentText()),
-                    kAtom,
-                    TOF,
-                    pxl,
-                    WingRad = WingRad, # Added WingRad parameter to fitOD for Gaussian Wing Fitting
-                    fx = fx,
-                    fy = fy,
-                    fz = fz,
-                    mbemu = mass_betamu_fit_species,
-                    Nscaler = Nscaler,
-                )
+                if self.av.b3_defr.isChecked():
+                    # fitbox = self.fK
+                    # So here we'll be checking whether the fit box fits within the inside of the plotbox
+                    # Or should we just do it for plotting and defringing?
+
+                    self.fitK = fitOD(
+                        self.mode,
+                        self.odKfit,
+                        str(self.fo.kFitFunction.currentText()),
+                        kAtom,
+                        TOF,
+                        pxl,
+                        WingRad = WingRad, # Added WingRad parameter to fitOD for Gaussian Wing Fitting
+                        fx = fx,
+                        fy = fy,
+                        fz = fz,
+                        mbemu = mass_betamu_fit_species,
+                        Nscaler = Nscaler,
+                    )
+                else:
+                    self.fitK = fitOD(
+                        self.mode,
+                        self.odK,
+                        str(self.fo.kFitFunction.currentText()),
+                        kAtom,
+                        TOF,
+                        pxl,
+                        WingRad = WingRad, # Added WingRad parameter to fitOD for Gaussian Wing Fitting
+                        fx = fx,
+                        fy = fy,
+                        fz = fz,
+                        mbemu = mass_betamu_fit_species,
+                        Nscaler = Nscaler,
+                    )
                 print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
                 self.fitK = None
@@ -727,6 +809,9 @@ class imfitDue(QtWidgets.QMainWindow):
         if self.figs.plotTools.kSelect.isChecked():
 
             box = self.pK if self.av.b3_defr.isChecked() else None
+            fitbox = self.fK if self.av.b3_defr.isChecked() else None
+            print("Fit box:")
+            print(fitbox)
             
             x = self.odK.xRange0
             y = self.odK.xRange1
@@ -775,7 +860,17 @@ class imfitDue(QtWidgets.QMainWindow):
                 image = self.odK.n
             else:
                 image = frames[species[0]][self.frame][y[0] : y[-1], x[0] : x[-1]]
-            self.figs.plotUpdate(x, y, image, ch0, ch1, box)
+            self.figs.plotUpdate(x, y, image, ch0, ch1, box, fitbox)
+
+            # Adjust slices to fitbox if defined
+            if fitbox is not None:
+                nx = fitbox[0]//2*2  # ensure even number (ch0 and ch1 always even length)
+                start = (len(x) - nx) // 2
+                x = x[int(start):int(start + nx)]
+
+                ny = fitbox[1]//2*2  # ensure even number (ch0 and ch1 always even length)
+                start = (len(y) - ny) // 2
+                y = y[int(start):int(start + ny)]
 
             if self.frame == "OD" or self.frame == "Column Density":
                 if self.fitK is not None:

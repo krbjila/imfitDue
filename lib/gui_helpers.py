@@ -96,7 +96,7 @@ class ImageWindows(QtWidgets.QWidget):
         frame = str(self.plotTools.frameSelect.currentText())
         self.signalFrameChanged.emit(frame)
 
-    def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None, box=None):
+    def plotUpdate(self, x=None, y=None, image=None, ch0=None, ch1=None, box=None, fitbox = None):
         colorMap = KRbCustomColors().whiteJet
         try:
             levelLow = float(self.plotTools.odMinEdit.text())
@@ -130,9 +130,21 @@ class ImageWindows(QtWidgets.QWidget):
             self.setCrossHair()
 
             if ch0 is not None:
-                self.ax0.plot(x, ch0, color=[0.75, 0, 0, 0.75])
+                if fitbox is not None:
+                    # ch0 always has even length due to a slight error in the calcOD function
+                    # so here we ensure that the fitbox length is even as well
+                    self.ax0.plot(np.arange(fitbox[0]//2*2) - fitbox[0]//2 + x[int(np.round(len(x)/2))], ch0,
+                                  color=[0.75, 0, 0, 0.75])
+                else:
+                    self.ax0.plot(x, ch0, color=[0.75, 0, 0, 0.75])
             if ch1 is not None:
-                self.ax0.plot(ch1, y, color=[0, 0.5, 0, 0.75])
+                    # ch1 always has even length due to a slight error in the calcOD function
+                    # so here we ensure that the fitbox length is even as well
+                if fitbox is not None:
+                    self.ax0.plot(ch1, np.arange(fitbox[1]//2*2) - fitbox[1]//2 + y[int(np.round(len(y)/2))],
+                                  color=[0, 0.5, 0, 0.75])
+                else:
+                    self.ax0.plot(ch1, y, color=[0, 0.5, 0, 0.75])
             if box is not None:
                 self.ax0.add_patch(
                     #box: [xc, yc, width, height]
@@ -145,6 +157,19 @@ class ImageWindows(QtWidgets.QWidget):
                         linewidth=2.5,
                     )
                 )
+            if fitbox is not None:
+                self.ax0.add_patch(
+                    #box: [xc, yc, width, height]
+                    Rectangle(
+                        (x[int(np.round(len(x)/2))] - fitbox[0] / 2,
+                          y[int(np.round(len(y)/2))] - fitbox[1] / 2),
+                        fitbox[0],
+                        fitbox[1],
+                        edgecolor="r",
+                        facecolor="none",
+                        linewidth=2.5,
+                    )
+                )
 
         try:
             self.mainImage.set_clim(levelLow, self.plotTools.sliderOd())
@@ -153,7 +178,7 @@ class ImageWindows(QtWidgets.QWidget):
             print("Are you sure you loaded an image?")
             print(e)
 
-    def plotSliceUpdate(self, x, Lx, y, Ly):
+    def plotSliceUpdate(self, x, Lx, y, Ly):        
         if Lx[0] is not None:
             self.ax1.cla()
             self.ax2.cla()
@@ -379,17 +404,17 @@ class regionWidget(QtWidgets.QWidget):
 
     def setup(self):
 
-        topLabels = ["XC", "YC", "CrX", "CrY"]
+        topLabels = ["XC", "YC", "CrX", "CrY", "          ", "CrXfit", "CrYfit"]
         # sideLabels = ATOM_NAMES
         sideLabels = IMFIT_MODES[DEFAULT_MODE]["Species"]
 
         font = QtGui.QFont()
         font.setBold(True)
-        font.setPointSize(12)
+        font.setPointSize(11)
 
         self.grid = QtWidgets.QGridLayout()
         self.atom_labels = []
-        for k in range(4):
+        for k in range(7):
             x = QtWidgets.QLabel(topLabels[k])
             x.setFont(font)
             self.grid.addWidget(x, 0, k + 1, 1, 1)
@@ -400,6 +425,7 @@ class regionWidget(QtWidgets.QWidget):
             self.grid.addWidget(x, k + 1, 0, 1, 1)
 
         self.region = [[0] * 4, [0] * 4]
+        self.fitregion = [[0] * 2, [0] * 2]
 
         for i in range(2):
             for j in range(4):
@@ -409,8 +435,19 @@ class regionWidget(QtWidgets.QWidget):
                 self.region[i][j].setValidator(QtGui.QIntValidator())
                 self.region[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region[i][j], i + 1, j + 1, 1, 1)
+                
+            # Add the fit region entries
+            for k in range(2):
+                self.fitregion[i][k] = QtWidgets.QLineEdit(
+                    str(IMFIT_MODES[DEFAULT_MODE]["Default Region"][i][2 + k])
+                )
+                self.fitregion[i][k].setValidator(QtGui.QIntValidator())
+                self.fitregion[i][k].setFixedWidth(50)
+                self.grid.addWidget(self.fitregion[i][k], i + 1, 5 + k  + 1, 1, 1)
 
-        
+        lbl_df = QtWidgets.QLabel(str("Defringing only"))
+        self.grid.addWidget(lbl_df, 3, 6, 1, 2)
+
         # self.CsatK = QtWidgets.QLineEdit(str(IMFIT_MODES[DEFAULT_MODE]["CSat"]["K"]))
         self.CsatK = QtWidgets.QLabel(str(IMFIT_MODES[DEFAULT_MODE]["CSat"]["K"]))
         # csatk_validator = QtGui.QDoubleValidator()
@@ -427,10 +464,10 @@ class regionWidget(QtWidgets.QWidget):
         # self.CsatRb.setFixedWidth(80)
         self.CsatRblabel = QtWidgets.QLabel("Rb CSAT:")
         
-        self.grid.addWidget(self.CsatKlabel)
-        self.grid.addWidget(self.CsatK)
-        self.grid.addWidget(self.CsatRblabel)
-        self.grid.addWidget(self.CsatRb)
+        self.grid.addWidget(self.CsatKlabel, 3, 1, 1, 1)
+        self.grid.addWidget(self.CsatK, 3, 2, 1, 1)
+        self.grid.addWidget(self.CsatRblabel, 3, 3, 1, 1)
+        self.grid.addWidget(self.CsatRb, 3, 4, 1, 1)
 
         
 
