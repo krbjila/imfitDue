@@ -293,7 +293,7 @@ class imfitDue(QtWidgets.QMainWindow):
         y = self.av.getBackgroundFileNumbers()
 
         path = str(
-                self.pf.filePath.text()
+                self.av.bgPath.text()
             )
 
         species = IMFIT_MODES[self.mode]["Species"]
@@ -415,6 +415,9 @@ class imfitDue(QtWidgets.QMainWindow):
             path = str(
                 self.pf.filePath.text()
             )  # IMFIT_MODES[self.mode]["Default Path"]
+            bgpath = str(
+                self.av.bgPath.text()
+            ) 
 
             defringe_flag = False
             if self.av.b3_defr.isChecked():
@@ -435,11 +438,11 @@ class imfitDue(QtWidgets.QMainWindow):
                         
                         print(
                             "Subtracting file: {}".format(
-                                (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
+                                (bgpath + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
                             )
                         )
                         self.BGFile = readImage(
-                            self.mode, (path + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
+                            self.mode, (bgpath + IMFIT_MODES[self.mode]["Default Suffix"]).format(k)
                         )
                         if self.BGFile is None:
                             return

@@ -783,6 +783,7 @@ class fitOptionsWidget(QtWidgets.QWidget):
 class averageWidget(QtWidgets.QWidget):
     def __init__(self, Parent=None):
         super(averageWidget, self).__init__(Parent)
+        self.mode = DEFAULT_MODE
         self.setup()
 
     def setup(self):
@@ -794,8 +795,10 @@ class averageWidget(QtWidgets.QWidget):
         self.initdefrButton = QtWidgets.QPushButton("Read Defringe Files")
 
         self.bgEdit = QtWidgets.QLineEdit()
+        self.bgPath = QtWidgets.QLineEdit(IMFIT_MODES[self.mode]["Default Path"])
 
         avgbox = QtWidgets.QHBoxLayout()
+        bgpathbox = QtWidgets.QHBoxLayout()
         bgbox = QtWidgets.QHBoxLayout()
 
         avgbox.addWidget(QtWidgets.QLabel("Images to Average:   "))
@@ -805,6 +808,9 @@ class averageWidget(QtWidgets.QWidget):
         bgbox.addWidget(QtWidgets.QLabel("Background Frames: "))
         bgbox.addWidget(self.bgEdit)
         bgbox.addWidget(self.initdefrButton)
+
+        bgpathbox.addWidget(QtWidgets.QLabel("Background File Path:"))
+        bgpathbox.addWidget(self.bgPath)
 
         topLabels_p = ["XCp", "YCp", "CrXp", "CrYp"]
         # sideLabels = ATOM_NAMES
@@ -857,6 +863,7 @@ class averageWidget(QtWidgets.QWidget):
 
         vbox.addLayout(avgbox)
         vbox.addLayout(bgbox)
+        vbox.addLayout(bgpathbox)
         vbox.addLayout(self.grid)
 
         self.setLayout(vbox)
