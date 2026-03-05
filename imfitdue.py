@@ -54,6 +54,8 @@ class imfitDue(QtWidgets.QMainWindow):
         self.pK = [0] * 4
         self.fK = [0] * 2
 
+        self.sigblur = 0
+
         self.initializeGui()
         self.createToolbar()
         self.makeConnections()
@@ -125,6 +127,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
         self.av.averageButton.clicked.connect(self.averageImages)
         self.av.initdefrButton.clicked.connect(self.intializeDefringe)
+        self.av.gaussblurButton.clicked.connect(self.GaussBlur)
         self.fo.uploadButton.clicked.connect(self.process2Origin)
         self.fo.databaseButton.clicked.connect(self.process2Database)
 
@@ -176,8 +179,8 @@ class imfitDue(QtWidgets.QMainWindow):
 
         species = IMFIT_MODES[self.mode]["Species"]
         try:
-            self.odKBG = calcOD(self.BGFile, species[0], self.mode, self.regionK)
-            self.odRbBG = calcOD(self.BGFile, species[1], self.mode, self.regionRb)
+            self.odKBG = calcOD(self.BGFile, species[0], self.mode, self.regionK, self.sigblur)
+            self.odRbBG = calcOD(self.BGFile, species[1], self.mode, self.regionRb, self.sigblur)
         except Exception as e:
             print("Could not calculate BG: {}".format(e))
 
@@ -199,12 +202,12 @@ class imfitDue(QtWidgets.QMainWindow):
         species = IMFIT_MODES[self.mode]["Species"]
         try:
             if self.av.b1_nobg.isChecked():
-                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
-                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur)
 
             elif self.av.b2_bgsu.isChecked():
-                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
-                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur)
                 self.odK.OD = self.odK.OD - self.odKBG.OD
                 self.odRb.OD = self.odRb.OD - self.odRbBG.OD
                 self.odK.ODCorrected = self.odK.ODCorrected - self.odKBG.ODCorrected
@@ -216,14 +219,14 @@ class imfitDue(QtWidgets.QMainWindow):
 
             elif self.av.b3_defr.isChecked():
                 # The plan is to defringe in the averaging function, so here we just calculate the OD normally
-                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK)
-                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb)
-                
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur)
+
                 # fitbox = self.fK
                 fitregionK = self.regionK.copy()
                 fitregionK[2] = self.fK[0]
                 fitregionK[3] = self.fK[1]
-                self.odKfit = calcOD(self.currentFile, species[0], self.mode, fitregionK)
+                self.odKfit = calcOD(self.currentFile, species[0], self.mode, fitregionK, self.sigblur)
                 # For debugging purposes only:
                 # self.plot_window = PlotWindow(self.odKfit.ODCorrected)
                 # self.plot_window.show()
@@ -387,7 +390,20 @@ class imfitDue(QtWidgets.QMainWindow):
 
             except Exception as e:
                 print("Could not defringe images: {}".format(e))
-        
+    
+    def GaussBlur(self):
+        sigblur_str = self.av.sigblur.text()
+        try:
+            sigblur = float(sigblur_str)
+            if sigblur < 0:
+                raise ValueError("Signal blur value must be zero or positive.")
+            else:
+                self.sigblur = sigblur
+                self.averageImages()
+        except ValueError as e:
+            print("Invalid signal blur value: {}".format(e))
+            show_warning_messagebox_defringing("Invalid signal blur value: {}".format(e))
+            return
 
     def cropaverageImages(self):
         update_flag = True

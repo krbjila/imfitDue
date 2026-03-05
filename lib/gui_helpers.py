@@ -793,9 +793,11 @@ class averageWidget(QtWidgets.QWidget):
         self.averageEdit = QtWidgets.QLineEdit()
         self.averageButton = QtWidgets.QPushButton("Average  / Defringe")
         self.initdefrButton = QtWidgets.QPushButton("Read Defringe Files")
+        self.gaussblurButton = QtWidgets.QPushButton("Gauss Blur", maximumWidth=72)
 
         self.bgEdit = QtWidgets.QLineEdit()
         self.bgPath = QtWidgets.QLineEdit(IMFIT_MODES[self.mode]["Default Path"])
+        self.sigblur = QtWidgets.QLineEdit(str(0), maximumWidth=25)
 
         avgbox = QtWidgets.QHBoxLayout()
         bgpathbox = QtWidgets.QHBoxLayout()
@@ -811,6 +813,8 @@ class averageWidget(QtWidgets.QWidget):
 
         bgpathbox.addWidget(QtWidgets.QLabel("Background File Path:"))
         bgpathbox.addWidget(self.bgPath)
+        bgpathbox.addWidget(self.gaussblurButton)
+        bgpathbox.addWidget(self.sigblur)
 
         topLabels_p = ["XCp", "YCp", "CrXp", "CrYp"]
         # sideLabels = ATOM_NAMES

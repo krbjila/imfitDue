@@ -18,12 +18,13 @@ from scipy import ndimage as ndimage
 
 class calcOD:
 
-    def __init__(self, data, species, mode, region=[]):
+    def __init__(self, data, species, mode, region=[], sigblur=0):
 
         ### Note that the region is passed as [x0, y0, xcrop, ycrop]
         ### Crop is symmetric about center (x0,y0)
 
         self.data = data
+        self.sigblur = sigblur
         self.xRange0 = None
         self.xRange1 = None
 
@@ -102,6 +103,12 @@ class calcOD:
             self.ODCorrected[np.isnan(self.ODCorrected)] = 0
             self.ODCorrected[np.isinf(self.ODCorrected)] = 0
 
+            if self.sigblur > 0:
+                self.GaussBlur(self.sigblur)
+            
+            # uncomment next line if you want to save the corrected OD for debugging purposes
+            # np.savetxt('output_array_2026-02-27.txt', self.ODCorrected, delimiter=',')
+
             # Calculate the column density, assuming zero detuning; see Pappa et al, NJP (2011)
             s0 = s2 / (bins**2 * self.config["CSat"][self.species])
             Tabs = s1 / s2
@@ -145,6 +152,18 @@ class calcOD:
 
         self.xRange0 = range(r0, r1)
         self.xRange1 = range(r2, r3)
+    
+    def GaussBlur(self, sigblur):
+        """
+        Apply a low-pass FFT filter to a 2D image.
+        
+        Parameters:
+            img (ndarray): 2D numpy array
+            sigblur (float): Standard deviation of the Gaussian kernel
+        """
+        img = self.ODCorrected
+        self.ODCorrected = ndimage.gaussian_filter(img, sigma=sigblur)
+
 
 
 class fitOD:
