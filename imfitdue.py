@@ -865,6 +865,7 @@ class imfitDue(QtWidgets.QMainWindow):
                 Fya = None
                 # box = None
 
+                # Initialized as 'None' in case the fit function does not have radial slices
                 R = None
                 RG = None
                 RF = None
@@ -897,13 +898,15 @@ class imfitDue(QtWidgets.QMainWindow):
                         "Fermi-Dirac"
                     ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Fermi-Dirac 2D"
-                        ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
-                            "Fermi-Dirac fixed betamu"
-                            ):
+                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Fermi-Dirac fixed betamu"
+                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Azimuthal Average Gauss"
+                    ):
                         self.figs.plotSliceUpdate(
                             x, [Sx, Fx], np.arange(len(R)), [R, RG, RF]
                         )
-                    if self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                    elif self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Gaussian Mask Sigma"
                     ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Gaussian Mask Sigma No Rot"
@@ -940,6 +943,11 @@ class imfitDue(QtWidgets.QMainWindow):
                 Fxa = self.fitRb.slices.fit0a
                 Fy = self.fitRb.slices.fit1
                 Fya = self.fitRb.slices.fit1a
+                
+                # Initialized as 'None' in case the fit function does not have radial slices
+                R = self.fitRb.slices.radSlice
+                RG = self.fitRb.slices.radSliceFitGauss
+                RF = self.fitRb.slices.radSliceFit
 
                 if hasattr(self.fitRb.slices, "fit0Gauss"):
                     FxGauss = self.fitRb.slices.fit0Gauss
@@ -986,6 +994,9 @@ class imfitDue(QtWidgets.QMainWindow):
                         x, [Sx, Fx, FxGauss], y, [Sy, Fy, FyGauss]
                     )
                 else:
+                    # This part will give an error if the fit isn't defined
+                    # it is probably better to nest it in the next if statement
+                    # but I opted to keep it like this since it does not break Imfit - Tim, 3/21/26
                     self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
                 if self.fitRb is not None:
                     if self.fitRb.fitFunction == FIT_FUNCTIONS.index(
@@ -994,6 +1005,12 @@ class imfitDue(QtWidgets.QMainWindow):
                         "Gaussian Mask Sigma No Rot"
                     ):
                         self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
+                    elif self.fitRb.fitFunction == FIT_FUNCTIONS.index(
+                        "Azimuthal Average Gauss"
+                    ):
+                        self.figs.plotSliceUpdate(
+                            x, [Sx, Fx], np.arange(len(R)), [R, RG, RF]
+                        )
 
     def passCamToROI(self):
         self.roi.setDefaultRegion(self.mode)

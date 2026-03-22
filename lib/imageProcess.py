@@ -2245,6 +2245,142 @@ class fitOD:
             self.slices.points1 = self.odImage.n[:, I0]
             self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
             self.slices.fit1 = None
+        
+        elif self.fitFunction == FIT_FUNCTIONS.index("Azimuthal Average Gauss"):
+            # Integrate azimuthally. We first fit a 2D Gaussian, then we average over
+            # an elliptical contour as determined from the Gaussian fit
+
+            r = [None, None]
+            r[0] = self.odImage.xRange0
+            r[1] = self.odImage.xRange1
+
+            print((r[1].start + r[1].stop) // 2)
+
+            # INITIAL Gaussian fit with gradient
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
+            p0 = [
+                0,
+                1,
+                (r[0].start + r[0].stop) // 2,
+                10,
+                (r[1].start + r[1].stop) // 2,
+                10,
+                0,
+                0,
+                0
+            ]
+
+            # limit between 0 and 45 degrees
+            pLower = [
+                -np.inf,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -np.inf,
+                -np.inf,
+            ]
+
+            pUpper = [
+                np.inf,
+                np.inf,
+                np.max(r[0]),
+                len(r[0]),
+                np.max(r[1]),
+                len(r[1]),
+                np.pi/4,
+                np.inf,
+                np.inf,
+            ]
+
+            resLSQ_G = least_squares(
+                gaussianGradient,
+                p0,
+                args=(r, self.odImage.ODCorrected),
+                bounds=(pLower, pUpper),
+            )
+
+            fit_res = gaussianGradient(resLSQ_G.x, r, 0).reshape(np.shape(self.odImage.ODCorrected))
+
+            ### Get radial average
+            x0f = resLSQ_G.x[2]
+            y0f = resLSQ_G.x[4]
+            sigx = resLSQ_G.x[3]
+            sigy = resLSQ_G.x[5]
+            theta = resLSQ_G.x[6]
+                       
+            I0 = self.odImage.xRange0.index(round(x0f))
+            I1 = self.odImage.xRange1.index(round(y0f))
+
+            X0, Y0 = np.meshgrid(r[0], r[1])
+            XR = X0 * np.cos(theta) - Y0 * np.sin(theta)
+            YR = X0 * np.sin(theta) + Y0 * np.cos(theta)
+
+            x0R = x0f * np.cos(theta) - y0f * np.sin(theta)
+            y0R = x0f * np.sin(theta) + y0f * np.cos(theta)
+            R = np.sqrt((XR-x0R)**2/sigx**2 + (YR-y0R)**2/sigy**2) * np.sqrt(sigx*sigy)
+
+            # Azimuthal averaging - the built in function does not allow elliptical averaging
+            # calculate the mean - even if part of the annulus partially goes out of bounds
+            # you're calculating the mean, so it's just averaged over less pixels
+            f = lambda r : self.odImage.ODCorrected[(R >= r-.5) & (R < r+.5)].mean()
+            ffit = lambda r : fit_res[(R >= r-.5) & (R < r+.5)].mean()
+            
+            r_az  = np.linspace(1, np.floor(np.max(R)) - 1)
+
+            center = [I0, I1]
+
+            ### Parameters: [offset, amplitude, wx, dODdx]
+            p0 = [
+                0,
+                resLSQ_G.x[1],
+                np.sqrt(sigx * sigy),
+                0,
+            ]
+
+            pLower = [
+                -np.inf,
+                0,
+                0,
+                -np.inf,
+            ]
+
+            pUpper = [
+                np.inf,
+                np.inf,
+                np.max(r[0]),
+                np.inf,
+            ]
+            
+            resLSQ = least_squares(
+                azimGauss,
+                p0,
+                args=(r_az, np.vectorize(f)(r_az)),
+                bounds=(pLower, pUpper),
+            )
+            
+            offset = resLSQ.x[0]
+            amplitude = resLSQ.x[1]
+            sigx = resLSQ.x[2]
+            dODdx = resLSQ.x[3]
+
+            self.fitData = [offset, amplitude, sigx, dODdx]
+            azimGaussfit = azimGauss(resLSQ.x, r_az, 0)
+
+            self.slices.radSlice = np.vectorize(f)(r_az)
+            self.slices.radSliceFit = azimGaussfit
+            self.slices.radSliceFitGauss = np.vectorize(ffit)(r_az)
+
+            ### Calculate slices through fit
+            self.slices.points0 = self.odImage.ODCorrected[I1, :]
+            self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
+            self.slices.fit0 = fit_res[I1, :]
+
+            self.slices.points1 = None
+            self.slices.ch1 = None
+            self.slices.fit1 = None
 
         else:
             print("Fit function undefined! Something went wrong!")
@@ -2748,6 +2884,23 @@ class processFitResult:
                 r["wy"],
                 r["x0"],
                 r["y0"],
+                r["offset"],
+            ]
+            self.data_dict = r
+        
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Azimuthal Average Gauss"):
+            r = {
+                "offset": self.fitObject.fitData[0],
+                "peakOD": self.fitObject.fitData[1],
+                "wx": self.fitObject.fitData[2] * self.bin * self.pixelSize,
+                "dODdx": self.fitObject.fitData[3] / self.bin * self.pixelSize,
+            }
+
+            self.data = [
+                "fileName",
+                r["peakOD"],
+                r["dODdx"],
+                r["wx"],
                 r["offset"],
             ]
             self.data_dict = r

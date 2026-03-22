@@ -34,6 +34,7 @@ FIT_FUNCTIONS = [
     "Gaussian Mask Sigma No Rot",
     "Gauss (Mask) Int",
     "Fermi-Dirac fixed betamu",
+    "Azimuthal Average Gauss",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -48,6 +49,7 @@ KRB_FIT_FUNCTIONS = [
     "Gaussian Mask Sigma",
     "Gaussian Mask Sigma No Rot",
     "Fermi-Dirac fixed betamu",
+    "Azimuthal Average Gauss",
 ]
 NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -61,6 +63,7 @@ NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian Mask Sigma No Rot",
     "Gauss (Mask) Int",
     "Fermi-Dirac fixed betamu",
+    "Azimuthal Average Gauss",
 ]
 NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -70,6 +73,7 @@ NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Integrate",
     "Gaussian Mask Sigma",
     "Gaussian Mask Sigma No Rot",
+    "Azimuthal Average Gauss",
 ]
 WORKSHEET_NAMES = [
     "GaussGrad",
@@ -87,6 +91,7 @@ WORKSHEET_NAMES = [
     "GaussMask",
     "GaussMask",
     "FDbemu",
+    "GaussAzAvg",
 ]
 
 DEFAULT_MODE = "Side iXon"

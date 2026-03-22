@@ -6,6 +6,19 @@ import lib.polylog as polylog_lib
 from lib.imfitDefaults import FREQS, PX_SIZE, NAT_CONSTANTS
 
 
+def azimGauss(p, x, y):
+    ### Parameters: [offset, amplitude, wx, dODdx]
+    return np.ravel(
+        p[0]
+        + p[1]
+        * np.exp(
+            -(x ** 2.0) / (2.0 * p[2] ** 2.0)
+        )
+        + p[3] * x
+        - y
+    )
+
+
 def gaussian(p, r, y, mask_above=np.inf):
     ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta]
     xaxis = r[0]
