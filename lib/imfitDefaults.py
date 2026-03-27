@@ -35,6 +35,7 @@ FIT_FUNCTIONS = [
     "Gauss (Mask) Int",
     "Fermi-Dirac fixed betamu",
     "Azimuthal Average Gauss",
+    "Twisted Fermi-Dirac 2D Int",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -92,6 +93,7 @@ WORKSHEET_NAMES = [
     "GaussMask",
     "FDbemu",
     "GaussAzAvg",
+    "TwistedFDInt",
 ]
 
 DEFAULT_MODE = "Side iXon"
@@ -101,7 +103,7 @@ MAX_OD_FIT = 1e9
 CSAT = {
     "axial": {"K": 2970, "Rb": 2882},  # not calibrated for a while $  calibrated when??
     "side": {"K": 1000, "Rb": 1000},  # {"K": 2072, "Rb": 2201} 12/10/2024; {"K": 2955, "Rb": 3276} calibrated 12/02/2024
-    "vertical": {"K": 490, "Rb": 1300},  # Calibrated 12/17/24
+    "vertical": {"K": 250, "Rb": 1300}, #changed to 250 # Calibrated 12/17/24
 }
 
 # Used as defaults for the input fields in the GUI
