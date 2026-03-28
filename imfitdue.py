@@ -1132,7 +1132,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     ok2write = True
 
             if ok2write:
-                f = open(xp, "w")
+                f = open(xp[0], "w")
                 for i in range(len(y)):
                     for j in range(len(x)):
                         f.write("{0:.3f},".format(od[j, i]))
