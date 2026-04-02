@@ -664,6 +664,7 @@ class imfitDue(QtWidgets.QMainWindow):
                         fz = fz,
                         mbemu = mass_betamu_fit_species,
                         Nscaler = Nscaler,
+                        fullOD = self.odK,
                     )
                 else:
                     self.fitK = fitOD(

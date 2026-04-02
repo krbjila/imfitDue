@@ -117,7 +117,7 @@ FREQS = {
 # Numerical aperture
 NA = {"axial": 0.12, "side": 0.20, "vertical": 0.5}
 
-TOP_CAMERA_ANGLE = 27.7 #27.7 degree, calibrated on 12.12.2024
+TOP_CAMERA_ANGLE = 33.9 #27.7 degree, calibrated on 12.12.2024
 
 # Pixel size (um)
 PX_SIZE = {

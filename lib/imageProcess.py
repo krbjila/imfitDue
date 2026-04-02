@@ -7,6 +7,7 @@ import copy
 from lib.imfitHelpers import *
 from lib.imfitDefaults import *
 from lib.imfitFunctions import *
+from lib.krb_custom_colors import KRbCustomColors
 from lib.polylog import fermi_poly2
 
 from scipy.optimize import least_squares
@@ -14,6 +15,26 @@ from scipy.interpolate import RectBivariateSpline
 
 from skimage.feature import peak_local_max
 from scipy import ndimage as ndimage
+
+from PyQt5 import QtWidgets, QtCore, QtGui
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+# ADDED FOR CHECKING THE ROTATED 2D FD FIT
+class PlotWindow(QtWidgets.QMainWindow):
+    def __init__(self, img):
+        super().__init__()
+        self.setWindowTitle("Matplotlib Window")
+
+        fig = Figure()
+        canvas = FigureCanvas(fig)
+        self.setCentralWidget(canvas)
+
+        ax = fig.add_subplot(111)
+        ax.imshow(img, cmap=KRbCustomColors().whiteJet)
+        ax.set_title("Rotated Image for Checking")
+
+        canvas.draw()
 
 
 class calcOD:
@@ -200,6 +221,8 @@ class fitOD:
                 self.mbemu = val
             if k == "Nscaler":
                 self.Nscaler = val
+            if k == "fullOD":
+                self.fullOD = val
 
         self.setFitFunction(fitFunction)
         self.fitODImage()
@@ -1861,10 +1884,36 @@ class fitOD:
 
             angle = IMFIT_MODES[self.mode]["Fit angle"]
             # Rotate the image
-            rot_img = ndimage.rotate(self.odImage.ODCorrected,
-                                      -IMFIT_MODES[self.mode]["Fit angle"],
-                                      reshape=False,)
-                                   
+            # For debugging purposes only:
+            if hasattr(self, "fullOD"):
+                rot_img = ndimage.rotate(self.fullOD.ODCorrected,
+                                        -IMFIT_MODES[self.mode]["Fit angle"],
+                                        reshape = False,
+                                        order = 1) # linear interpolation
+                
+                # We use the full OD to rotate and then recrop it for the fitting,
+                # to avoid losing data from the rotation and to avoid adding zeros
+                r0 = int(self.odImage.xCenter0 - np.floor(self.odImage.xCrop0 / 2) 
+                         - (self.fullOD.xCenter0 - np.floor(self.fullOD.xCrop0 / 2)))
+                r1 = int(self.odImage.xCenter0 + np.floor(self.odImage.xCrop0 / 2) 
+                         - (self.fullOD.xCenter0 - np.floor(self.fullOD.xCrop0 / 2)))
+                r2 = int(self.odImage.xCenter1 - np.floor(self.odImage.xCrop1 / 2) 
+                         - (self.fullOD.xCenter1 - np.floor(self.fullOD.xCrop1 / 2)))
+                r3 = int(self.odImage.xCenter1 + np.floor(self.odImage.xCrop1 / 2) 
+                         - (self.fullOD.xCenter1 - np.floor(self.fullOD.xCrop1 / 2)))
+
+                rot_img = rot_img[r2:r3, r0:r1]
+
+            else:
+                print("Consider using defringing with a fit crop if you do not want to to add zeros.")
+                rot_img = ndimage.rotate(self.odImage.ODCorrected,
+                                        -IMFIT_MODES[self.mode]["Fit angle"],
+                                        reshape = False,
+                                        order = 1) # linear interpolation
+            
+            self.plot_window = PlotWindow(rot_img)
+            self.plot_window.show()
+            
             r_rot = [None, None]
             r_rot[0] = np.arange(0, np.shape(rot_img)[1])  # x
             r_rot[1] = np.arange(0, np.shape(rot_img)[0])  # y
@@ -1874,21 +1923,11 @@ class fitOD:
             od_int_y = np.sum(rot_img, axis = 0)
 
             # Fit the 1D profiles with Fermi-Dirac 2D Int
-
             # Fit integrated OD
             od_int_x *= self.config["Pixel Size"] * self.odImage.data.bin
             od_int_y *= self.config["Pixel Size"] * self.odImage.data.bin
 
-            # subtract gradient using linear fit
-            A = np.vstack([np.arange(len(od_int_x)), np.ones(len(od_int_x))]).T
-            m, c = np.linalg.lstsq(A, od_int_x, rcond=None)[0]
-            od_int_x_no_bg = od_int_x - (m * np.arange(len(od_int_x)) + c)
-            
-            A = np.vstack([np.arange(len(od_int_y)), np.ones(len(od_int_y))]).T
-            m, c = np.linalg.lstsq(A, od_int_y, rcond=None)[0]
-            od_int_y_no_bg = od_int_y - (m * np.arange(len(od_int_y)) + c)
-
-            # 2D Gaussian fit
+            ####### 2D Gaussian fit with fixed angle #######
             ### Parameters: [offset, amplitude, x0, wx, y0, wy]
             # Only to get the center point for the x slice
             p0 = [0, M, r[0][0] + np.shape(self.odImage.ODCorrected)[1] // 2, 20,
@@ -1909,7 +1948,7 @@ class fitOD:
             self.fitDataGauss = resLSQ_G_norot.x
             self.fittedImageGauss = gaussianNoRotTwist(resLSQ_G_norot.x, r, 0, angle).reshape(self.odImage.ODCorrected.shape)
 
-            ####### Calculate slices through fit #####
+            ####### Calculate slices through fit for plotting on OD #######
             m0 = np.tan(np.pi / 2.0 - angle * np.pi / 180.0)
             m1 = -np.tan(angle * np.pi / 180.0)
 
@@ -1922,19 +1961,19 @@ class fitOD:
             b1 = -m1 * resLSQ_G_norot.x[2] + resLSQ_G_norot.x[4]
             ch1 = (np.asarray(self.odImage.xRange1) - b1) / m1
 
-            # 1D Gaussian fit along x to integrated OD along y
-            # Parameters: [offset, amplitude, x0, wx]
-            est_bg = np.quantile(od_int_y_no_bg, 0.1)
+            ####### 1D Gaussian fit along x to integrated OD along y #######
+            # Parameters: [offset, amplitude, x0, sigma, gradient]
+            est_bg = np.quantile(od_int_y, 0.1)
             p0 = [
                 est_bg,
-                np.max(od_int_y_no_bg),
-                np.argmax(od_int_y_no_bg) + r_rot[0][0],
-                np.std(od_int_y_no_bg),
-                m,
+                np.max(od_int_y),
+                np.argmax(od_int_y) + r_rot[0][0],
+                np.std(od_int_y),
+                0,
             ]
             pUpper = [
                 np.inf,
-                np.max(od_int_y_no_bg) - np.min(od_int_y_no_bg),
+                np.max(od_int_y) - np.min(od_int_y),
                 r_rot[0][-1],
                 len(r_rot[0]),
                 np.inf,
@@ -1945,17 +1984,17 @@ class fitOD:
             resLSQ_Gx = least_squares(
                 gaussian1D,
                 p0,
-                args=(np.array(r_rot[0]), od_int_y_no_bg),
+                args=(np.array(r_rot[0]), od_int_y),
                 bounds=(pLower, pUpper),
             )
 
             ### Parameters: [offset, amplitude, x0, wx, y0, wy]
-            self.slices.points0 = od_int_y_no_bg
-            self.slices.points1 = od_int_x_no_bg
+            self.slices.points0 = od_int_y
+            self.slices.points1 = od_int_x
             self.slices.ch0 = ch0
             self.slices.ch1 = ch1
 
-            # Fermi--Dirac fit
+            ####### 1D Fermi--Dirac fit along x to integrated OD along y #######
             # Parameters: [offset, amplitude, x0, sigma, q, gradient]
             p0 = [
                 resLSQ_Gx.x[0],
@@ -1979,22 +2018,22 @@ class fitOD:
             resLSQ_inty = least_squares(
                 fermiDirac2Dint,
                 p0,
-                args=(np.array(r_rot[0]), od_int_y_no_bg),
+                args=(np.array(r_rot[0]), od_int_y),
                 bounds=(pLower, pUpper),
             )
 
             self.fittedImage = fermiDirac2Dint(resLSQ_inty.x, np.array(r_rot[0]), 0)
             self.slices.fit0 = self.fittedImage
-
-            # 1D Gaussian fit along y to integrated OD along x
+            
+            ####### 1D Gaussian fit along y to integrated OD along x - confusing names I know #######
             resLSQ_Gy = least_squares(
                 gaussian1D,
                 p0,
-                args=(np.array(r_rot[1]), od_int_x_no_bg),
+                args=(np.array(r_rot[1]), od_int_x),
                 bounds=(pLower, pUpper),
             )
 
-            # Fermi--Dirac fit
+            ####### 1D Fermi--Dirac fit along y to integrated OD along x #######
             # Parameters: [offset, amplitude, x0, sigma, q, gradient]
             p0 = [
                 resLSQ_Gy.x[0],
@@ -2018,7 +2057,7 @@ class fitOD:
             resLSQ_intx = least_squares(
                 fermiDirac2Dint,
                 p0,
-                args=(np.array(r_rot[1]), od_int_x_no_bg),
+                args=(np.array(r_rot[1]), od_int_x),
                 bounds=(pLower, pUpper),
             )
 
