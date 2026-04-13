@@ -36,6 +36,7 @@ FIT_FUNCTIONS = [
     "Fermi-Dirac fixed betamu",
     "Azimuthal Average Gauss",
     "Twisted Fermi-Dirac 2D Int",
+    "Twisted Gauss (Mask) Int",
 ]
 KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -51,6 +52,7 @@ KRB_FIT_FUNCTIONS = [
     "Gaussian Mask Sigma No Rot",
     "Fermi-Dirac fixed betamu",
     "Azimuthal Average Gauss",
+    "Twisted Gauss (Mask) Int",
 ]
 NONTWISTED_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -65,6 +67,7 @@ NONTWISTED_FIT_FUNCTIONS = [
     "Gauss (Mask) Int",
     "Fermi-Dirac fixed betamu",
     "Azimuthal Average Gauss",
+    "Twisted Gauss (Mask) Int",
 ]
 NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian w/ Gradient",
@@ -75,6 +78,7 @@ NONTWISTED_KRB_FIT_FUNCTIONS = [
     "Gaussian Mask Sigma",
     "Gaussian Mask Sigma No Rot",
     "Azimuthal Average Gauss",
+    "Twisted Gauss (Mask) Int",
 ]
 WORKSHEET_NAMES = [
     "GaussGrad",
@@ -94,6 +98,7 @@ WORKSHEET_NAMES = [
     "FDbemu",
     "GaussAzAvg",
     "TwistedFDInt",
+    "GaussMask",
 ]
 
 DEFAULT_MODE = "Side iXon"
@@ -117,7 +122,7 @@ FREQS = {
 # Numerical aperture
 NA = {"axial": 0.12, "side": 0.20, "vertical": 0.5}
 
-TOP_CAMERA_ANGLE = 33.9 #27.7 degree, calibrated on 12.12.2024
+TOP_CAMERA_ANGLE = 31.2 #27.7 degree, calibrated on 12.12.2024
 
 # Pixel size (um)
 PX_SIZE = {
@@ -475,7 +480,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["vertical"],
                 "Species": ["K", "Rb"],
                 "Image Path": "Vertical",
-                "Default Region": [[128, 295, 150, 150], [128, 295, 150, 150]],
+                "Default Region": [[190, 503, 150, 150], [190, 503, 150, 150]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": FIT_FUNCTIONS,
                 "Enforce same fit for both": False,

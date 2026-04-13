@@ -911,6 +911,8 @@ class imfitDue(QtWidgets.QMainWindow):
                         "Gaussian Mask Sigma"
                     ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
                         "Gaussian Mask Sigma No Rot"
+                    ) or self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Twisted Gauss (Mask) Int"
                     ):
                         self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], y, [Sy, Fy, Fya])
                     elif self.fitK.fitFunction == FIT_FUNCTIONS.index(

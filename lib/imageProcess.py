@@ -2096,6 +2096,265 @@ class fitOD:
             self.fittedImage = fermiDirac2Dint(resLSQ_intx.x, np.array(r_rot[1]), 0)
             self.slices.fit1 = self.fittedImage
 
+        
+        elif self.fitFunction == FIT_FUNCTIONS.index("Twisted Gauss (Mask) Int"):
+
+            r = [None, None]
+            r[0] = self.odImage.xRange0  # x
+            r[1] = self.odImage.xRange1  # y
+
+            angle = IMFIT_MODES[self.mode]["Fit angle"]
+            
+             # We mask EXCLUSION_RADIUS * initial sigma around the center of the fit
+            EXCLUSION_RADIUS = self.WingRad
+
+            # Rotate the image
+            # For debugging purposes only:
+            if hasattr(self, "fullOD"):
+                rot_img = ndimage.rotate(self.fullOD.ODCorrected,
+                                        -IMFIT_MODES[self.mode]["Fit angle"],
+                                        reshape = False,
+                                        order = 1) # linear interpolation
+                
+                # We use the full OD to rotate and then recrop it for the fitting,
+                # to avoid losing data from the rotation and to avoid adding zeros
+                r0 = int(self.odImage.xCenter0 - np.floor(self.odImage.xCrop0 / 2) 
+                         - (self.fullOD.xCenter0 - np.floor(self.fullOD.xCrop0 / 2)))
+                r1 = int(self.odImage.xCenter0 + np.floor(self.odImage.xCrop0 / 2) 
+                         - (self.fullOD.xCenter0 - np.floor(self.fullOD.xCrop0 / 2)))
+                r2 = int(self.odImage.xCenter1 - np.floor(self.odImage.xCrop1 / 2) 
+                         - (self.fullOD.xCenter1 - np.floor(self.fullOD.xCrop1 / 2)))
+                r3 = int(self.odImage.xCenter1 + np.floor(self.odImage.xCrop1 / 2) 
+                         - (self.fullOD.xCenter1 - np.floor(self.fullOD.xCrop1 / 2)))
+
+                rot_img = rot_img[r2:r3, r0:r1]
+
+            else:
+                print("Consider using defringing with a fit crop if you do not want to to add zeros.")
+                rot_img = ndimage.rotate(self.odImage.ODCorrected,
+                                        -IMFIT_MODES[self.mode]["Fit angle"],
+                                        reshape = False,
+                                        order = 1) # linear interpolation
+            
+            self.plot_window = PlotWindow(rot_img)
+            self.plot_window.show()
+            
+            r_rot = [None, None]
+            r_rot[0] = np.arange(0, np.shape(rot_img)[1])  # x
+            r_rot[1] = np.arange(0, np.shape(rot_img)[0])  # y
+
+            # Integrate the OD along x and y to get 1D profiles
+            od_int_x = np.sum(rot_img, axis = 1)
+            od_int_y = np.sum(rot_img, axis = 0)
+
+            # Fit the 1D profiles with Fermi-Dirac 2D Int
+            # Fit integrated OD
+            od_int_x *= self.config["Pixel Size"] * self.odImage.data.bin
+            od_int_y *= self.config["Pixel Size"] * self.odImage.data.bin
+
+            ####### 2D Gaussian fit with fixed angle #######
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy]
+            # Only to get the center point for the x slice
+            p0 = [0, M, r[0][0] + np.shape(self.odImage.ODCorrected)[1] // 2, 20,
+                  r[1][0] + np.shape(self.odImage.ODCorrected)[0] // 2, 20]
+            pUpper = [np.inf, 50, np.max(r[0]), len(r[0]), np.max(r[1]), len(r[1])]
+            pLower = [-np.inf, 0.0, 0, 0, 0, 0]
+
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ_G_norot = least_squares(
+                gaussianNoRotTwist,
+                p0,
+                args=(r, self.odImage.ODCorrected, angle),
+                bounds=(pLower, pUpper),
+            )
+
+            self.fitDataConfGauss = confidenceIntervals(resLSQ_G_norot)
+            self.fitDataGauss = resLSQ_G_norot.x
+            self.fittedImageGauss = gaussianNoRotTwist(resLSQ_G_norot.x, r, 0, angle).reshape(self.odImage.ODCorrected.shape)
+
+            ####### Calculate slices through fit for plotting on OD #######
+            m0 = np.tan(np.pi / 2.0 - angle * np.pi / 180.0)
+            m1 = -np.tan(angle * np.pi / 180.0)
+
+            if abs(m0) > abs(m1):
+                # Ensure that lower slope is always along x
+                m0, m1 = m1, m0
+
+            b0 = -m0 * resLSQ_G_norot.x[2] + resLSQ_G_norot.x[4]
+            ch0 = np.asarray(self.odImage.xRange0) * m0 + b0
+            b1 = -m1 * resLSQ_G_norot.x[2] + resLSQ_G_norot.x[4]
+            ch1 = (np.asarray(self.odImage.xRange1) - b1) / m1
+
+            ####### 1D Gaussian fit along x to integrated OD along y #######
+            ### Parameters: [offset, amplitude, x0, wx, dODdx]
+            est_bg = np.quantile(od_int_y, 0.1)
+            p0 = [
+                est_bg,
+                np.max(od_int_y),
+                np.argmax(od_int_y) + r_rot[0][0],
+                np.std(od_int_y),
+                0,
+            ]
+            pUpper = [
+                np.inf,
+                np.max(od_int_y) - np.min(od_int_y),
+                r_rot[0][-1],
+                len(r_rot[0]),
+                np.inf,
+            ]
+            pLower = [-np.inf, 0.0, r_rot[0][0], 0.0, -np.inf]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ_Gx = least_squares(
+                gaussian1D,
+                p0,
+                args=(np.array(r_rot[0]), od_int_y),
+                bounds=(pLower, pUpper),
+            )
+
+            ### Parameters: [offset, amplitude, x0, wx, y0, wy]
+            self.slices.points0 = od_int_y
+            self.slices.points1 = od_int_x
+            self.slices.ch0 = ch0
+            self.slices.ch1 = ch1
+
+            ####### 1D Fermi--Dirac fit along x to integrated OD along y #######
+            ### Parameters: [offset, amplitude, x0, wx, dODdx]
+            p0 = [
+                resLSQ_Gx.x[0],
+                resLSQ_Gx.x[1],
+                resLSQ_Gx.x[2],
+                resLSQ_Gx.x[3],
+                resLSQ_Gx.x[4],
+            ]
+            pUpper = [
+                np.inf,
+                np.inf,
+                r_rot[1][-1],
+                len(r_rot[0]),
+                np.inf,
+            ]
+            pLower = [-np.inf, 0.0, r_rot[1][0], 0.0, -np.inf]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ_inty = least_squares(
+                gaussian_mask_sigma_1D,
+                p0,
+                args=(np.array(r_rot[0]), od_int_y),
+                bounds=(pLower, pUpper),
+                kwargs={
+                    "mask_radius_x": EXCLUSION_RADIUS * np.abs(resLSQ_Gx.x[3]),
+                    "x0_mask": np.abs(resLSQ_Gx.x[2]),
+                },
+            )
+
+            self.fittedImage = gaussian_mask_sigma_1D(
+                resLSQ_inty.x,
+                np.array(r_rot[0]),
+                0,
+                mask_radius_x = EXCLUSION_RADIUS * np.abs(resLSQ_Gx.x[3]),
+                x0_mask = np.abs(resLSQ_Gx.x[2]),
+                )
+            
+            fittedImage_no_maskx = gaussian_mask_sigma_1D(
+                resLSQ_inty.x,
+                np.array(r_rot[0]),
+                0,
+                )
+            
+            self.slices.fit0 = self.fittedImage
+            self.slices.fit0a = fittedImage_no_maskx
+            
+            ####### 1D Gaussian fit along y to integrated OD along x - confusing names I know #######
+            resLSQ_Gy = least_squares(
+                gaussian1D,
+                p0,
+                args=(np.array(r_rot[1]), od_int_x),
+                bounds=(pLower, pUpper),
+            )
+
+            ####### 1D Fermi--Dirac fit along y to integrated OD along x #######
+            ### Parameters: [offset, amplitude, x0, wx, dODdx]
+            p0 = [
+                resLSQ_Gy.x[0],
+                resLSQ_Gy.x[1],
+                resLSQ_Gy.x[2],
+                resLSQ_Gy.x[3],
+                resLSQ_Gy.x[4],
+            ]
+            pUpper = [
+                np.inf,
+                np.inf,
+                r_rot[1][-1],
+                len(r_rot[0]),
+                np.inf,
+            ]
+            pLower = [-np.inf, 0.0, r_rot[1][0], 0.0, -np.inf]
+            p0 = checkGuess(p0, pUpper, pLower)
+
+            resLSQ_intx = least_squares(
+                gaussian_mask_sigma_1D,
+                p0,
+                args=(np.array(r_rot[1]), od_int_x),
+                bounds=(pLower, pUpper),
+                kwargs={
+                    "mask_radius_x": EXCLUSION_RADIUS * np.abs(resLSQ_Gy.x[3]),
+                    "x0_mask": np.abs(resLSQ_Gy.x[2]),
+                },
+            )
+
+
+            fitData = resLSQ_inty.x
+            fitData = np.append(fitData, resLSQ_intx.x)
+
+            # Calculate average number density in border and subtract from rest of image
+            border = int(max(min(self.odImage.n.shape) / 10, 5))
+            border_mask = np.ones(self.odImage.n.shape)
+            border_mask[border:-border, border:-border] = 0
+            offset = np.sum(self.odImage.n * border_mask) / np.sum(border_mask)
+            self.odImage.n -= offset
+
+            interior = self.odImage.n[border:-border, border:-border]
+            interior_err = self.odImage.nerr[border:-border, border:-border]
+
+            # Compute the number by summing the pixels and multiplying by the pixel area
+            raw_number = interior.sum()
+            number = (
+                raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
+
+            error = (
+                np.sqrt((interior_err**2).sum())
+                * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
+            )
+            
+            fitData = np.append(fitData, angle)
+            fitData = np.append(fitData, number)
+
+            conf_int = confidenceIntervals(resLSQ_inty)
+            conf_int = np.append(conf_int, confidenceIntervals(resLSQ_intx))
+
+            self.fitDataConf = conf_int
+            self.fitData = fitData
+            self.fittedImage = gaussian_mask_sigma_1D(
+                resLSQ_intx.x,
+                np.array(r_rot[1]),
+                0,
+                mask_radius_x = EXCLUSION_RADIUS * np.abs(resLSQ_Gy.x[3]),
+                x0_mask = np.abs(resLSQ_Gy.x[2]),
+                )
+            
+            fittedImage_no_masky = gaussian_mask_sigma_1D(
+                resLSQ_intx.x,
+                np.array(r_rot[1]),
+                0,
+                )
+            
+            self.slices.fit1 = self.fittedImage
+            self.slices.fit1a = fittedImage_no_masky
+
+        
 
         elif self.fitFunction == FIT_FUNCTIONS.index("Gauss (Mask) Int"):
             # Gaussian fit with gradient in 1D with masked center
@@ -3077,6 +3336,36 @@ class processFitResult:
             ]
             self.data_dict = r
 
+        elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Twisted Gauss (Mask) Int"):
+            r = {
+                "offset_x": self.fitObject.fitData[0],
+                "peakOD_x": self.fitObject.fitData[1],
+                "x0": self.fitObject.fitData[2],
+                "wx": self.fitObject.fitData[3] * self.bin * self.pixelSize,
+                "dODdx": self.fitObject.fitData[4] / self.bin * self.pixelSize,
+                "offset_y": self.fitObject.fitData[5],
+                "peakOD_y": self.fitObject.fitData[6],
+                "y0": self.fitObject.fitData[7],
+                "wy": self.fitObject.fitData[8] * self.bin * self.pixelSize,
+                "dODdy": self.fitObject.fitData[9] / self.bin * self.pixelSize,
+                "angle": self.fitObject.fitData[10],
+                "number": self.fitObject.fitData[11],
+            }
+
+            self.data = [
+                "fileName",
+                (r["peakOD_x"] + r["peakOD_y"]) / 2,
+                r["dODdx"],
+                r["dODdy"],
+                r["wx"],
+                r["wy"],
+                r["x0"],
+                r["y0"],
+                (r["offset_x"] + r["offset_y"]) / 2,
+                r["angle"],
+                r["number"],
+            ]
+            self.data_dict = r
 
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Gauss (Mask) Int"):
             r = {
