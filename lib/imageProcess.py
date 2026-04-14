@@ -2331,6 +2331,8 @@ class fitOD:
             
             fitData = np.append(fitData, angle)
             fitData = np.append(fitData, number)
+            fitData = np.append(fitData, error)
+            fitData = np.append(fitData, EXCLUSION_RADIUS)
 
             conf_int = confidenceIntervals(resLSQ_inty)
             conf_int = np.append(conf_int, confidenceIntervals(resLSQ_intx))
@@ -3349,7 +3351,9 @@ class processFitResult:
                 "wy": self.fitObject.fitData[8] * self.bin * self.pixelSize,
                 "dODdy": self.fitObject.fitData[9] / self.bin * self.pixelSize,
                 "angle": self.fitObject.fitData[10],
-                "number": self.fitObject.fitData[11],
+                "N": self.fitObject.fitData[11],
+                "Nerr": self.fitObject.fitData[12],
+                "ExclR": self.fitObject.fitData[13],
             }
 
             self.data = [
@@ -3363,7 +3367,9 @@ class processFitResult:
                 r["y0"],
                 (r["offset_x"] + r["offset_y"]) / 2,
                 r["angle"],
-                r["number"],
+                r["N"],
+                r["Nerr"],
+                r["ExclR"],
             ]
             self.data_dict = r
 
