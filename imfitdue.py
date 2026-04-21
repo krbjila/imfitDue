@@ -173,14 +173,19 @@ class imfitDue(QtWidgets.QMainWindow):
     def currentBGCalc(self):
         self.autoloader.is_active = False
 
+        self.bin_size = int(self.av.binsize.text())
+        # If bin size not checked default to 1
+        if not self.av.bincheck.isChecked():
+            self.bin_size = 1
+
         for i in range(4):
             self.regionK[i] = float(self.roi.region[0][i].text())
             self.regionRb[i] = float(self.roi.region[1][i].text())
 
         species = IMFIT_MODES[self.mode]["Species"]
         try:
-            self.odKBG = calcOD(self.BGFile, species[0], self.mode, self.regionK, self.sigblur)
-            self.odRbBG = calcOD(self.BGFile, species[1], self.mode, self.regionRb, self.sigblur)
+            self.odKBG = calcOD(self.BGFile, species[0], self.mode, self.regionK, self.sigblur, self.bin_size)
+            self.odRbBG = calcOD(self.BGFile, species[1], self.mode, self.regionRb, self.sigblur, self.bin_size)
         except Exception as e:
             print("Could not calculate BG: {}".format(e))
 
@@ -199,15 +204,29 @@ class imfitDue(QtWidgets.QMainWindow):
         for i in range(2):
             self.fK[i] = float(self.roi.fitregion[0][i].text())
 
+        self.bin_size = int(self.av.binsize.text())
+        # If bin size not checked default to 1
+        if not self.av.bincheck.isChecked():
+            self.bin_size = 1
+        # else:
+        #     self.regionK[2] /= self.bin_size
+        #     self.regionK[3] /= self.bin_size
+        #     self.regionRb[2] /= self.bin_size
+        #     self.regionRb[3] /= self.bin_size
+        #     self.pK[2] /= self.bin_size
+        #     self.pK[3] /= self.bin_size
+        #     self.pRb[2] /= self.bin_size
+        #     self.pRb[3] /= self.bin_size
+
         species = IMFIT_MODES[self.mode]["Species"]
         try:
             if self.av.b1_nobg.isChecked():
-                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur)
-                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur)
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur, self.bin_size)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur, self.bin_size)
 
             elif self.av.b2_bgsu.isChecked():
-                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur)
-                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur)
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur, self.bin_size)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur, self.bin_size)
                 self.odK.OD = self.odK.OD - self.odKBG.OD
                 self.odRb.OD = self.odRb.OD - self.odRbBG.OD
                 self.odK.ODCorrected = self.odK.ODCorrected - self.odKBG.ODCorrected
@@ -219,14 +238,14 @@ class imfitDue(QtWidgets.QMainWindow):
 
             elif self.av.b3_defr.isChecked():
                 # The plan is to defringe in the averaging function, so here we just calculate the OD normally
-                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur)
-                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur)
+                self.odK = calcOD(self.currentFile, species[0], self.mode, self.regionK, self.sigblur, self.bin_size)
+                self.odRb = calcOD(self.currentFile, species[1], self.mode, self.regionRb, self.sigblur, self.bin_size)
 
                 # fitbox = self.fK
                 fitregionK = self.regionK.copy()
                 fitregionK[2] = self.fK[0]
                 fitregionK[3] = self.fK[1]
-                self.odKfit = calcOD(self.currentFile, species[0], self.mode, fitregionK, self.sigblur)
+                self.odKfit = calcOD(self.currentFile, species[0], self.mode, fitregionK, self.sigblur, self.bin_size)
                 # For debugging purposes only:
                 # self.plot_window = PlotWindow(self.odKfit.ODCorrected)
                 # self.plot_window.show()
@@ -835,6 +854,14 @@ class imfitDue(QtWidgets.QMainWindow):
             
             x = self.odK.xRange0
             y = self.odK.xRange1
+            
+            cutoff_index = (len(self.odK.xRange0) // self.bin_size) * self.bin_size
+            # This range is perfectly divisible by your bin size
+            clean_range0 = self.odK.xRange0[:cutoff_index]
+            clean_range1 = self.odK.xRange1[:cutoff_index]
+
+            x_bin = clean_range0[::self.bin_size]
+            y_bin = clean_range1[::self.bin_size]
 
             try:
                 ch0 = self.fitK.slices.ch0
@@ -928,7 +955,7 @@ class imfitDue(QtWidgets.QMainWindow):
                         self.figs.plotSliceUpdate(x, [Sx, Fx, Fxa], x, [Sy])
                     
                     else:
-                        self.figs.plotSliceUpdate(x, [Sx, Fx], y, [Sy, Fy])
+                        self.figs.plotSliceUpdate(x_bin, [Sx, Fx], y_bin, [Sy, Fy])
 
         if self.figs.plotTools.rbSelect.isChecked():
 

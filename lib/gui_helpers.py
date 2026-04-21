@@ -822,7 +822,7 @@ class averageWidget(QtWidgets.QWidget):
 
         font = QtGui.QFont()
         font.setBold(True)
-        font.setPointSize(10)
+        font.setPointSize(9)
 
         self.group1 = QtWidgets.QButtonGroup()
 
@@ -834,7 +834,7 @@ class averageWidget(QtWidgets.QWidget):
         self.grid = QtWidgets.QGridLayout()
         self.atom_labels = []
         
-        x = QtWidgets.QLabel('Particle Region:')
+        x = QtWidgets.QLabel('Particle Reg.:')
         x.setFont(font)
         self.grid.addWidget(x, 0, 1, 1, 1)
         
@@ -864,6 +864,43 @@ class averageWidget(QtWidgets.QWidget):
                 self.region_p[i][j].setFixedWidth(50)
                 self.grid.addWidget(self.region_p[i][j], i + 1, j + 2, 1, 1)
 
+        self.bincol = QtWidgets.QFrame()
+        col_layout = QtWidgets.QVBoxLayout(self.bincol)
+
+        # Add 'QFrame' at the start of the string
+        self.bincol.setStyleSheet(
+            """
+            .QFrame {
+                font-weight: bold; 
+                background-color: #fcfbfd; 
+                border: 1px solid gray; 
+                border-radius: 3px; 
+                margin-top: 2px;
+            }
+            """
+        )
+
+        self.bin_label = QtWidgets.QLabel("Binning:")
+        self.bin_label.setFont(font)
+        self.bincheck = QtWidgets.QCheckBox("Y/N")
+        self.bincheck.setChecked(False)
+        self.binsize = QtWidgets.QLineEdit(str(1))
+        self.binsize.setValidator(QtGui.QIntValidator())
+
+        col_layout.addWidget(self.bin_label)
+        col_layout.addWidget(self.bincheck)
+        col_layout.addWidget(self.binsize)
+        
+        self.grid.addWidget(self.bincol, 0, 6, 3, 1)
+
+        # 4. Add the framed column to the grid (Column 1)
+        # layout.addWidget(column_frame, 0, 1)
+
+        # # Create the separator between particle region and binning
+        # line = QtWidgets.QFrame()
+        # line.setFrameShape(QtWidgets.QFrame.VLine)
+        # # line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        # self.grid.addWidget(line, 0, 6, 3, 1)
 
         vbox.addLayout(avgbox)
         vbox.addLayout(bgbox)

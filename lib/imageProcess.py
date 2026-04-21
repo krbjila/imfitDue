@@ -39,13 +39,14 @@ class PlotWindow(QtWidgets.QMainWindow):
 
 class calcOD:
 
-    def __init__(self, data, species, mode, region=[], sigblur=0):
+    def __init__(self, data, species, mode, region=[], sigblur=0, post_bin_size=1):
 
         ### Note that the region is passed as [x0, y0, xcrop, ycrop]
         ### Crop is symmetric about center (x0,y0)
 
         self.data = data
         self.sigblur = sigblur
+        self.post_bin_size = post_bin_size
         self.xRange0 = None
         self.xRange1 = None
 
@@ -117,6 +118,13 @@ class calcOD:
             Ceff = self.config["CSat"][self.species]
             bins = self.data.bin
             Ceff *= float(bins**2)
+            
+            if self.post_bin_size > 1:
+                print(f"Binning with bin size {self.post_bin_size}...")
+                s1 = self.bin_image(s1, self.post_bin_size)
+                s2 = self.bin_image(s2, self.post_bin_size)
+                self.OD = -np.log(s1 / s2)
+                Ceff *= float(self.post_bin_size**2)
 
             self.ODCorrected = (self.OD + (s2 - s1) / Ceff) / (1 - Omega)
 
@@ -131,7 +139,7 @@ class calcOD:
             # np.savetxt('output_array_2026-02-27.txt', self.ODCorrected, delimiter=',')
 
             # Calculate the column density, assuming zero detuning; see Pappa et al, NJP (2011)
-            s0 = s2 / (bins**2 * self.config["CSat"][self.species])
+            s0 = s2 / (bins**2 * self.post_bin_size**2 * self.config["CSat"][self.species])
             Tabs = s1 / s2
             self.n = (-np.log(Tabs) + s0 * (1 - Tabs)) / ((1 - Omega) * sigma0)
             self.n /= EFF[self.species]
@@ -173,7 +181,7 @@ class calcOD:
 
         self.xRange0 = range(r0, r1)
         self.xRange1 = range(r2, r3)
-    
+
     def GaussBlur(self, sigblur):
         """
         Apply a low-pass FFT filter to a 2D image.
@@ -184,6 +192,19 @@ class calcOD:
         """
         img = self.ODCorrected
         self.ODCorrected = ndimage.gaussian_filter(img, sigma=sigblur)
+    
+    def bin_image(self, img, bin_size):
+        # Calculate the dimensions that are perfectly divisible
+        y_trim = (img.shape[0] // bin_size) * bin_size
+        x_trim = (img.shape[1] // bin_size) * bin_size
+        
+        # Slice the image to the divisible area
+        trimmed_img = img[:y_trim, :x_trim]
+        
+        n_bins_y = y_trim // bin_size
+        n_bins_x = x_trim // bin_size
+        
+        return trimmed_img.reshape(n_bins_y, bin_size, n_bins_x, bin_size).sum(axis=(1, 3))
 
 
 
@@ -255,6 +276,7 @@ class fitOD:
             self.fitFunction = FIT_FUNCTIONS.index(fitFunction)
 
     def fitODImage(self):
+        self.post_bin_size = self.odImage.post_bin_size
 
         I0, I1 = np.unravel_index(
             self.odImage.ODCorrected.argmax(), self.odImage.ODCorrected.shape
@@ -942,21 +964,27 @@ class fitOD:
             ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
 
             r = [None, None]
-            r[0] = self.odImage.xRange0
-            r[1] = self.odImage.xRange1
+            #The index where the last full bin ends
+            cutoff_index = (len(self.odImage.xRange0) // self.post_bin_size) * self.post_bin_size
+            # This range is perfectly divisible by your bin size
+            clean_range0 = self.odImage.xRange0[:cutoff_index]
+            clean_range1 = self.odImage.xRange1[:cutoff_index]
+            r[0] = clean_range0[::self.post_bin_size]
+            r[1] = clean_range1[::self.post_bin_size]
+
             xmin = np.min(r[0])
             ymin = np.min(r[1])
 
             data = self.odImage.ODCorrected
             od_no_bg = subtract_gradient(data)
-            blur = ndimage.gaussian_filter(od_no_bg, 5, mode="constant")
+            blur = ndimage.gaussian_filter(od_no_bg, 5//self.post_bin_size, mode="constant")
 
             p0 = [
                 0,
                 M,
-                self.odImage.xRange0[I1],
+                r[0][I1],
                 20,
-                self.odImage.xRange1[I0],
+                r[1][I0],
                 20,
                 0,
                 0,
@@ -1017,8 +1045,8 @@ class fitOD:
 
             ### Get radial average
 
-            I0 = self.odImage.xRange0.index(int(self.fitData[2]))
-            I1 = self.odImage.xRange1.index(int(self.fitData[4]))
+            I0 = self.odImage.xRange0.index(int(self.fitData[2])) // self.post_bin_size
+            I1 = self.odImage.xRange1.index(int(self.fitData[4])) // self.post_bin_size
 
             center = [I0, I1]
             self.slices.radSlice = azimuthalAverage(self.odImage.ODCorrected, center)
@@ -1028,11 +1056,11 @@ class fitOD:
             ### Calculate slices through fit
 
             self.slices.points0 = self.odImage.ODCorrected[I1, :]
-            self.slices.ch0 = [self.odImage.xRange1[I1]] * len(self.odImage.xRange0)
+            self.slices.ch0 = [r[1][I1]] * len(self.odImage.xRange0)
             self.slices.fit0 = self.fittedImage[I1, :]
 
             self.slices.points1 = self.odImage.ODCorrected[:, I0]
-            self.slices.ch1 = [self.odImage.xRange0[I0]] * len(self.odImage.xRange1)
+            self.slices.ch1 = [r[0][I0]] * len(self.odImage.xRange1)
             self.slices.fit1 = self.fittedImage[:, I0]
 
             print("Done with fit function!")
