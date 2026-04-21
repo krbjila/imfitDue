@@ -2686,15 +2686,13 @@ class fitOD:
             yc = np.sum(interior.sum(axis=1) * yrange) / raw_number
 
             # Box size for plotting
+            D0 = self.odImage.xRange0.stop - border - (self.odImage.xRange0.start + border)
+            D1 = self.odImage.xRange1.stop - border - (self.odImage.xRange1.start + border)
             self.box = [
-                [
-                    self.odImage.xRange0.start + border,
-                    self.odImage.xRange0.stop - border,
-                ],
-                [
-                    self.odImage.xRange1.start + border,
-                    self.odImage.xRange1.stop - border,
-                ],
+                    self.odImage.xRange0.start + border + D0 // 2,
+                    self.odImage.xRange1.start + border + D1 // 2,
+                    D0,
+                    D1,
             ]
 
             # These calculations of moments aren't exact, since the contents of the square root can be negative since the column density can be negative in some pixels.
