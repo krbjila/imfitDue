@@ -2086,10 +2086,12 @@ class fitOD:
                 * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
             )
             
-            fitData = np.append(fitData, number)
 
             conf_int = confidenceIntervals(resLSQ_inty)
             conf_int = np.append(conf_int, confidenceIntervals(resLSQ_intx))
+
+            fitData = np.append(fitData, number)
+            conf_int = np.append(conf_int, error)
 
             self.fitDataConf = conf_int
             self.fitData = fitData
@@ -3289,6 +3291,91 @@ class processFitResult:
             self.data_dict = r
         
         elif self.fitObject.fitFunction == FIT_FUNCTIONS.index("Twisted Fermi-Dirac 2D Int"):
+            
+            ### Add printing of fitting errors
+            ### Parameters: [offset, amplitude, x0, sigma, q, gradient]
+            try:
+                TTF0x = np.sqrt(
+                        -1 / (2 * mp.fp.polylog(2, -np.exp(self.fitObject.fitData[4])))
+                    )
+            except:
+                TTF0x = 0
+
+                print("\n")
+                print("!!!!!!!!!!!!!!!!")
+                print("Error calculating T/TFx")
+                print("!!!!!!!!!!!!!!!!")
+            try:
+                TTF0xp = np.sqrt(
+                        -1 / (2 * mp.fp.polylog(2, -np.exp(self.fitObject.fitData[4] - self.fitObject.fitDataConf[4])))
+                    )
+                TTF0xm = np.sqrt(
+                    -1 / (2 * mp.fp.polylog(2, -np.exp(self.fitObject.fitData[4] + self.fitObject.fitDataConf[4])))
+                    )
+            except:
+                TTF0xp = 0
+                TTF0xm = 0
+
+                print("\n")
+                print("!!!!!!!!!!!!!!!!")
+                print("Error calculating T/TFx errors")
+                print("!!!!!!!!!!!!!!!!")
+            
+            try:
+                TTF0y = np.sqrt(
+                        -1 / (2 * mp.fp.polylog(2, -np.exp(self.fitObject.fitData[10])))
+                    )
+            except:
+                TTF0y = 0
+
+                print("\n")
+                print("!!!!!!!!!!!!!!!!")
+                print("Error calculating T/TFy")
+                print("!!!!!!!!!!!!!!!!")
+            try:
+                TTF0yp = np.sqrt(
+                        -1 / (2 * mp.fp.polylog(2, -np.exp(self.fitObject.fitData[10] - self.fitObject.fitDataConf[10])))
+                    )
+                TTF0ym = np.sqrt(
+                        -1 / (2 * mp.fp.polylog(2, -np.exp(self.fitObject.fitData[10] + self.fitObject.fitDataConf[10])))
+                    )
+            except:
+                TTF0yp = 0
+                TTF0ym = 0
+
+                print("\n")
+                print("!!!!!!!!!!!!!!!!")
+                print("Error calculating T/TFy errors")
+                print("!!!!!!!!!!!!!!!!")
+
+            print("\n")
+            print('///////////////////////////////////////////////////////////////////////')
+            print('///////////////////////////////////////////////////////////////////////')
+            print("Fitting errors:")
+            print("  - Number:      {value:.1f} +/- {err:.1f}".format(value = self.fitObject.fitData[12], err = self.fitObject.fitDataConf[12]))
+            print("\n")
+            print("  - Confidence intervals:")
+            print("  - offset_x:    {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[0], err = self.fitObject.fitDataConf[0]))
+            print("  - amplitude_x: {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[1], err = self.fitObject.fitDataConf[1]))
+            print("  - x0:          {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[2], err = self.fitObject.fitDataConf[2]))
+            print("  - sigma_x:     {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[3], err = self.fitObject.fitDataConf[3]))
+            print("  - q_x:         {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[4], err = self.fitObject.fitDataConf[4]))
+            print("  - gradient_x:  {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[5], err = self.fitObject.fitDataConf[5]))
+            print("  - T/TFx:       {value:.3f} + {errp:.3f} - {errm:.3f}".format(value = TTF0x, errp = TTF0xp - TTF0x, errm = TTF0x - TTF0xm))
+
+            print("\n")
+            print("  - offset_y:    {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[6], err = self.fitObject.fitDataConf[6]))
+            print("  - amplitude_y: {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[7], err = self.fitObject.fitDataConf[7]))
+            print("  - y0:          {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[8], err = self.fitObject.fitDataConf[8]))
+            print("  - sigma_y:     {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[9], err = self.fitObject.fitDataConf[9]))
+            print("  - q_y:         {value:.3f} +/- {err:.3f}".format(value = self.fitObject.fitData[10], err = self.fitObject.fitDataConf[10]))
+            print("  - gradient_y:  {value:.1f} +/- {err:.1f}".format(value = self.fitObject.fitData[11], err = self.fitObject.fitDataConf[11]))
+            print("  - T/TFy:       {value:.3f} + {errp:.3f} - {errm:.3f}".format(value = TTF0y, errp = TTF0yp - TTF0y, errm = TTF0y - TTF0ym))
+            print('///////////////////////////////////////////////////////////////////////')
+            print('///////////////////////////////////////////////////////////////////////')
+            print("\n")
+
+
             r = {
                 "offset": self.fitObject.fitDataGauss[0],
                 "peakOD": self.fitObject.fitDataGauss[1],
