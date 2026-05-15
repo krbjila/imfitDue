@@ -789,13 +789,22 @@ class imfitDue(QtWidgets.QMainWindow):
                 and self.fo.fitBothCheckbox.isEnabled()
             ):
                 if "Gauss" in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
-                    print("Uploading KRb to Origin")
-                    upload2Origin(
-                        "KRbSpinGauss",
-                        self.fitK.fitFunction,
-                        [KProcess.data, RbProcess.data],
-                    )
-                    print("Done uploading KRb to Origin")
+                    if "Mask" in FIT_FUNCTIONS[KProcess.fitObject.fitFunction]:
+                        print("Uploading KRb to Origin")
+                        upload2Origin(
+                            "KRbSpinGaussMask",
+                            self.fitK.fitFunction,
+                            [KProcess.data, RbProcess.data],
+                        )
+                        print("Done uploading KRb to Origin")
+                    else:
+                        print("Uploading KRb to Origin")
+                        upload2Origin(
+                            "KRbSpinGauss",
+                            self.fitK.fitFunction,
+                            [KProcess.data, RbProcess.data],
+                        )
+                        print("Done uploading KRb to Origin")
                 else:
                     print("Uploading KRb to Origin")
                     upload2Origin("N0", self.fitK.fitFunction, KProcess.data)

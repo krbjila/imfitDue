@@ -193,7 +193,11 @@ def upload2Origin(species, fitFunction, data):
         worksheetName = species + WORKSHEET_NAMES[fitFunction]
         longname = species + " " + FIT_FUNCTIONS[fitFunction]
         print(worksheetName)
-        if species == "KRbSpinGauss" and "Gaussian" in FIT_FUNCTIONS[fitFunction]:
+        if species == "KRbSpinGaussMask":
+            template = "KRbSpinGaussMask"
+            worksheetName = "KRbSpinMask1"
+            longname = "KRb Spin Resolved Gaussian Mask"
+        elif species == "KRbSpinGauss" and "Gaussian" in FIT_FUNCTIONS[fitFunction]:
             template = "KRbSpinGauss"
             worksheetName = "KRbSpinGauss1"
             longname = "KRb Spin Resolved Gaussian"
@@ -218,7 +222,34 @@ def upload2Origin(species, fitFunction, data):
         orgApp.Execute("{}!page.longname$ = {}".format(worksheetName, longname))
         # orgApp.Execute("{}!page.active$ = {}".format(worksheetName, "Sheet1"))
 
-        if species == "KRbSpinGauss":
+        if species == "KRbSpinGaussMask":
+            # This only happens when you're doing Gaussian Wing Fitting, so we can upload it directly
+            # the worksheet name is set to be KRbSpinMask1
+            data = (
+                    data[0][0:10]
+                    + data[1][1:10]
+                    + [data[0][12]]
+                    + data[0][10:12]
+                    + data[1][10:12]
+                )
+
+            for i, d in enumerate(data):
+                # eta is a field skipper in Origin
+                if i > 21:
+                    eta = 2
+                else:
+                    eta = 0
+                uploadSuccess = orgApp.PutWorksheet(
+                    "[{}]Sheet1".format(worksheetName), d, -1, i + eta
+                )
+
+                if not uploadSuccess:
+                    print(
+                        "Failed to upload to Origin. Is Sheet1 in the proper workbook available?"
+                    )
+                    return -1
+
+        elif species == "KRbSpinGauss":
             if (
                 FIT_FUNCTIONS[fitFunction] != "Gaussian w/ Gradient"
                 and FIT_FUNCTIONS[fitFunction] != "Gaussian Fixed"

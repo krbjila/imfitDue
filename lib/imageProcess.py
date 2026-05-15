@@ -131,6 +131,7 @@ class calcOD:
             # np.savetxt('output_array_2026-02-27.txt', self.ODCorrected, delimiter=',')
 
             # Calculate the column density, assuming zero detuning; see Pappa et al, NJP (2011)
+            # DOI: https://doi.org/10.1088/1367-2630/13/11/115012
             s0 = s2 / (bins**2 * self.config["CSat"][self.species])
             Tabs = s1 / s2
             self.n = (-np.log(Tabs) + s0 * (1 - Tabs)) / ((1 - Omega) * sigma0)
@@ -138,11 +139,23 @@ class calcOD:
             self.n[np.isnan(self.n)] = 0
             self.n[np.isinf(self.n)] = 0
 
+            # self.nerr = (
+            #     (s0 * Tabs + (1 + delta ** 2))
+            #     / (sigma0 * (1 - Omega))
+            #     * np.sqrt((s1 + s2) / (s1 * s2))
+            # )
+
+            # Updated error calculation. We previously assuems s1 = s2, which is approximately correct
+            # the updated error is only marginally different
             self.nerr = (
-                (s0 * Tabs + (1 + delta ^ 2))
+                np.sqrt(
+                    (s1 + s2) / (s1*s2) 
+                    + (s1 + s2)/(bins**2 * self.config["CSat"][self.species])**2
+                    + 4 / (bins**2 * self.config["CSat"][self.species])
+                    )
                 / (sigma0 * (1 - Omega))
-                * np.sqrt((s1 + s2) / (s1 * s2))
             )
+
             self.nerr[np.isnan(self.nerr)] = 0
             self.nerr[np.isinf(self.nerr)] = 0
 
@@ -546,7 +559,8 @@ class fitOD:
                 / getsigma
             )
 
-            raw_number = (self.odImage.n - fitted_bg).sum()
+            # raw_number = (self.odImage.n - fitted_bg).sum()
+            raw_number = (self.odImage.ODCorrected / getsigma - fitted_bg).sum()
             number = (
                 raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
             )
@@ -771,7 +785,7 @@ class fitOD:
                 / getsigma
             )
 
-            raw_number = (self.odImage.n - fitted_bg).sum()
+            raw_number = (self.odImage.ODCorrected / getsigma - fitted_bg).sum()
             number = (
                 raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
             )
@@ -1467,7 +1481,7 @@ class fitOD:
                 / getsigma
             )
 
-            raw_number = (self.odImage.n - fitted_bg).sum()
+            raw_number = (self.odImage.ODCorrected / getsigma - fitted_bg).sum()
             number = (
                 raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
             )
@@ -2569,7 +2583,7 @@ class fitOD:
                 / getsigma
             )
 
-            raw_number = (self.odImage.n - fitted_bg).sum()
+            raw_number = (self.odImage.ODCorrected / getsigma - fitted_bg).sum()
             number = (
                 raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
             )

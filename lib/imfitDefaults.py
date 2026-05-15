@@ -255,7 +255,7 @@ IMFIT_MODES = OrderedDict(
                 "Pixel Size": PX_SIZE["side"],
                 "Species": ["|0,0>", "|1,0>"],
                 "Image Path": "Side",
-                "Default Region": [[186, 376, 150, 50], [186, 376, 150, 50]],
+                "Default Region": [[325, 389, 150, 50], [325, 389, 150, 50]],
                 "Extension Filter": "*.npz",
                 "Fit Functions": NONTWISTED_KRB_FIT_FUNCTIONS,
                 "Enforce same fit for both": True,
