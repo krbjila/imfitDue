@@ -236,7 +236,7 @@ def upload2Origin(species, fitFunction, data):
             for i, d in enumerate(data):
                 # eta is a field skipper in Origin
                 if i > 21:
-                    eta = 2
+                    eta = 3
                 else:
                     eta = 0
                 uploadSuccess = orgApp.PutWorksheet(
