@@ -31,8 +31,9 @@ class PlotWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(canvas)
 
         ax = fig.add_subplot(111)
-        ax.imshow(img, cmap=KRbCustomColors().whiteJet)
+        im = ax.imshow(img, cmap=KRbCustomColors().whiteJet)
         ax.set_title("Rotated Image for Checking")
+        fig.colorbar(im, ax=ax)
 
         canvas.draw()
 
@@ -236,6 +237,9 @@ class fitOD:
                 self.Nscaler = val
             if k == "fullOD":
                 self.fullOD = val
+            if k == "p_reg":
+                self.p_reg = val
+                print("Received p_reg: {}".format(self.p_reg))
 
         self.setFitFunction(fitFunction)
         self.fitODImage()
@@ -524,43 +528,49 @@ class fitOD:
             # Integration of number from computed column density
 
             # Compute the number by summing the pixels and multiplying by the pixel area
-            # subtract the offset from the initial Gaussian fit, as well as the gradients
-            # We make a background image where we just set the amplitude to zero, so that
-            # we only have the offset and the gradients
-            ### Parameters: [offset, amplitude, x0, wx, y0, wy, theta, dODdx, dODdy]
-            bg_res = [
-                resLSQ.x[0],
-                0,
-                resLSQ.x[2],
-                resLSQ.x[3],
-                resLSQ.x[4],
-                resLSQ.x[5],
-                resLSQ.x[6],
-                resLSQ.x[7],
-                resLSQ.x[8],
-            ]
+            # subtract the offset and gradient
+            XCp, YCp, CrXp, CrYp = self.p_reg
+
+            # NEED TO  MAKE SURE THE ROI DOES NOT EXIT THE ACTUAL ROI
+            # JUST TAKE THE FULL IMAGE OTHERWISE
+            r0p = int(np.max((0, int(XCp - self.odImage.xCenter0 + np.floor(self.odImage.ODCorrected.shape[1] / 2 - CrXp / 2)))))
+            r1p = int(np.min((self.odImage.ODCorrected.shape[1],
+                              int(XCp - self.odImage.xCenter0 + np.floor(self.odImage.ODCorrected.shape[1] / 2 + CrXp / 2)))) )
+            r2p = int(np.max((0, int(YCp - self.odImage.xCenter1 + np.floor(self.odImage.ODCorrected.shape[0] / 2 - CrYp / 2)))))
+            r3p = int(np.min((self.odImage.ODCorrected.shape[0],
+                              int(YCp - self.odImage.xCenter1 + np.floor(self.odImage.ODCorrected.shape[0] / 2 + CrYp / 2)))) )
+
+            xRange0p = range(r0p, r1p)
+            xRange1p = range(r2p, r3p)
+
+            p0_grad = np.array([-0.1, 0, 0, 0.01, 0.01])
+
+            resLSQ_x_grad = least_squares(
+                                    GradientMask,
+                                    p0_grad,
+                                    args=(r, self.odImage.ODCorrected),
+                                    kwargs={
+                                        "xr0": xRange0p,
+                                        "xr1": xRange1p,
+                                        },
+                                )
+
 
             # fitted bg converted to density
             getsigma = SIGMA_0[self.odImage.species] * (
                 2 if IMFIT_MODES[self.odImage.mode]["Image Path"] == "Vertical" else 1
             )
+            
+            mask = np.ones_like(self.odImage.ODCorrected)
+            mask[np.ix_(xRange1p, xRange0p)] = 0
 
-            fitted_bg = (
-                gaussian_mask_sigma(
-                    bg_res,
-                    r,
-                    0,
-                    mask_radius_x=1e-9,
-                    mask_radius_y=1e-9,
-                    x0_mask=np.abs(updated_guess[2]),
-                    y0_mask=np.abs(updated_guess[4]),
-                    theta_mask=np.abs(updated_guess[6]),
-                ).reshape(self.odImage.ODCorrected.shape)
-                / getsigma
-            )
+            fitted_grad = GradientMask(resLSQ_x_grad.x, r, 0, [], []).reshape(self.odImage.ODCorrected.shape)
+
+            # self.plot_window = PlotWindow(self.odImage.ODCorrected * mask)
+            # self.plot_window.show()
 
             # raw_number = (self.odImage.n - fitted_bg).sum()
-            raw_number = (self.odImage.ODCorrected / getsigma - fitted_bg).sum()
+            raw_number = (self.odImage.ODCorrected / getsigma - fitted_grad / getsigma).sum()
             number = (
                 raw_number * (self.config["Pixel Size"] * self.odImage.data.bin) ** 2
             )

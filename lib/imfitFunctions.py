@@ -492,3 +492,25 @@ def bandmapV(p, r, y, imageDetails):
     GX = np.exp(-((X - p[7]) ** 2.0) / (2.0 * p[6] ** 2.0))
 
     return np.ravel((B1 + B2 + B3) * GX + p[0] - y)
+
+
+def GradientMask(p, r, y, xr0, xr1):
+    ### Parameters: [offset, x0, y0, dODdx, dODdy]
+    xaxis = r[0]
+    yaxis = r[1]
+
+    X, Y = np.meshgrid(xaxis, yaxis)
+
+    x0R = p[1]
+    y0R = p[2]
+    
+    mask = np.ones_like(y)
+    if xr0 != [] and xr1 != []:
+        mask[np.ix_(xr1, xr0)] = 0
+    
+    return np.ravel(
+        p[0]
+        + p[3] * (X - x0R)
+        + p[4] * (Y - y0R)
+        - y
+    )*mask.ravel()

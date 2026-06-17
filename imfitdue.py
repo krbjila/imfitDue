@@ -665,6 +665,7 @@ class imfitDue(QtWidgets.QMainWindow):
                         mbemu = mass_betamu_fit_species,
                         Nscaler = Nscaler,
                         fullOD = self.odK,
+                        p_reg = self.pK,
                     )
                 else:
                     self.fitK = fitOD(
@@ -680,6 +681,7 @@ class imfitDue(QtWidgets.QMainWindow):
                         fz = fz,
                         mbemu = mass_betamu_fit_species,
                         Nscaler = Nscaler,
+                        p_reg = self.pK,
                     )
                 print(processFitResult(self.fitK, self.mode).data_dict)
             except Exception as e:
@@ -706,6 +708,7 @@ class imfitDue(QtWidgets.QMainWindow):
                     fz = fz,
                     mbemu = mass_betamu_fit_species,
                     Nscaler = Nscaler,
+                    p_reg = self.pRb,
                 )
                 print(processFitResult(self.fitRb, self.mode).data_dict)
             except Exception as e:
@@ -738,7 +741,7 @@ class imfitDue(QtWidgets.QMainWindow):
 
         if self.fitRb is not None:
             RbProcess = processFitResult(self.fitRb, self.mode)
-            species = KProcess.config["Species"][1]
+            species = KProcess.config["Species"][1] # This has to be K, I think
             func = FIT_FUNCTIONS[KProcess.fitObject.fitFunction]
             result[species] = {}
             result[species][func] = RbProcess.data_dict
@@ -838,6 +841,16 @@ class imfitDue(QtWidgets.QMainWindow):
         if self.figs.plotTools.kSelect.isChecked():
 
             box = self.pK if self.av.b3_defr.isChecked() else None
+            try:
+                if self.fitK.fitFunction == FIT_FUNCTIONS.index(
+                        "Gaussian Mask Sigma"
+                    ):
+                    box = self.pK
+            except Exception as e:
+                box = self.pK if self.av.b3_defr.isChecked() else None
+                print(e)
+
+
             fitbox = self.fK if self.av.b3_defr.isChecked() else None
             print("Fit box:")
             print(fitbox)
@@ -942,6 +955,15 @@ class imfitDue(QtWidgets.QMainWindow):
         if self.figs.plotTools.rbSelect.isChecked():
 
             box = self.pRb if self.av.b3_defr.isChecked() else None
+
+            try:
+                if self.fitRb.fitFunction == FIT_FUNCTIONS.index(
+                        "Gaussian Mask Sigma"
+                    ):
+                    box = self.pRb
+            except Exception as e:
+                box = self.pRb if self.av.b3_defr.isChecked() else None
+                print(e)
             
             x = self.odRb.xRange0
             y = self.odRb.xRange1
