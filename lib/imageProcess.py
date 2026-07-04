@@ -471,8 +471,7 @@ class fitOD:
                     print("Error fitting image: {}".format(e))
 
             updated_guess = res.x
-            best_fit = None
-            best_guess = np.inf
+            # removed lines that reset best fit
             # print('UPDATED GUESS: {}'.format(updated_guess))
             try:
                 # print("Trying guess: {}".format(guess))
@@ -491,7 +490,7 @@ class fitOD:
                 )
                 # print("Cost: {}".format(res.cost))
                 if not res.success:
-                    print("Warning: fit did not converge.")
+                    print("Warning: fit did not converge part 2.")
                 elif res.cost < best_guess:
                     best_guess = res.cost
                     best_fit = res
@@ -585,6 +584,7 @@ class fitOD:
             self.fitData = np.append(self.fitData, EXCLUSION_RADIUS)
 
             ### Get radial average
+            print(self.fitData)
             I0 = self.odImage.xRange0.index(int(self.fitData[2]))
             I1 = self.odImage.xRange1.index(int(self.fitData[4]))
 

@@ -254,15 +254,21 @@ class imfitDue(QtWidgets.QMainWindow):
             for j in range(2):
                 if float(self.roi.fitregion[i][j].text()) > float(self.roi.region[i][j + 2].text()):
                     self.roi.fitregion[i][j].setText(self.roi.region[i][j + 2].text())
+                if float(self.av.region_p[i][j + 2].text()) > float(self.roi.region[i][j + 2].text()):
+                    # just in case we set the particle region to be smaller by 1 pixel
+                    self.av.region_p[i][j + 2].setText(str(np.max((int(self.roi.region[i][j + 2].text()) - 1, 1))))
+
+        # also set the defringe particle region xc and yc to the crop region xc and yc
+        for i in range(2):
+           self.av.region_p[0][i].setText(self.roi.region[0][i].text())
+           self.av.region_p[1][i].setText(self.roi.region[1][i].text())
+           print(self.av.region_p[0][i+2].text())
+           print(self.roi.region[0][i+2].text())
 
         if self.av.b2_bgsu.isChecked():
             self.averageImages()
         else:
             self.currentODCalc()
-        # also set the defringe particle region xc and yc to the crop region xc and yc
-        for i in range(2):
-           self.av.region_p[0][i].setText(self.roi.region[0][i].text())
-           self.av.region_p[1][i].setText(self.roi.region[1][i].text())
 
 
     def intializeDefringe(self):  # FOR NOW IMPLEMENTING ONLY FOR iXon side and for K and Rb
